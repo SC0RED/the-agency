@@ -1,0 +1,98 @@
+routing:
+  jira:
+    rules:
+      - name: plan
+        condition:
+          equals:
+            field: issue.fields.status.name
+            value: Plan
+        messageTemplate: templates/jira-plan.md
+
+      - name: ready-for-development
+        condition:
+          equals:
+            field: issue.fields.status.name
+            value: Ready for Development
+        messageTemplate: templates/jira-ready-for-dev.md
+
+      - name: deploy-to-development
+        condition:
+          equals:
+            field: issue.fields.status.name
+            value: Deploy to development
+        messageTemplate: templates/jira-deployed-to-dev.md
+
+      - name: verified-in-development
+        condition:
+          equals:
+            field: issue.fields.status.name
+            value: Verified in Development
+        messageTemplate: templates/jira-verified-in-dev.md
+
+      - name: deploy-to-testing
+        condition:
+          equals:
+            field: issue.fields.status.name
+            value: Deploy to testing
+        messageTemplate: templates/jira-deploy-to-testing.md
+
+      - name: verified-in-testing
+        condition:
+          equals:
+            field: issue.fields.status.name
+            value: Verified in Testing
+        messageTemplate: templates/jira-verified-in-test.md
+
+      - name: ready-for-production
+        condition:
+          equals:
+            field: issue.fields.status.name
+            value: Ready for Production
+        messageTemplate: templates/jira-ready-for-production.md
+
+      - name: hotfix
+        condition:
+          equals:
+            field: issue.fields.status.name
+            value: Hotfix
+        messageTemplate: templates/jira-hotfix.md
+
+  slack:
+    rules:
+      - name: alerts-production
+        condition:
+          equals:
+            field: event.channel
+            value: C08V6MV0VNV
+        messageTemplate: templates/slack-alert.njk
+
+      - name: alerts-development
+        condition:
+          equals:
+            field: event.channel
+            value: C08UWMQJFBN
+        messageTemplate: templates/slack-alert.njk
+
+      - name: alerts-testing
+        condition:
+          equals:
+            field: event.channel
+            value: C08UVJDJZTL
+        messageTemplate: templates/slack-alert.njk
+
+modelRules:
+  jira:
+    - field: issue.fields.status.name
+      matches:
+        - Plan
+        - Ready for Development
+        - Deploy to development
+        - Deploy to testing
+        - Ready for Production
+        - Hotfix
+      model: claude-opus-4-6
+  slack:
+    - field: event.channel
+      matches:
+        - C08UVJDJZTL
+      model: claude-opus-4-6
