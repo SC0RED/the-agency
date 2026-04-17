@@ -1,60 +1,123 @@
+# Patch's routing rules.
+#
+# All status-based rules require webhookEvent == "jira:issue_updated" so
+# comment-add and other side-events don't trip them. Comment events fire
+# with the issue's current status snapshot but a different webhookEvent
+# value — leaving them out of all rules means routing:no-match, no run.
+#
+# Rule order matters — first match wins. More-specific rules (status +
+# type) come before status-only fallbacks.
 routing:
   jira:
     rules:
+
+      # ── Plan: per-type ───────────────────────────────────────────────
+      - name: plan-bug
+        condition:
+          all_of:
+            - equals: { field: webhookEvent, value: "jira:issue_updated" }
+            - equals: { field: issue.fields.status.name, value: Plan }
+            - equals: { field: issue.fields.issuetype.name, value: Bug }
+        messageTemplate: templates/jira-plan-bug.md
+
+      - name: plan-story
+        condition:
+          all_of:
+            - equals: { field: webhookEvent, value: "jira:issue_updated" }
+            - equals: { field: issue.fields.status.name, value: Plan }
+            - equals: { field: issue.fields.issuetype.name, value: Story }
+        messageTemplate: templates/jira-plan-story.md
+
+      - name: plan-task
+        condition:
+          all_of:
+            - equals: { field: webhookEvent, value: "jira:issue_updated" }
+            - equals: { field: issue.fields.status.name, value: Plan }
+            - equals: { field: issue.fields.issuetype.name, value: Task }
+        messageTemplate: templates/jira-plan-task.md
+
+      # ── Plan: type-agnostic fallback ─────────────────────────────────
       - name: plan
         condition:
-          equals:
-            field: issue.fields.status.name
-            value: Plan
+          all_of:
+            - equals: { field: webhookEvent, value: "jira:issue_updated" }
+            - equals: { field: issue.fields.status.name, value: Plan }
         messageTemplate: templates/jira-plan.md
 
+      # ── Ready for Development: per-type ──────────────────────────────
+      - name: ready-for-development-bug
+        condition:
+          all_of:
+            - equals: { field: webhookEvent, value: "jira:issue_updated" }
+            - equals: { field: issue.fields.status.name, value: Ready for Development }
+            - equals: { field: issue.fields.issuetype.name, value: Bug }
+        messageTemplate: templates/jira-ready-for-dev-bug.md
+
+      - name: ready-for-development-story
+        condition:
+          all_of:
+            - equals: { field: webhookEvent, value: "jira:issue_updated" }
+            - equals: { field: issue.fields.status.name, value: Ready for Development }
+            - equals: { field: issue.fields.issuetype.name, value: Story }
+        messageTemplate: templates/jira-ready-for-dev-story.md
+
+      - name: ready-for-development-task
+        condition:
+          all_of:
+            - equals: { field: webhookEvent, value: "jira:issue_updated" }
+            - equals: { field: issue.fields.status.name, value: Ready for Development }
+            - equals: { field: issue.fields.issuetype.name, value: Task }
+        messageTemplate: templates/jira-ready-for-dev-task.md
+
+      # ── Ready for Development: type-agnostic fallback ────────────────
       - name: ready-for-development
         condition:
-          equals:
-            field: issue.fields.status.name
-            value: Ready for Development
+          all_of:
+            - equals: { field: webhookEvent, value: "jira:issue_updated" }
+            - equals: { field: issue.fields.status.name, value: Ready for Development }
         messageTemplate: templates/jira-ready-for-dev.md
 
+      # ── Other status transitions (type-agnostic) ─────────────────────
       - name: deploy-to-development
         condition:
-          equals:
-            field: issue.fields.status.name
-            value: Deploy to development
+          all_of:
+            - equals: { field: webhookEvent, value: "jira:issue_updated" }
+            - equals: { field: issue.fields.status.name, value: Deploy to development }
         messageTemplate: templates/jira-deployed-to-dev.md
 
       - name: verified-in-development
         condition:
-          equals:
-            field: issue.fields.status.name
-            value: Verified in Development
+          all_of:
+            - equals: { field: webhookEvent, value: "jira:issue_updated" }
+            - equals: { field: issue.fields.status.name, value: Verified in Development }
         messageTemplate: templates/jira-verified-in-dev.md
 
       - name: deploy-to-testing
         condition:
-          equals:
-            field: issue.fields.status.name
-            value: Deploy to testing
+          all_of:
+            - equals: { field: webhookEvent, value: "jira:issue_updated" }
+            - equals: { field: issue.fields.status.name, value: Deploy to testing }
         messageTemplate: templates/jira-deploy-to-testing.md
 
       - name: verified-in-testing
         condition:
-          equals:
-            field: issue.fields.status.name
-            value: Verified in Testing
+          all_of:
+            - equals: { field: webhookEvent, value: "jira:issue_updated" }
+            - equals: { field: issue.fields.status.name, value: Verified in Testing }
         messageTemplate: templates/jira-verified-in-test.md
 
       - name: ready-for-production
         condition:
-          equals:
-            field: issue.fields.status.name
-            value: Ready for Production
+          all_of:
+            - equals: { field: webhookEvent, value: "jira:issue_updated" }
+            - equals: { field: issue.fields.status.name, value: Ready for Production }
         messageTemplate: templates/jira-ready-for-production.md
 
       - name: hotfix
         condition:
-          equals:
-            field: issue.fields.status.name
-            value: Hotfix
+          all_of:
+            - equals: { field: webhookEvent, value: "jira:issue_updated" }
+            - equals: { field: issue.fields.status.name, value: Hotfix }
         messageTemplate: templates/jira-hotfix.md
 
   slack:
