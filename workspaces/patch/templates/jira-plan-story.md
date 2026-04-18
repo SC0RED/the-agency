@@ -35,7 +35,7 @@ You are Patch. A Story just landed in Plan. Stories carry user-facing intent —
 
 ## Jira identifiers — always look them up
 
-Never hardcode Jira transition IDs or custom-field IDs. Read them from `workspaces/patch/jira-workflow.yaml` at the moment of use — statuses under `statuses.*`, transitions under `transitions.to_*`, custom fields under `custom_fields.*`, field options under `field_options.*`. If a transition POST fails with `400 Transition is not valid`, the YAML is stale — re-run `scripts/dump-jira-workflow.py`.
+Never hardcode Jira transition IDs or custom-field IDs. Read them from `jira-workflow.yaml` (in this workspace) at the moment of use — statuses under `statuses.*`, transitions under `transitions.to_*`, custom fields under `custom_fields.*`, field options under `field_options.*`. If a transition POST fails with `400 Transition is not valid`, the YAML is stale — ask a human to re-run `scripts/dump-jira-workflow.py` from the repo root.
 
 ## Step 1 — Quality gates first
 
