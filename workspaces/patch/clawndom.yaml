@@ -1,12 +1,14 @@
 # Patch's routing rules.
 #
-# All status-based rules require webhookEvent == "jira:issue_updated" so
-# comment-add and other side-events don't trip them. Comment events fire
-# with the issue's current status snapshot but a different webhookEvent
-# value — leaving them out of all rules means routing:no-match, no run.
+# All rules require webhookEvent == "jira:issue_updated" so comment-add and
+# other side-events don't trip them. Comment events fire with the issue's
+# current status snapshot but a different webhookEvent value — leaving them
+# out of all rules means routing:no-match, no run.
 #
-# Rule order matters — first match wins. More-specific rules (status +
-# type) come before status-only fallbacks.
+# Rule order matters — first match wins. Only Bug / Story / Task are routed
+# for Plan and Ready for Development (those workflows carry type-specific
+# guidance). Other issue types and other columns fall through to no-match
+# and Patch does not run.
 routing:
   jira:
     rules:
@@ -36,14 +38,6 @@ routing:
             - equals: { field: issue.fields.issuetype.name, value: Task }
         messageTemplate: templates/jira-plan-task.md
 
-      # ── Plan: type-agnostic fallback ─────────────────────────────────
-      - name: plan
-        condition:
-          all_of:
-            - equals: { field: webhookEvent, value: "jira:issue_updated" }
-            - equals: { field: issue.fields.status.name, value: Plan }
-        messageTemplate: templates/jira-plan.md
-
       # ── Ready for Development: per-type ──────────────────────────────
       - name: ready-for-development-bug
         condition:
@@ -68,57 +62,6 @@ routing:
             - equals: { field: issue.fields.status.name, value: Ready for Development }
             - equals: { field: issue.fields.issuetype.name, value: Task }
         messageTemplate: templates/jira-ready-for-dev-task.md
-
-      # ── Ready for Development: type-agnostic fallback ────────────────
-      - name: ready-for-development
-        condition:
-          all_of:
-            - equals: { field: webhookEvent, value: "jira:issue_updated" }
-            - equals: { field: issue.fields.status.name, value: Ready for Development }
-        messageTemplate: templates/jira-ready-for-dev.md
-
-      # ── Other status transitions (type-agnostic) ─────────────────────
-      - name: deploy-to-development
-        condition:
-          all_of:
-            - equals: { field: webhookEvent, value: "jira:issue_updated" }
-            - equals: { field: issue.fields.status.name, value: Deploy to development }
-        messageTemplate: templates/jira-deployed-to-dev.md
-
-      - name: verified-in-development
-        condition:
-          all_of:
-            - equals: { field: webhookEvent, value: "jira:issue_updated" }
-            - equals: { field: issue.fields.status.name, value: Verified in Development }
-        messageTemplate: templates/jira-verified-in-dev.md
-
-      - name: deploy-to-testing
-        condition:
-          all_of:
-            - equals: { field: webhookEvent, value: "jira:issue_updated" }
-            - equals: { field: issue.fields.status.name, value: Deploy to testing }
-        messageTemplate: templates/jira-deploy-to-testing.md
-
-      - name: verified-in-testing
-        condition:
-          all_of:
-            - equals: { field: webhookEvent, value: "jira:issue_updated" }
-            - equals: { field: issue.fields.status.name, value: Verified in Testing }
-        messageTemplate: templates/jira-verified-in-test.md
-
-      - name: ready-for-production
-        condition:
-          all_of:
-            - equals: { field: webhookEvent, value: "jira:issue_updated" }
-            - equals: { field: issue.fields.status.name, value: Ready for Production }
-        messageTemplate: templates/jira-ready-for-production.md
-
-      - name: hotfix
-        condition:
-          all_of:
-            - equals: { field: webhookEvent, value: "jira:issue_updated" }
-            - equals: { field: issue.fields.status.name, value: Hotfix }
-        messageTemplate: templates/jira-hotfix.md
 
   slack:
     rules:
@@ -149,10 +92,6 @@ modelRules:
       matches:
         - Plan
         - Ready for Development
-        - Deploy to development
-        - Deploy to testing
-        - Ready for Production
-        - Hotfix
       model: claude-opus-4-6
   slack:
     - field: event.channel

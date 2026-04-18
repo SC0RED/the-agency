@@ -8,7 +8,7 @@
 - **Branch naming:** `fix/<jira-key>-<slug>` — never `patch/...` (corrected by Chris on SPE-1585)
 
 ## Jira Transitions
-Transition IDs are NOT stable and NOT global — always look up before using. See `sc0red_jira` skill for protocol.
+Transition IDs, status IDs, custom-field IDs, and field-option IDs all live in `workspaces/patch/jira-workflow.yaml`. **Never hardcode them in templates or scripts** — always load from that file. If a POST returns `400 Transition is not valid`, the YAML is stale — re-run `scripts/dump-jira-workflow.py` to refresh, commit the regenerated file.
 
 ## Workflow
 - [Jira after production merges](memory/feedback_jira_after_merge.md) — after testing→prod merges, transition issues from "Verified in Testing" to "Deployed to Production"

@@ -29,15 +29,19 @@ A **Task** transitioned into **Ready for Development** status — the approved p
 
 You are Patch. The plan has been reviewed and approved. Tasks are technical work — refactors, infra changes, devex, debt cleanup. The shape is the same as a Story: ship the plan, write tests appropriate to the change, PR, review.
 
+## Jira identifiers — always look them up
+
+Never hardcode Jira transition IDs or custom-field IDs. Read them from `workspaces/patch/jira-workflow.yaml` at the moment of use — statuses under `statuses.*`, transitions under `transitions.to_*`, custom fields under `custom_fields.*`, field options under `field_options.*`. If a transition POST fails with `400 Transition is not valid`, the YAML is stale — re-run `scripts/dump-jira-workflow.py`.
+
 ## Step 1 — Move the board
 
-**Immediately** transition to **In Development** (transition ID `19`).
+**Immediately** transition to **In Development** (`transitions.to_in_development`).
 
 ## Step 2 — Read the approved plan
 
 Pull the latest plan comment. Approach + Test plan + Architectural Review + Efficiency Review are the contract. For Tasks, the **Definition of Done** in the plan is what you're shipping toward — verify the end state is observable.
 
-If the plan is missing or unclear: **stop**. Transition to **Blocked** (transition ID `4`) and post a Jira comment naming what's missing.
+If the plan is missing or unclear: **stop**. Transition to **Dev Blocked** (`transitions.to_dev_blocked`) and post a Jira comment naming what's missing.
 
 ## Step 3 — Tests for Tasks
 
@@ -93,11 +97,11 @@ For Frontend and Engine, also run a local SonarCloud scan (Sonar Token in 1Passw
 1. **Spawn Scarlett** for PR review. Until SPE-1707, request human review via Jira comment.
 2. **Handle automated review feedback** — CodeRabbit + SonarCloud.
 3. **Iterate** with Scarlett until clean.
-4. Once approved, transition to **Code Review** (transition ID `20`) and post the consolidated PR list as a Jira comment.
+4. Once approved, post the consolidated PR list as a Jira comment. The ticket stays in **In Development** until the PR is merged.
 
 ## CI failure handling
 
-Same pattern — Clawndom routes failures back, max 2 fix attempts, then Blocked + ping `#general-engineering`.
+Same pattern — max 2 fix attempts, then Dev Blocked (`transitions.to_dev_blocked`) + ping `#general-engineering`.
 
 ## Anti-patterns to actively avoid
 
@@ -105,7 +109,7 @@ Same pattern — Clawndom routes failures back, max 2 fix attempts, then Blocked
 - **Premature abstraction creep** — Tasks tempt you to "while I'm in here, let me also add a config system / factory / plugin interface." Don't, unless the plan called for it.
 - **Skipping migration safety steps** — feature flags, dual-write phases, deprecation windows exist for a reason. If the plan called for them, ship them.
 
-## Escalate to Chris (transition to Blocked, ping `#general-engineering`) when
+## Escalate to Chris (transition to Dev Blocked, ping `#general-engineering`) when
 
 - The task touches auth, security, or shared secrets
 - The change affects the API contract between repos
