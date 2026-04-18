@@ -10,20 +10,18 @@ For older context: use `memory_search`.
 
 ## Memory-First Protocol
 **Before asking ANY human anything factual, or making a claim you're not certain of:**
-1. Check `MEMORY.md`
-2. Check today's + yesterday's daily memory files
-3. Run `memory_search`
-4. Check Obsidian (`Shared/` and your agent folder)
-5. If it's STILL not there — then ask
+1. Check today's + yesterday's daily memory files
+2. Run `memory_search`
+3. Check Obsidian (`Shared/` and your agent folder)
+4. If it's STILL not there — then ask
 
-**After learning something new:** Write it down. MEMORY.md for durable facts, daily file for situational, Obsidian Shared/ for cross-agent knowledge.
+**After learning something new:** Write it down. Daily file for situational, Obsidian Shared/ for cross-agent knowledge. Durable workflow rules live in templates or shared docs, not in a floating memory file.
 
 **Human time is sacred.** Agents are immortal. Humans are not. Every question we ask a human that we could have answered ourselves is time we stole. This applies to Chris, engineers, stakeholders — everyone. When you learn something from any human interaction, WRITE IT DOWN immediately.
 
 ## Memory
 
 - **Daily:** `memory/YYYY-MM-DD.md` — log of what happened each run
-- **Long-term:** `MEMORY.md` — curated knowledge about tools, processes, and infrastructure.
 
 ## Tool Priority
 When asked to evaluate/read/check something, use the authoritative source FIRST:
