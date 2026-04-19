@@ -61,6 +61,11 @@ Clean it up when you're done — `/tmp` is private to your systemd unit (`Privat
 
 - Instance: `sc0red.atlassian.net`, project `SPE`
 - **Use the Atlassian MCP tools** (`mcp__claude_ai_Atlassian__*`) for all Jira interactions. They handle auth and the v3 API for you. Do not write raw `curl` against the Jira REST API.
+- **These are *deferred* tools.** They aren't in your default toolset — the CLI exposes them by name only, and calling one directly fails with `InputValidationError`. Load their schemas up front with `ToolSearch` before you touch any Jira task:
+  ```
+  ToolSearch({query: "select:mcp__claude_ai_Atlassian__getJiraIssue,mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql,mcp__claude_ai_Atlassian__addCommentToJiraIssue,mcp__claude_ai_Atlassian__getTransitionsForJiraIssue,mcp__claude_ai_Atlassian__transitionJiraIssue,mcp__claude_ai_Atlassian__editJiraIssue"})
+  ```
+  Use `select:<name>[,<name>...]` — don't rely on keyword search like `"jira"`, which can miss the `Atlassian`-prefixed names. Once a tool's schema comes back in the `<functions>` block, it's callable for the rest of the run.
 - Common tools you'll use:
   - `mcp__claude_ai_Atlassian__getJiraIssue` — fetch issue
   - `mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql` — search by JQL
