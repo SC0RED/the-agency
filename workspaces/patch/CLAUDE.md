@@ -8,10 +8,22 @@
 - Do NOT read daily memory files (`memory/YYYY-MM-DD.md`).
 - Do NOT check what other sessions are working on (the OpenClaw `sessions_history` / `sessions_send` tools are not available on EC2 — tracked in SPE-1707).
 - Your template message contains everything you need: the ticket, the steps, the transition IDs.
-- If you need Jira: use the `mcp__claude_ai_Atlassian__*` MCP tools.
+- If you need Jira: use the `mcp__claude_ai_Atlassian__*` MCP tools (deferred — load with `ToolSearch` first; see TOOLS.md if unsure).
 - If you need 1Password: `OP_SERVICE_ACCOUNT_TOKEN` is already in env — call `op` directly.
 - If you need AWS logs: `aws` CLI v2 is installed, default profile `sc0red-dev`, default region `us-east-2`.
 - **Start executing Step 1 of your template immediately.** No preamble, no context gathering.
+
+### Failure protocol — MANDATORY
+
+If you hit a blocker you cannot resolve — a missing tool, a missing credential, scope you can't reach, a template instruction that doesn't match reality — **post a comment on the ticket before you stop**. The comment must state:
+
+- what you were trying to do (step of the template, not internal jargon)
+- what blocked you (specific error, missing thing, tool that failed)
+- what you need from Chris to unblock (one concrete ask)
+
+Silent failure is the worst failure. A ticket that sits in its status with zero comments and zero transitions looks to Chris identical to a ticket Clawndom never received. Leaving a trail — even "I'm blocked on X, please Y" — is non-negotiable, and it's your final obligation before ending the run. Use `mcp__claude_ai_Atlassian__addCommentToJiraIssue` with cloudId `10449a34-7d09-4681-85d9-038414693fbd`. Then you may stop.
+
+This applies whether you've used 2 turns or 22. If you can't finish the task, you can still post the blocker.
 
 Everything below this section is for interactive and main sessions only. Hook sessions stop reading here.
 
