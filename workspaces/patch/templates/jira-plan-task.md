@@ -45,7 +45,7 @@ Validate against the Six Questions, but the bar for a Task is different from a B
 - **A motivating reason** — why now? What's the cost of *not* doing this? "This file has 8 active bugs traced to its 600-line god-method" is a reason. "It's old" is not.
 - **Scope boundaries** — what's *in* scope and what's explicitly *not*. Tasks are scope-creep magnets.
 
-If the task is "we should refactor X" with no specific outcome and no motivating cost, **do not plan**. Post a Jira comment naming what's missing and transition to **Dev Blocked** (`transitions.to_dev_blocked`). Stop.
+If the task is "we should refactor X" with no specific outcome and no motivating cost, **do not plan**. Post a Jira comment naming what's missing and transition to **Blocked** (`transitions.to_blocked`). Stop.
 
 ## Step 2 — Map the technical landscape
 

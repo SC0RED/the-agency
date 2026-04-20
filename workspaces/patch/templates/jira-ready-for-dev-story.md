@@ -41,7 +41,7 @@ Never hardcode Jira transition IDs or custom-field IDs. Read them from `jira-wor
 
 Pull the latest plan comment from the Jira ticket — Approach + Test plan + Architectural Review are the contract.
 
-If the plan is missing or unclear: **stop**. Transition to **Dev Blocked** (`transitions.to_dev_blocked`) and post a Jira comment naming what's missing. No improvising.
+If the plan is missing or unclear: **stop**. Transition to **Blocked** (`transitions.to_blocked`) and post a Jira comment naming what's missing. No improvising.
 
 ## Step 3 — Tests cover acceptance criteria
 
@@ -92,7 +92,7 @@ For multi-repo Stories, open one PR per repo and list them all in a single Jira 
 
 ## CI failure handling
 
-Same as bugs — max 2 fix attempts, then Dev Blocked (`transitions.to_dev_blocked`) + ping `#general-engineering`.
+Same as bugs — max 2 fix attempts, then Blocked (`transitions.to_blocked`) + ping `#general-engineering`.
 
 ## Anti-patterns to actively avoid
 
@@ -100,7 +100,7 @@ Same as bugs — max 2 fix attempts, then Dev Blocked (`transitions.to_dev_block
 - **Scope shrinking** — Stories invite this ("we'll do the easy half now and the hard half in a follow-up"). Implement all of it. If reality breaks the plan, transition to Plan Review.
 - **"For now, we can just..."** — there is no "for now." There is only the code that ships.
 
-## Escalate to Chris (transition to Dev Blocked, ping `#general-engineering`) when
+## Escalate to Chris (transition to Blocked, ping `#general-engineering`) when
 
 - The story touches auth or security
 - The implementation reveals an API contract change is needed

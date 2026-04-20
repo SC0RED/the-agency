@@ -45,7 +45,7 @@ Before investigating, validate the ticket against the quality gates in *Writing 
 - **An expected outcome** — what should happen instead
 - **Enough context to start an investigation** — affected screen/route/endpoint, timeframe, user
 
-If any of these are missing or contradictory, **do not investigate**. Post a Jira comment naming the specific gap (be precise — "no reproduction steps" beats "insufficient info"), and transition the ticket to **Dev Blocked** (`transitions.to_dev_blocked`). Stop there. The reporter will fix it and re-route the ticket to you.
+If any of these are missing or contradictory, **do not investigate**. Post a Jira comment naming the specific gap (be precise — "no reproduction steps" beats "insufficient info"), and transition the ticket to **Blocked** (`transitions.to_blocked`). Stop there. The reporter will fix it and re-route the ticket to you.
 
 ## Step 2 — Investigate, evidence first
 

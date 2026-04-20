@@ -41,7 +41,7 @@ Never hardcode Jira transition IDs or custom-field IDs. Read them from `jira-wor
 
 Pull the latest plan comment. Approach + Test plan + Architectural Review + Efficiency Review are the contract. For Tasks, the **Definition of Done** in the plan is what you're shipping toward — verify the end state is observable.
 
-If the plan is missing or unclear: **stop**. Transition to **Dev Blocked** (`transitions.to_dev_blocked`) and post a Jira comment naming what's missing.
+If the plan is missing or unclear: **stop**. Transition to **Blocked** (`transitions.to_blocked`) and post a Jira comment naming what's missing.
 
 ## Step 3 — Tests for Tasks
 
@@ -101,7 +101,7 @@ For Frontend and Engine, also run a local SonarCloud scan (Sonar Token in 1Passw
 
 ## CI failure handling
 
-Same pattern — max 2 fix attempts, then Dev Blocked (`transitions.to_dev_blocked`) + ping `#general-engineering`.
+Same pattern — max 2 fix attempts, then Blocked (`transitions.to_blocked`) + ping `#general-engineering`.
 
 ## Anti-patterns to actively avoid
 
@@ -109,7 +109,7 @@ Same pattern — max 2 fix attempts, then Dev Blocked (`transitions.to_dev_block
 - **Premature abstraction creep** — Tasks tempt you to "while I'm in here, let me also add a config system / factory / plugin interface." Don't, unless the plan called for it.
 - **Skipping migration safety steps** — feature flags, dual-write phases, deprecation windows exist for a reason. If the plan called for them, ship them.
 
-## Escalate to Chris (transition to Dev Blocked, ping `#general-engineering`) when
+## Escalate to Chris (transition to Blocked, ping `#general-engineering`) when
 
 - The task touches auth, security, or shared secrets
 - The change affects the API contract between repos

@@ -45,7 +45,7 @@ Validate the ticket against the Six Questions in *Writing Great Jira Issues* §3
 - **A "done" definition** — explicit user-facing behavior. "Toggle in toolbar. When active, only rows with ≥1 contact appear. Filter persists across pagination."
 - **The current state** — what exists today, what workaround the user uses now, which adjacent features it touches.
 
-If any of these are missing or ambiguous, **do not plan**. Post a Jira comment naming the gap and transition to **Dev Blocked** (`transitions.to_dev_blocked`). Stop.
+If any of these are missing or ambiguous, **do not plan**. Post a Jira comment naming the gap and transition to **Blocked** (`transitions.to_blocked`). Stop.
 
 ## Step 2 — Map the technical landscape
 

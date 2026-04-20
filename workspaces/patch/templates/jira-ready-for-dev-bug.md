@@ -41,7 +41,7 @@ Never hardcode Jira transition IDs or custom-field IDs. Read them from `jira-wor
 
 Pull the latest plan comment from the Jira ticket. The comment with the **Architectural Review**, **Efficiency Review**, and **Structural Quality** sections is the contract. Re-read the **Approach** and **Test plan** sections — those are what you're shipping.
 
-If the plan is missing or unclear: **stop**. Transition the ticket to **Dev Blocked** (`transitions.to_dev_blocked`) and post a Jira comment naming what's missing. Do not improvise.
+If the plan is missing or unclear: **stop**. Transition the ticket to **Blocked** (`transitions.to_blocked`) and post a Jira comment naming what's missing. Do not improvise.
 
 ## Step 3 — Write the regression test FIRST
 
@@ -93,7 +93,7 @@ For Frontend and Engine, also run a local SonarCloud scan before push (the Sonar
 
 ## CI failure handling
 
-If CI fails on the PR, read the logs and push a fix. **Max 2 fix attempts** — if the build still fails after 2 cycles, transition to **Dev Blocked** (`transitions.to_dev_blocked`) and notify `#general-engineering`.
+If CI fails on the PR, read the logs and push a fix. **Max 2 fix attempts** — if the build still fails after 2 cycles, transition to **Blocked** (`transitions.to_blocked`) and notify `#general-engineering`.
 
 ## Anti-patterns to actively avoid
 
@@ -101,7 +101,7 @@ If CI fails on the PR, read the logs and push a fix. **Max 2 fix attempts** — 
 - **Scope shrinking** — implement what was planned. All of it. If reality contradicts the plan during implementation, follow the *Mid-Implementation Discovery* protocol (transition back to Plan Review for major deviations; document minor ones).
 - **Skipping tests to save time** — you can generate 50 test cases in the time a human writes 2. Write them.
 
-## Escalate to Chris (transition to Dev Blocked, ping `#general-engineering`) when
+## Escalate to Chris (transition to Blocked, ping `#general-engineering`) when
 
 - The fix touches auth or security
 - The root cause is in the backend API contract

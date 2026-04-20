@@ -8,20 +8,21 @@ Why this exists
     a single YAML file, and templates reference the IDs by symbolic name.
 
 Usage
-    op run --env-file=.op.env -- python3 scripts/dump-jira-workflow.py
+    On the EC2 (1Password service-account token already in env):
 
-    or set env vars directly:
-
-    JIRA_CLIENT_ID=... \
-    JIRA_CLIENT_SECRET=... \
-    JIRA_CLOUD_ID=... \
+    JIRA_USER_EMAIL=$(op item get "Service Account Auth Token: Jira" --vault Engineering --fields username) \
+    JIRA_API_TOKEN=$(op item get "Service Account Auth Token: Jira" --vault Engineering --fields credential --reveal) \
+    JIRA_CLOUD_ID=10449a34-7d09-4681-85d9-038414693fbd \
     python3 scripts/dump-jira-workflow.py
 
+    Elsewhere, any Atlassian account + API token combination works — pass the
+    same three env vars.
+
 Env vars
-    JIRA_CLIENT_ID       — OAuth client ID (1Password: Patch/Jira OAuth)
-    JIRA_CLIENT_SECRET   — OAuth client secret
-    JIRA_CLOUD_ID        — sc0red.atlassian.net cloud UUID
-    PROJECT_KEY          — defaults to SPE
+    JIRA_USER_EMAIL  — Atlassian account the API token was generated under
+    JIRA_API_TOKEN   — API token (Atlassian id.atlassian.com → API tokens)
+    JIRA_CLOUD_ID    — sc0red.atlassian.net cloud UUID
+    PROJECT_KEY      — defaults to SPE
 
 When to re-run
     - After any Jira workflow edit (statuses added / renamed, transitions changed)
@@ -36,6 +37,7 @@ Field options
 
 from __future__ import annotations
 
+import base64
 import datetime as dt
 import json
 import os
@@ -87,17 +89,17 @@ WANTED_CUSTOM_FIELDS: dict[str, str] = {
 
 
 def main() -> int:
-    client_id = os.environ["JIRA_CLIENT_ID"]
-    client_secret = os.environ["JIRA_CLIENT_SECRET"]
+    email = os.environ["JIRA_USER_EMAIL"]
+    api_token = os.environ["JIRA_API_TOKEN"]
     cloud_id = os.environ["JIRA_CLOUD_ID"]
 
-    token = fetch_oauth_token(client_id, client_secret)
+    auth_header = build_basic_auth(email, api_token)
     base = f"https://api.atlassian.com/ex/jira/{cloud_id}/rest/api/3"
 
-    statuses = fetch_project_statuses(base, token)
-    sample_key = find_sample_issue_key(base, token)
-    transitions = fetch_transitions(base, token, sample_key)
-    custom_fields = fetch_custom_fields(base, token)
+    statuses = fetch_project_statuses(base, auth_header)
+    sample_key = find_sample_issue_key(base, auth_header)
+    transitions = fetch_transitions(base, auth_header, sample_key)
+    custom_fields = fetch_custom_fields(base, auth_header)
 
     write_yaml(
         path=OUTPUT_PATH,
@@ -111,15 +113,20 @@ def main() -> int:
     return 0
 
 
+def build_basic_auth(email: str, api_token: str) -> str:
+    raw = f"{email}:{api_token}".encode()
+    return "Basic " + base64.b64encode(raw).decode()
+
+
 def http_json(
     method: str,
     url: str,
-    token: str | None = None,
+    auth_header: str | None = None,
     body: dict | None = None,
 ) -> dict | list:
     headers = {"Accept": "application/json"}
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
+    if auth_header:
+        headers["Authorization"] = auth_header
     data = None
     if body is not None:
         headers["Content-Type"] = "application/json"
@@ -133,22 +140,9 @@ def http_json(
         sys.exit(f"HTTP {e.code} on {method} {url}: {e.read().decode(errors='replace')}")
 
 
-def fetch_oauth_token(client_id: str, client_secret: str) -> str:
-    response = http_json(
-        "POST",
-        "https://auth.atlassian.com/oauth/token",
-        body={
-            "grant_type": "client_credentials",
-            "client_id": client_id,
-            "client_secret": client_secret,
-        },
-    )
-    return response["access_token"]
-
-
-def fetch_project_statuses(base: str, token: str) -> dict[str, dict[str, str]]:
+def fetch_project_statuses(base: str, auth_header: str) -> dict[str, dict[str, str]]:
     """Collect unique statuses across all issue types for PROJECT_KEY."""
-    data = http_json("GET", f"{base}/project/{PROJECT_KEY}/statuses", token)
+    data = http_json("GET", f"{base}/project/{PROJECT_KEY}/statuses", auth_header)
     seen: dict[str, dict[str, str]] = {}
     for issue_type in data:
         for status in issue_type.get("statuses", []):
@@ -162,11 +156,11 @@ def fetch_project_statuses(base: str, token: str) -> dict[str, dict[str, str]]:
     return dict(sorted(seen.items()))
 
 
-def find_sample_issue_key(base: str, token: str) -> str:
+def find_sample_issue_key(base: str, auth_header: str) -> str:
     data = http_json(
         "POST",
         f"{base}/search/jql",
-        token,
+        auth_header,
         body={
             "jql": f"project = {PROJECT_KEY} ORDER BY created DESC",
             "fields": ["summary"],
@@ -179,7 +173,7 @@ def find_sample_issue_key(base: str, token: str) -> str:
     return issues[0]["key"]
 
 
-def fetch_transitions(base: str, token: str, issue_key: str) -> dict[str, dict[str, str]]:
+def fetch_transitions(base: str, auth_header: str, issue_key: str) -> dict[str, dict[str, str]]:
     """All transitions reachable from the sample issue.
 
     SPE workflow is team-managed with 'any status' transitions, so the set
@@ -187,7 +181,7 @@ def fetch_transitions(base: str, token: str, issue_key: str) -> dict[str, dict[s
     current state.
     """
     url = f"{base}/issue/{issue_key}/transitions?includeUnavailableTransitions=true"
-    data = http_json("GET", url, token)
+    data = http_json("GET", url, auth_header)
     out: dict[str, dict[str, str]] = {}
     for t in data.get("transitions", []):
         key = "to_" + slugify(t["to"]["name"])
@@ -199,8 +193,8 @@ def fetch_transitions(base: str, token: str, issue_key: str) -> dict[str, dict[s
     return dict(sorted(out.items()))
 
 
-def fetch_custom_fields(base: str, token: str) -> dict[str, str]:
-    data = http_json("GET", f"{base}/field", token)
+def fetch_custom_fields(base: str, auth_header: str) -> dict[str, str]:
+    data = http_json("GET", f"{base}/field", auth_header)
     out: dict[str, str] = {}
     for field in data:
         name = field.get("name")
