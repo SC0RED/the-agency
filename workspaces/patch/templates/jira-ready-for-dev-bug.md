@@ -49,20 +49,23 @@ For a Bug, the test that fails *because of this bug* is the most important artif
 
 If the bug is genuinely untestable in isolation, restructure the code so it isn't — testability is part of the fix.
 
-## Step 4 — Branch + implement
+## Step 4 — Clone, branch, implement
 
-1. Branch off `development`:
+1. Generate a GitHub token and clone the target repo into `/tmp` (see *GitHub access* above):
+   ```
+   export GH_TOKEN=$(bash ../../scripts/generate-github-app-token.sh)
+   cd /tmp && rm -rf <repo-name>
+   git clone https://x-access-token:${GH_TOKEN}@github.com/SC0RED/<repo-name>.git
+   cd <repo-name>
+   ```
+2. Branch off `development`:
    ```
    git checkout development && git pull --ff-only
    git checkout -b fix/{{ issue.key }}-<short-slug>
    ```
    (For hotfixes only: rebase onto `production` instead, with back-merge PRs to testing and development.)
-2. Spawn a Claude Code session with the approved plan, the regression test, and explicit constraints:
-   - "Implement exactly the approved plan."
-   - "No scope creep. No extra refactors."
-   - "Follow existing patterns in the touched files."
-   - "Prefer design patterns over hacks."
-3. Review the diff yourself before pushing. Diff matches plan? Tests run? No "while I was in here" surprises?
+3. Implement the approved plan directly. Write the regression test. Follow existing patterns in the touched files. No scope creep, no extra refactors. Prefer design patterns over hacks.
+4. Review the diff yourself before pushing. Diff matches plan? Tests run? No "while I was in here" surprises?
 
 ## Step 5 — Local validation (mandatory)
 

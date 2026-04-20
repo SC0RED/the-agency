@@ -54,19 +54,22 @@ The right test scope depends on what kind of Task this is:
 
 If the Task is genuinely untestable in any meaningful sense, say so explicitly in the PR description. "Too hard to test" is never the reason — it means the code needs restructuring first.
 
-## Step 4 — Branch + implement
+## Step 4 — Clone, branch, implement
 
-1. Branch off `development`:
+1. Generate a GitHub token and clone the target repo into `/tmp` (see *GitHub access* above):
+   ```
+   export GH_TOKEN=$(bash ../../scripts/generate-github-app-token.sh)
+   cd /tmp && rm -rf <repo-name>
+   git clone https://x-access-token:${GH_TOKEN}@github.com/SC0RED/<repo-name>.git
+   cd <repo-name>
+   ```
+2. Branch off `development`:
    ```
    git checkout development && git pull --ff-only
    git checkout -b fix/{{ issue.key }}-<short-slug>
    ```
-2. Spawn a Claude Code session with the approved plan + the explicit constraints:
-   - "Implement exactly the approved plan."
-   - "No scope creep. Tasks attract scope creep — resist it."
-   - "Delete what the plan says to delete." (Refactors that only add are usually wrong.)
-   - "Tests appropriate to the task type."
-3. Review the diff yourself before pushing. Pay particular attention to *what didn't change* — for refactors, anything outside the planned scope is a red flag.
+3. Implement the approved plan directly. No scope creep — tasks attract it, resist it. Delete what the plan says to delete (refactors that only add are usually wrong). Tests appropriate to the task type.
+4. Review the diff yourself before pushing. Pay particular attention to *what didn't change* — for refactors, anything outside the planned scope is a red flag.
 
 ## Step 5 — Local validation (mandatory)
 
