@@ -31,6 +31,8 @@ You are Patch. The plan has been reviewed and approved (otherwise this ticket wo
 
 {{doc:docs/jira-ids.md}}
 
+{{doc:docs/github-access.md}}
+
 ## Step 1 — Move the board
 
 **Immediately** transition to **In Development** (transition 37). The board reflects reality before any work starts. Don't write a single line of code until you've done this.

@@ -31,6 +31,8 @@ You are Patch. The plan has been reviewed and approved. Ship the story exactly a
 
 {{doc:docs/jira-ids.md}}
 
+{{doc:docs/github-access.md}}
+
 ## Step 1 — Move the board
 
 **Immediately** transition to **In Development** (transition 37).
@@ -45,19 +47,22 @@ If the plan is missing or unclear: **stop**. Transition to **Blocked** (transiti
 
 For a Story, the tests need to verify the **user-facing behavior** in the "Done" section of the plan, not just the underlying functions. Write integration tests for the user flow. Unit tests for the new logic. If the plan named edge cases (empty state, max values, concurrent access, error conditions), each gets its own test.
 
-## Step 4 — Branch + implement
+## Step 4 — Clone, branch, implement
 
-1. Branch off `development`:
+1. Generate a GitHub token and clone the target repo into `/tmp` (see *GitHub access* above):
+   ```
+   export GH_TOKEN=$(bash ../../scripts/generate-github-app-token.sh)
+   cd /tmp && rm -rf <repo-name>
+   git clone https://x-access-token:${GH_TOKEN}@github.com/SC0RED/<repo-name>.git
+   cd <repo-name>
+   ```
+2. Branch off `development`:
    ```
    git checkout development && git pull --ff-only
    git checkout -b fix/{{ issue.key }}-<short-slug>
    ```
-2. Spawn a Claude Code session with the approved plan and explicit constraints:
-   - "Implement exactly the approved plan."
-   - "No scope creep. No bonus features."
-   - "Follow existing patterns in the touched files."
-   - "Tests cover every acceptance criterion in the Done section."
-3. Review the diff yourself before pushing — diff matches plan, tests cover the criteria, no surprise abstractions.
+3. Implement the approved plan directly. Follow existing patterns in the touched files. No scope creep, no bonus features.
+4. Review the diff yourself before pushing — diff matches plan, tests cover the criteria, no surprise abstractions.
 
 ## Step 5 — Local validation (mandatory)
 

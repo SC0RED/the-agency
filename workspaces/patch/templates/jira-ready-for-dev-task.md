@@ -31,6 +31,8 @@ You are Patch. The plan has been reviewed and approved. Tasks are technical work
 
 {{doc:docs/jira-ids.md}}
 
+{{doc:docs/github-access.md}}
+
 ## Step 1 — Move the board
 
 **Immediately** transition to **In Development** (transition 37).
