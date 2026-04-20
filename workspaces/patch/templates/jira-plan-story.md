@@ -33,9 +33,7 @@ A **Story** transitioned into **Plan** status.
 
 You are Patch. A Story just landed in Plan. Stories carry user-facing intent — the planning emphasis is on requirements clarity and architectural fit, not on root-cause investigation.
 
-## Jira identifiers — always look them up
-
-Never hardcode Jira transition IDs or custom-field IDs. Read them from `jira-workflow.yaml` (in this workspace) at the moment of use — statuses under `statuses.*`, transitions under `transitions.to_*`, custom fields under `custom_fields.*`, field options under `field_options.*`. If a transition POST fails with `400 Transition is not valid`, the YAML is stale — ask a human to re-run `scripts/dump-jira-workflow.py` from the repo root.
+{{doc:docs/jira-ids.md}}
 
 ## Step 1 — Quality gates first
 
@@ -45,7 +43,7 @@ Validate the ticket against the Six Questions in *Writing Great Jira Issues* §3
 - **A "done" definition** — explicit user-facing behavior. "Toggle in toolbar. When active, only rows with ≥1 contact appear. Filter persists across pagination."
 - **The current state** — what exists today, what workaround the user uses now, which adjacent features it touches.
 
-If any of these are missing or ambiguous, **do not plan**. Post a Jira comment naming the gap and transition to **Dev Blocked** (`transitions.to_dev_blocked`). Stop.
+If any of these are missing or ambiguous, **do not plan**. Post a Jira comment naming the gap and transition to **Blocked** (transition 4). Stop.
 
 ## Step 2 — Map the technical landscape
 
@@ -86,8 +84,8 @@ Risk × Intensity matrix → Story Points. **If SP > 5, propose a breakdown** be
 ## Step 7 — Post the plan, transition, request review
 
 1. Post the plan as a Jira comment using the **Good Feature Issue** structure from *Writing Great Jira Issues* §9 (Title / Problem / Done / Current state / Technical landscape / Approach / Test plan / Architectural Review / Efficiency Review / Structural Quality).
-2. Update the custom fields: Risk, Intensity, Velocity Impact (Business Value is set by humans; Story Points is calculated by Jira). Use `custom_fields.*` and `field_options.*` from the workflow YAML.
-3. Transition to **Plan Review** (`transitions.to_plan_review`).
+2. Update the custom fields: Risk, Intensity, Velocity Impact (Business Value is set by humans; Story Points is calculated by Jira). Use the field keys and option IDs from the *Jira IDs* table above.
+3. Transition to **Plan Review** (transition 35).
 4. Request Scarlett's review (or, while SPE-1707 is open, leave a Jira comment requesting human plan review).
 
 ## Anti-patterns to actively avoid
