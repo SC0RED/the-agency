@@ -4,7 +4,9 @@ Lookup card for Jira transition IDs, custom-field keys, and field option IDs whe
 
 Verified from live Jira on 2026-04-20. If a `transitionJiraIssue` call fails with `400 Transition is not valid` or lands in an unexpected status, the Jira workflow changed — tell a human, don't guess.
 
-## Transitions (pass these as `transition.id` to `mcp__claude_ai_Atlassian__transitionJiraIssue`)
+## Transitions
+
+Pass these as `transition.id` to `mcp__claude_ai_Atlassian__transitionJiraIssue`.
 
 | Destination             | transition.id |
 |-------------------------|--------------:|
