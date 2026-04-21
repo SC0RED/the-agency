@@ -9,14 +9,12 @@ This document defines how engineering work flows from request to production at s
 
 Every engineer and agent follows this process. No exceptions.
 
-## Project context (Jira)
-
-The SPE project lives at `sc0red.atlassian.net`. Pass `cloudId: 10449a34-7d09-4681-85d9-038414693fbd` to every Atlassian MCP call. Patch's own Atlassian account ID is `712020:2fbdb38e-012b-43a6-b286-4339c24baabc`.
+The SPE project lives at `sc0red.atlassian.net`. All Jira-side numbers — cloud ID, Atlassian account IDs, transition IDs, custom-field keys, and field option IDs — live in `docs/jira-ids-reference.md`. This doc is narrative only.
 
 **Related reference material:**
+- `docs/jira-ids-reference.md` — every Jira ID you need at runtime
 - `docs/estimation.md` — Risk × Intensity scoring, story-point tiers
 - `writing-great-issues-base.md` + per-type companions — issue structure, reviews, examples
-- `jira-ids-reference.md` — the lookup card for transition / field / option IDs
 
 ---
 
@@ -73,26 +71,28 @@ New → Plan → In Planning → Plan Review → Ready for Development → In De
 
 **Reverse transitions** exist at key decision points: In Planning can return to Plan ("Stalled"), Plan Review and Code Review can return to Plan ("Replan"), and In Development can return to Ready for Development ("Stalled").
 
-| Column                  | Transition ID | Category    | Global? | Routed to Agent?                                             |
-| ----------------------- | ------------- | ----------- | ------- | ------------------------------------------------------------ |
-| New                     | 11            | To Do       | Yes     | No                                                           |
-| Triage                  | 2             | To Do       | Yes     | No                                                           |
-| Backlog                 | 30            | To Do       | Yes     | No                                                           |
-| Plan                    | 16            | In Progress | No      | **Yes** - Patch investigates, writes plan                    |
-| In Planning             | 14            | In Progress | No      | No                                                           |
-| Plan Review             | 3             | In Progress | No      | No - human gate                                              |
-| Ready for Development   | 28            | In Progress | Yes     | **Yes** - Patch implements                                   |
-| In Development          | 19            | In Progress | No      | No                                                           |
-| Code Review             | 20            | In Progress | No      | No - human gate                                              |
-| Deploy to development   | 8             | In Progress | No      | **Yes** - Patch merges PR, moves to Deployed to Development  |
-| Deployed to Development | 32            | In Progress | Yes     | No - awaiting engineer verification                          |
-| Verified in Development | 12            | In Progress | Yes     | **Yes** - Patch checks gate, batch promotes to testing       |
-| Deployed to Testing     | 33            | In Progress | Yes     | No - awaiting reporter/engineer verification                 |
-| Verified in Testing     | 5             | In Progress | Yes     | **Yes** - Patch checks gate, creates production PR           |
-| Deployed to Production  | 31 ("Done")   | Done        | Yes     | No                                                           |
-| Hotfix                  | 13            | In Progress | Yes     | **Yes** - Patch creates PRs against production + back-merges |
-| Blocked                 | 4             | To Do       | Yes     | No - human resolves                                          |
-| Abandon                 | 9             | Done        | Yes     | No - terminal state                                          |
+| Column                  | Category    | Routed to Agent?                                             |
+| ----------------------- | ----------- | ------------------------------------------------------------ |
+| New                     | To Do       | No                                                           |
+| Triage                  | To Do       | No                                                           |
+| Backlog                 | To Do       | No                                                           |
+| Plan                    | In Progress | **Yes** — Patch investigates, writes plan                    |
+| In Planning             | In Progress | No                                                           |
+| Plan Review             | In Progress | No — human gate                                              |
+| Ready for Development   | In Progress | **Yes** — Patch implements                                   |
+| In Development          | In Progress | No                                                           |
+| Code Review             | In Progress | No — human gate                                              |
+| Deploy to development   | In Progress | **Yes** — Patch merges PR, moves to Deployed to Development  |
+| Deployed to Development | In Progress | No — awaiting engineer verification                          |
+| Verified in Development | In Progress | **Yes** — Patch checks gate, batch promotes to testing       |
+| Deployed to Testing     | In Progress | No — awaiting reporter/engineer verification                 |
+| Verified in Testing     | In Progress | **Yes** — Patch checks gate, creates production PR           |
+| Deployed to Production  | Done        | No                                                           |
+| Hotfix                  | In Progress | **Yes** — Patch creates PRs against production + back-merges |
+| Blocked                 | To Do       | No — human resolves                                          |
+| Abandon                 | Done        | No — terminal state                                          |
+
+Transition IDs for every move between these columns live in `docs/jira-ids-reference.md` — that's the only place to look them up. Never copy them into this doc.
 
 ---
 
