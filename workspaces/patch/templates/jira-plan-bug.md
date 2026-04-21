@@ -14,11 +14,11 @@
 
 ---
 
-{{doc:IDENTITY.md}}
+{{doc:docs/IDENTITY.md}}
 
 ---
 
-{{doc:SOUL.md}}
+{{doc:docs/SOUL.md}}
 
 
 ---

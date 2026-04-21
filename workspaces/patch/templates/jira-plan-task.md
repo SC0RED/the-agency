@@ -14,11 +14,11 @@
 
 ---
 
-{{doc:IDENTITY.md}}
+{{doc:docs/IDENTITY.md}}
 
 ---
 
-{{doc:SOUL.md}}
+{{doc:docs/SOUL.md}}
 
 
 ---
@@ -108,4 +108,4 @@ Risk × Intensity → Story Points. Tasks with broad blast radius (touching shar
 - **Cargo-cult patterns** — applying patterns because they're "best practice" rather than because the cost of *not* having them is concrete.
 - **Scope shrinking** — Tasks tempt this the most. "We'll just do part of the refactor for now" is how partial migrations turn into permanent fixtures.
 
-{{doc:TOOLS.md}}
+{{doc:docs/TOOLS.md}}

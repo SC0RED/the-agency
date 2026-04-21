@@ -5,7 +5,7 @@
 **If your session key contains `hook-` (e.g. `agent:patch:hook-jira-156`):**
 - You are an isolated webhook handler. Execute ONLY the template message you received.
 - Your template injects everything you need via Nunjucks doc-injection: IDENTITY, SOUL (your principles), TOOLS (host inventory), the engineering pipeline, the issue-writing guide for this ticket type, anti-patterns, jira-ids-reference, github-access, and — in plan templates — the estimation framework. Do NOT open those files directly.
-- Do NOT read USER.md or MEMORY.md — not injected, not needed for a single webhook run.
+- Do NOT read docs/USER.md or MEMORY.md — not injected, not needed for a single webhook run.
 - Do NOT read daily memory files (`memory/YYYY-MM-DD.md`).
 - Do NOT check what other sessions are working on (sessions_history / sessions_send don't exist on this host — tracked in SPE-1707).
 - Your template message contains everything you need: the ticket, the steps, the transition IDs, the tools list.
@@ -34,16 +34,16 @@ Everything below this section is for interactive and main sessions only. Hook se
 
 You run on a dedicated c7i.large EC2 in `sc0red-dev` (us-east-1), reachable as `clawndom.tail708f46.ts.net` over Tailscale Funnel. Your home is `/home/clawndom`. Your workspace (this directory) is at `/home/clawndom/.clawndom/agents/SC0RED__the-agency/workspaces/patch/`, refreshed every 5 minutes from `git@github.com:SC0RED/the-agency.git` by the `clawndom-sync-agents.timer` systemd timer.
 
-You are on Linux (Ubuntu 24.04). Read TOOLS.md for the tool inventory.
+You are on Linux (Ubuntu 24.04). Read docs/TOOLS.md for the tool inventory.
 
 ## What to read for an interactive / main session
 
 (Hook sessions skip this — they have everything they need via the template's `{{doc:}}` injections.)
 
-- `IDENTITY.md` — your name, creature, vibe
-- `SOUL.md` — your engineering principles and what Chris expects of you
-- `USER.md` — who Chris is (metadata only)
-- `TOOLS.md` — host inventory
+- `docs/IDENTITY.md` — your name, creature, vibe
+- `docs/SOUL.md` — your engineering principles and what Chris expects of you
+- `docs/USER.md` — who Chris is (metadata only)
+- `docs/TOOLS.md` — host inventory
 - `docs/sc0red-engineering-pipeline.md` — the full pipeline
 - `docs/writing-great-issues-base.md` + `writing-great-bug-issues.md` / `writing-great-feature-issues.md` / `writing-great-task-issues.md` — per-type issue-writing guides
 - `docs/anti-patterns.md` — AI anti-patterns to avoid in plans and code

@@ -10,11 +10,11 @@
 
 ---
 
-{{doc:IDENTITY.md}}
+{{doc:docs/IDENTITY.md}}
 
 ---
 
-{{doc:SOUL.md}}
+{{doc:docs/SOUL.md}}
 
 ---
 
@@ -125,4 +125,4 @@ If CI fails on the PR, read the logs and push a fix. **Max 2 fix attempts** — 
 - CI fails for reasons outside your change
 - Requirements turn out to be technically possible but architecturally wrong
 
-{{doc:TOOLS.md}}
+{{doc:docs/TOOLS.md}}

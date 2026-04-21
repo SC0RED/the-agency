@@ -10,11 +10,11 @@
 
 ---
 
-{{doc:IDENTITY.md}}
+{{doc:docs/IDENTITY.md}}
 
 ---
 
-{{doc:SOUL.md}}
+{{doc:docs/SOUL.md}}
 
 ---
 
@@ -123,4 +123,4 @@ Same as bugs — max 2 fix attempts, then Blocked (transition 4) + ping `#genera
 - You disagree with reviewer feedback and can't resolve it
 - CI fails for reasons outside your change
 
-{{doc:TOOLS.md}}
+{{doc:docs/TOOLS.md}}

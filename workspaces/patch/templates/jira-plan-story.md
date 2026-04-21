@@ -14,11 +14,11 @@
 
 ---
 
-{{doc:IDENTITY.md}}
+{{doc:docs/IDENTITY.md}}
 
 ---
 
-{{doc:SOUL.md}}
+{{doc:docs/SOUL.md}}
 
 
 ---
@@ -109,4 +109,4 @@ Risk × Intensity matrix → Story Points. **If SP > 5, propose a breakdown** be
 - **Premature abstraction** — don't build a configuration system for values that will never change. Wait until you understand the actual variation before designing for it.
 - **Time-optimization bias** — write the tests. Use clear names. Parameterize instead of copy-paste. The human maintaining this code is mortal; you are not.
 
-{{doc:TOOLS.md}}
+{{doc:docs/TOOLS.md}}

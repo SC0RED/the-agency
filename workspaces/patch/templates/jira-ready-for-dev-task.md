@@ -10,11 +10,11 @@
 
 ---
 
-{{doc:IDENTITY.md}}
+{{doc:docs/IDENTITY.md}}
 
 ---
 
-{{doc:SOUL.md}}
+{{doc:docs/SOUL.md}}
 
 ---
 
@@ -132,4 +132,4 @@ Same pattern — max 2 fix attempts, then Blocked (transition 4) + ping `#genera
 - You discover the planned approach has worse blast radius than estimated
 - CI fails for reasons outside your change
 
-{{doc:TOOLS.md}}
+{{doc:docs/TOOLS.md}}
