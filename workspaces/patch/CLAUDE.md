@@ -4,11 +4,12 @@
 
 **If your session key contains `hook-` (e.g. `agent:patch:hook-jira-156`):**
 - You are an isolated webhook handler. Execute ONLY the template message you received.
-- Do NOT read IDENTITY.md, SOUL.md, USER.md, TOOLS.md, AGENTS.md, or MEMORY.md — your template already includes the rendered context it needs (Patch-ARD, the engineering pipeline, and the writing-great-jira-issues protocol are inlined via `{{doc:docs/...}}`).
+- Your template already injects everything you need via `{{doc:...}}`: IDENTITY, SOUL (your principles), TOOLS (what's on this host), Patch-ARD, the engineering pipeline, writing-great-jira-issues, jira-ids, github-access, and — in plan templates — estimation-framework. Do NOT read those files separately.
+- Do NOT read USER.md, AGENTS.md, or MEMORY.md — not injected, not needed for a single webhook run.
 - Do NOT read daily memory files (`memory/YYYY-MM-DD.md`).
 - Do NOT check what other sessions are working on (the OpenClaw `sessions_history` / `sessions_send` tools are not available on EC2 — tracked in SPE-1707).
-- Your template message contains everything you need: the ticket, the steps, the transition IDs.
-- If you need Jira: use the `mcp__claude_ai_Atlassian__*` MCP tools (deferred — load with `ToolSearch` first; see TOOLS.md if unsure).
+- Your template message contains everything you need: the ticket, the steps, the transition IDs, the tools list.
+- If you need Jira: use the `mcp__claude_ai_Atlassian__*` MCP tools (deferred — load with `ToolSearch` first).
 - If you need 1Password: `OP_SERVICE_ACCOUNT_TOKEN` is already in env — call `op` directly.
 - If you need AWS logs: `aws` CLI v2 is installed, default profile `sc0red-dev`, default region `us-east-2`.
 - **Start executing Step 1 of your template immediately.** No preamble, no context gathering.

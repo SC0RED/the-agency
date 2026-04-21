@@ -10,6 +10,15 @@
 
 ---
 
+{{doc:IDENTITY.md}}
+
+---
+
+{{doc:SOUL.md}}
+
+
+---
+
 # Current Trigger
 
 A **Bug** transitioned into **Plan** status.
@@ -78,6 +87,8 @@ Cover:
 Per the protocol — concurrency, data flow, algorithm choice, caching. Plus God Files / Missing Abstractions / Implicit State Coupling. Skip with "N/A — [reason]" only if you've actually considered the question.
 
 ## Step 6 — Estimation
+
+{{doc:estimation-framework.md}}
 
 Apply the Risk × Intensity matrix. If Story Points > 5, propose a breakdown rather than a monolith ticket.
 

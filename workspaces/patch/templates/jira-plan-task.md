@@ -10,6 +10,15 @@
 
 ---
 
+{{doc:IDENTITY.md}}
+
+---
+
+{{doc:SOUL.md}}
+
+
+---
+
 # Current Trigger
 
 A **Task** transitioned into **Plan** status.
@@ -78,6 +87,8 @@ For Tasks specifically: this section is often the *whole point*. If the task is 
 
 ## Step 6 — Estimation
 
+{{doc:estimation-framework.md}}
+
 Risk × Intensity → Story Points. Tasks with broad blast radius (touching shared infrastructure, build pipeline, secrets, auth) are usually higher Risk than they look. If SP > 5, propose a phased breakdown.
 
 ## Step 7 — Post the plan, transition, request review
@@ -93,11 +104,4 @@ Risk × Intensity → Story Points. Tasks with broad blast radius (touching shar
 - **Cargo-cult patterns** — applying patterns because they're "best practice" rather than because the cost of *not* having them is concrete.
 - **Scope shrinking** — Tasks tempt this the most. "We'll just do part of the refactor for now" is how partial migrations turn into permanent fixtures.
 
-## Tools available on this host (Linux / EC2)
-
-- `aws` CLI v2 with profiles `sc0red-dev` (default), `sc0red-test`, `sc0red-prod`. Default region `us-east-2`.
-- `op` CLI with `OP_SERVICE_ACCOUNT_TOKEN` already in env. Only the `Engineering` 1Password vault is accessible.
-- `mcp__claude_ai_Atlassian__*` MCP tools for the Jira REST API.
-- Standard Linux toolchain: `git`, `gh`, `jq`, `curl`, `python3`, `node`, `pnpm`.
-
-You are not on macOS. No Keychain. No `security` command.
+{{doc:TOOLS.md}}

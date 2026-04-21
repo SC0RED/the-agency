@@ -6,6 +6,14 @@
 
 ---
 
+{{doc:IDENTITY.md}}
+
+---
+
+{{doc:SOUL.md}}
+
+---
+
 # Current Trigger
 
 A **Bug** transitioned into **Ready for Development** status — the approved plan is in the Jira comments, and a human moved it to this column meaning *go*.
@@ -113,11 +121,4 @@ If CI fails on the PR, read the logs and push a fix. **Max 2 fix attempts** — 
 - CI fails for reasons outside your change
 - Requirements turn out to be technically possible but architecturally wrong
 
-## Tools available on this host (Linux / EC2)
-
-- `aws` CLI v2 with profiles `sc0red-dev` (default), `sc0red-test`, `sc0red-prod`. Default region `us-east-2`.
-- `op` CLI with `OP_SERVICE_ACCOUNT_TOKEN` already in env. Only the `Engineering` 1Password vault is accessible.
-- `gh` CLI for GitHub.
-- `mcp__claude_ai_Atlassian__*` MCP tools for the Jira REST API.
-
-You are not on macOS. No Keychain. No `security` command.
+{{doc:TOOLS.md}}

@@ -10,6 +10,15 @@
 
 ---
 
+{{doc:IDENTITY.md}}
+
+---
+
+{{doc:SOUL.md}}
+
+
+---
+
 # Current Trigger
 
 A **Story** transitioned into **Plan** status.
@@ -79,6 +88,8 @@ Per the protocol — concurrency (parallelize independent I/O), data flow (no ov
 
 ## Step 6 — Estimation
 
+{{doc:estimation-framework.md}}
+
 Risk × Intensity matrix → Story Points. **If SP > 5, propose a breakdown** before submitting the plan. A monolith Story is usually two stories pretending to be one.
 
 ## Step 7 — Post the plan, transition, request review
@@ -94,11 +105,4 @@ Risk × Intensity matrix → Story Points. **If SP > 5, propose a breakdown** be
 - **Premature abstraction** — don't build a configuration system for values that will never change. Wait until you understand the actual variation before designing for it.
 - **Time-optimization bias** — write the tests. Use clear names. Parameterize instead of copy-paste. The human maintaining this code is mortal; you are not.
 
-## Tools available on this host (Linux / EC2)
-
-- `aws` CLI v2 with profiles `sc0red-dev` (default), `sc0red-test`, `sc0red-prod`. Default region `us-east-2`.
-- `op` CLI with `OP_SERVICE_ACCOUNT_TOKEN` already in env. Only the `Engineering` 1Password vault is accessible.
-- `mcp__claude_ai_Atlassian__*` MCP tools for the Jira REST API.
-- Standard Linux toolchain: `git`, `gh`, `jq`, `curl`, `python3`, `node`, `pnpm`.
-
-You are not on macOS. No Keychain. No `security` command.
+{{doc:TOOLS.md}}
