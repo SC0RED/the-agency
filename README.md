@@ -2,7 +2,7 @@
 
 Monorepo of agent workspaces consumed by [Clawndom](https://github.com/SC0RED/clawndom) at runtime. Each agent lives in its own directory under `workspaces/` — identity, principles, templates, reference docs, routing config. Clawndom pulls this repo on a 5-minute sync timer on the EC2 host and renders webhook-triggered prompts from the per-agent templates.
 
-Currently only **Patch** (the AI software engineer) has a populated workspace. Scarlett, Marlowe, and Sasha are planned agents; their directories don't exist yet.
+Currently only **Patch** (the AI software engineer) has a populated workspace. Additional agents can be added by creating a new `workspaces/<name>/` directory with the same layout — see *Adding a new agent* below.
 
 ---
 
@@ -151,12 +151,12 @@ Templates use Nunjucks. `{{doc:path/to/file.md}}` is the Clawndom-side extension
 
 ## Adding a new agent
 
-To stand up a second agent (say, Scarlett):
+To stand up a second agent:
 
-1. Create `workspaces/scarlett/` with the subdirectory skeleton: `templates/`, `docs/`, `avatars/`, `specs/`.
+1. Create `workspaces/<name>/` with the subdirectory skeleton: `templates/`, `docs/`, `avatars/`, `specs/`.
 2. Author:
    - `CLAUDE.md` — bootstrap + hook-session block
-   - `clawndom.yaml` — routing rules for whichever webhooks Scarlett consumes
+   - `clawndom.yaml` — routing rules for whichever webhooks this agent consumes
    - `docs/IDENTITY.md`, `docs/SOUL.md`, `docs/TOOLS.md`, `docs/USER.md` — start from Patch's as templates
    - Per-status templates under `templates/`
 3. Push. Clawndom picks up the new agent on next sync.
