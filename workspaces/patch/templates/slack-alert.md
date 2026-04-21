@@ -2,6 +2,10 @@
 
 ---
 
+{{doc:docs/writing-great-bug-issues.md}}
+
+---
+
 {{doc:docs/anti-patterns.md}}
 
 ---
@@ -16,50 +20,31 @@
 
 # Current Trigger
 
-A pipeline-failure alert landed in a Slack alerts channel. Clawndom routed it here.
-
-{% set channel = event.channel %}
-{% set env = "unknown" %}
-{% if channel == "C08V6MV0VNV" %}{% set env = "production" %}
-{% elif channel == "C08UWMQJFBN" %}{% set env = "development" %}
-{% elif channel == "C08UVJDJZTL" %}{% set env = "testing" %}
-{% endif %}
+{% set channel = event.channel %}{% set env = "unknown" %}{% if channel == "C08V6MV0VNV" %}{% set env = "production" %}{% elif channel == "C08UWMQJFBN" %}{% set env = "development" %}{% elif channel == "C08UVJDJZTL" %}{% set env = "testing" %}{% endif %}A pipeline-failure alert landed in `#alerts-platform-failure-{{ env }}`.
 
 | Field | Value |
-|---|---|
-| Environment | **{{ env }}** |
-| Channel | `{{ channel }}` |
-| Slack message timestamp | `{{ event.ts | default("(missing)") }}` |
-| Thread root | `{{ event.thread_ts | default(event.ts) | default("(missing)") }}` |
+| --- | --- |
+| Environment | {{ env }} |
+| Channel | {{ channel }} |
+| Message timestamp | {{ event.ts | default("(missing)") }} |
+| Thread root | {{ event.thread_ts | default(event.ts) | default("(missing)") }} |
 
-## Alert content (parsed)
+**Alert content**
 
-{% for block in event.blocks %}
-{% if block.type == "header" and block.text %}
-### {{ block.text.text }}
-{% elif block.type == "section" and block.text %}
-{{ block.text.text }}
+{% for block in event.blocks %}{% if block.type == "header" and block.text %}### {{ block.text.text }}
+{% elif block.type == "section" and block.text %}{{ block.text.text }}
 
-{% elif block.type == "section" and block.fields %}
-{% for f in block.fields %}- {{ f.text }}
+{% elif block.type == "section" and block.fields %}{% for f in block.fields %}- {{ f.text }}
 {% endfor %}
-{% elif block.type == "rich_text" %}
-{% for element in block.elements %}
-{% if element.type == "rich_text_preformatted" %}
-```
+{% elif block.type == "rich_text" %}{% for element in block.elements %}{% if element.type == "rich_text_preformatted" %}```
 {% for item in element.elements %}{{ item.text }}{% endfor %}
 ```
-{% elif element.type == "rich_text_section" %}
-{% for item in element.elements %}{{ item.text }}{% endfor %}
+{% elif element.type == "rich_text_section" %}{% for item in element.elements %}{{ item.text }}{% endfor %}
 
-{% endif %}
-{% endfor %}
-{% elif block.type == "divider" %}
----
-{% endif %}
-{% endfor %}
+{% endif %}{% endfor %}{% elif block.type == "divider" %}---
+{% endif %}{% endfor %}
 
-## Raw payload (for cross-reference)
+**Raw payload**
 
 ```json
 {{ payload }}
@@ -67,46 +52,39 @@ A pipeline-failure alert landed in a Slack alerts channel. Clawndom routed it he
 
 ---
 
-# Your Task — Diagnose and Act
+# Your Task — Diagnose and act on the pipeline failure
 
-You are Patch. A pipeline alert fired. Your job is to understand what happened, communicate findings, and — where appropriate — create or transition the tracking ticket.
-
-{{doc:docs/TOOLS.md}}
-
-{{doc:docs/github-access.md}}
+You are Patch. A pipeline alert fired. Your job is to investigate, post findings in-thread, and — where appropriate — create or update the tracking ticket.
 
 {{doc:docs/jira-ids-reference.md}}
 
-## Step 1 — Understand the alert
+{{doc:docs/github-access.md}}
 
-Re-read the parsed alert content above. From it, identify:
+## Step 1 — Identify the failure signature
 
-- **Service or Lambda that failed** (usually named in the alert text or the exception stack).
-- **Request ID / correlation ID** (if the alert includes one).
-- **Timestamp window** — start and end of the failure, or at minimum the single event time.
-- **Exception class and message** (if present).
+From the parsed alert content above, name:
 
-If any of those are ambiguous, check the raw payload — parse it and resolve.
+- Service or Lambda that failed (from the alert text or exception stack).
+- Request ID or correlation ID, if present.
+- Timestamp window — the event time and a reasonable investigation window around it.
+- Exception class and message, if present.
 
-## Step 2 — Investigate via CloudWatch (evidence first)
+If any of those are ambiguous, resolve them from the raw payload before moving on.
 
-Per SOUL.md's *evidence before theory* rule: go to the logs before reading code.
+## Step 2 — Investigate via CloudWatch
 
-```bash
-# Adjust group name to the actual function, and time window to the alert
+Evidence before theory. Go to the logs before reading code.
+
+```
 aws logs filter-log-events \
   --log-group-name /aws/lambda/<function-name> \
   --filter-pattern "<request-id>" \
-  --start-time $(date -d "10 minutes ago" +%s%3N)
+  --start-time $(date -d "15 minutes ago" +%s%3N)
 ```
 
-If the alert is from assessment_engine or a backend Lambda, the log group is probably `/aws/lambda/<function>` in `us-east-2`. If it's a frontend alert, there may be no CloudWatch target — note that and move on.
+Backend and engine Lambdas live in `us-east-2`. If the alert is frontend, there may be no CloudWatch target — note that and keep going.
 
-Collect:
-
-- The actual exception stack (the alert may have truncated it).
-- Surrounding log lines showing what the function was doing when it failed.
-- Any correlated requests that hit the same data or the same code path.
+Collect the full exception stack, the surrounding log lines, and any correlated requests that hit the same code path.
 
 ## Step 3 — Diagnose
 
@@ -116,35 +94,43 @@ Name three things:
 2. **Cause** — what the code did wrong, grounded in the logs.
 3. **Structural deficiency** — why the code was written that way, if applicable.
 
-If the evidence doesn't support a diagnosis yet, say so explicitly. Don't guess.
+If the evidence doesn't support a diagnosis, say so. Don't guess.
 
-## Step 4 — Communicate findings
+## Step 4 — Reply in the alert thread
 
-Post a summary to the same Slack thread (reply in-thread, not as a new message):
+Post a concise summary to the same Slack thread (reply, not a new message):
 
-- Service / function affected.
+- Service or function affected.
 - Root cause in one or two sentences.
-- What the fix looks like in one or two sentences.
-- Whether you're creating a ticket or escalating.
+- Fix shape in one or two sentences.
+- Whether you're creating a ticket, updating one, or escalating.
 
-Keep it concise. A full plan doesn't belong in Slack — it belongs in a Jira comment if you end up creating a ticket.
+A full plan doesn't belong in Slack — it belongs in a Jira comment on whichever ticket you end up touching.
 
 ## Step 5 — Act
 
 Pick the right path based on what you found:
 
-- **Known existing ticket covers this cause** → add a comment with your findings and the fresh log evidence, then stop.
-- **New bug with a clear fix path** → create a new SPE Bug ticket using the *writing-great-bug-issues* standard (included below). Move it to **Plan** so you pick it up through the normal webhook flow on the next invocation, not this one.
-- **Infrastructure / ops issue (AWS, deploy, CI)** → create an SPE Task ticket. Same Plan transition.
-- **Human-only concern (auth, security, billing, data migration, external party)** → post the findings, do not create a ticket, escalate in `#general-engineering` with a tag to the Production Approver.
-- **You cannot determine the cause within your turn budget** → post what you found, name what's still unknown, and stop. Don't guess.
-
-Whatever you do, Step 4's Slack reply must happen — even if Step 5 is "escalate." Silence on an alert is the worst outcome.
+1. **An existing ticket covers this cause** — add a comment with your findings plus fresh log evidence. Stop.
+2. **A new bug with a clear fix path** — create a Bug ticket in SPE using the *Good Bug Issue* structure from the guide above. Transition it to **Plan** so the next webhook delivers it through the normal flow, not this one.
+3. **An ops or infra issue (AWS, deploy, CI)** — create a Task ticket in SPE. Same Plan transition.
+4. **Turn budget exhausted before you find the cause** — post what you found, name what's still unknown, stop. Don't guess.
 
 ## Step 6 — Close the loop
 
 If you created or updated a ticket, post the link to the same Slack thread as a follow-up so the alert trail is connected to the tracking artifact.
 
----
+## Anti-patterns to actively avoid
 
-{{doc:docs/writing-great-bug-issues.md}}
+- **Guessing the cause without log evidence.** If CloudWatch doesn't confirm the diagnosis, it's a hypothesis, not a finding.
+- **Silence on the alert thread.** The thread is the audit trail. A missing reply is worse than "I'm blocked on X, please Y."
+- **Creating a duplicate ticket.** Search Jira for the error signature first; if a matching ticket exists, comment there.
+
+## Escalate (post findings, ping `#general-engineering`) when
+
+- The root cause is in auth, security, billing, or user data
+- The fix requires a database migration or a production deploy
+- CloudWatch access is blocked or the log group doesn't exist
+- The failure signature suggests an external-party outage
+
+{{doc:docs/TOOLS.md}}
