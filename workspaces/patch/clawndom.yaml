@@ -70,21 +70,21 @@ routing:
           equals:
             field: event.channel
             value: C08V6MV0VNV
-        messageTemplate: templates/slack-alert.njk
+        messageTemplate: templates/slack-alert.md
 
       - name: alerts-development
         condition:
           equals:
             field: event.channel
             value: C08UWMQJFBN
-        messageTemplate: templates/slack-alert.njk
+        messageTemplate: templates/slack-alert.md
 
       - name: alerts-testing
         condition:
           equals:
             field: event.channel
             value: C08UVJDJZTL
-        messageTemplate: templates/slack-alert.njk
+        messageTemplate: templates/slack-alert.md
 
 modelRules:
   jira:
