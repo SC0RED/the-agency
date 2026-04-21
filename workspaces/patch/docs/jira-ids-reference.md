@@ -27,7 +27,9 @@ Pass these as `transition.id` to `mcp__claude_ai_Atlassian__transitionJiraIssue`
 | Code Review             | 36            |
 | In Development          | 37            |
 
-## Custom fields (pass these as field keys to `mcp__claude_ai_Atlassian__editJiraIssue`)
+## Custom fields 
+
+Pass these as field keys to `mcp__claude_ai_Atlassian__editJiraIssue`.
 
 | Field           | key                   |
 |-----------------|-----------------------|
@@ -37,7 +39,8 @@ Pass these as `transition.id` to `mcp__claude_ai_Atlassian__transitionJiraIssue`
 | Story Points    | `customfield_10016`   |
 | Velocity Impact | `customfield_10064`   |
 
-## Field option IDs (pass these as `{"id": "..."}` values when setting the custom fields above)
+## Field option IDs (
+Pass these as `{"id": "..."}` values when setting the custom fields above.
 
 **Risk** (`customfield_10038`):
 
