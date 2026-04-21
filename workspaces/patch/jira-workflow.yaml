@@ -2,7 +2,7 @@
 # Re-run the script when the Jira workflow changes.
 #
 # SEED: this file was initially populated by hand on 2026-04-18 from
-# spe-board-guide.md + the transition IDs referenced across templates.
+# docs/jira-ids-reference.md + the transition IDs referenced across templates.
 # Run `scripts/dump-jira-workflow.py` to replace with live Jira data.
 
 project: SPE

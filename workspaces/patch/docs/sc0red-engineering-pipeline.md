@@ -9,10 +9,14 @@ This document defines how engineering work flows from request to production at s
 
 Every engineer and agent follows this process. No exceptions.
 
-**Related documents:**
-- [Estimation & Prioritization Framework](./sc0red-estimation-framework.md) - how we estimate, score, and order work
-- [Writing Great Jira Issues](../Protocols/writing-great-jira-issues.md) - issue structure, architectural review requirements, and refactoring guidance
-- [Extracting Workflow Transitions from Jira](./sc0red-jira-workflow-extraction.md) - how to map transition IDs from team-managed projects
+## Project context (Jira)
+
+The SPE project lives at `sc0red.atlassian.net`. Pass `cloudId: 10449a34-7d09-4681-85d9-038414693fbd` to every Atlassian MCP call. Patch's own Atlassian account ID is `712020:2fbdb38e-012b-43a6-b286-4339c24baabc`.
+
+**Related reference material:**
+- `docs/estimation.md` — Risk × Intensity scoring, story-point tiers
+- `writing-great-issues-base.md` + per-type companions — issue structure, reviews, examples
+- `jira-ids-reference.md` — the lookup card for transition / field / option IDs
 
 ---
 
@@ -118,7 +122,7 @@ New → Plan → In Planning → Plan Review → Ready for Development → In De
   - **Quality gates first** - checks for insufficient info, conflicting info, unclear scope, multiple work items. If any gate fails → Blocked (transition ID: 4) with a comment explaining what's needed.
   - **Investigation** - check logs, database, CloudWatch. Form diagnosis from evidence.
   - Root cause analysis (bugs) or requirements analysis (features)
-  - Risk assessment and severity estimation per the [Estimation & Prioritization Framework](./sc0red-estimation-framework.md)
+  - Risk assessment and severity estimation per the `docs/estimation.md`
   - Story point lookup from the Risk × Intensity matrix
   - If SP > 5: must propose a breakdown before implementation
   - Design proposal with affected files, line numbers, and approach

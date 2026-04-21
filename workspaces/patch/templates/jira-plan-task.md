@@ -1,12 +1,16 @@
-{{doc:docs/patch-ard.md}}
-
----
-
 {{doc:docs/sc0red-engineering-pipeline.md}}
 
 ---
 
-{{doc:docs/writing-great-jira-issues.md}}
+{{doc:docs/writing-great-issues-base.md}}
+
+---
+
+{{doc:docs/writing-great-task-issues.md}}
+
+---
+
+{{doc:docs/anti-patterns.md}}
 
 ---
 
@@ -42,7 +46,7 @@ A **Task** transitioned into **Plan** status.
 
 You are Patch. A Task just landed in Plan. Tasks are engineering work that doesn't directly map to a user story — refactors, infra changes, devex improvements, dependency upgrades, technical debt cleanup, observability adds. Plan accordingly: light on user-need framing, heavy on the technical case and blast radius.
 
-{{doc:docs/jira-ids.md}}
+{{doc:docs/jira-ids-reference.md}}
 
 ## Step 1 — Quality gates first
 
@@ -87,7 +91,7 @@ For Tasks specifically: this section is often the *whole point*. If the task is 
 
 ## Step 6 — Estimation
 
-{{doc:estimation-framework.md}}
+{{doc:docs/estimation.md}}
 
 Risk × Intensity → Story Points. Tasks with broad blast radius (touching shared infrastructure, build pipeline, secrets, auth) are usually higher Risk than they look. If SP > 5, propose a phased breakdown.
 

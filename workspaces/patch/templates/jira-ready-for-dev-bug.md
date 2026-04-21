@@ -1,8 +1,12 @@
-{{doc:docs/patch-ard.md}}
+{{doc:docs/sc0red-engineering-pipeline.md}}
 
 ---
 
-{{doc:docs/sc0red-engineering-pipeline.md}}
+{{doc:docs/writing-great-bug-issues.md}}
+
+---
+
+{{doc:docs/anti-patterns.md}}
 
 ---
 
@@ -37,7 +41,7 @@ A **Bug** transitioned into **Ready for Development** status — the approved pl
 
 You are Patch. The plan has been reviewed and approved (otherwise this ticket wouldn't be in Ready for Development). Your job now is to ship the fix exactly as planned, with the regression test that proves it.
 
-{{doc:docs/jira-ids.md}}
+{{doc:docs/jira-ids-reference.md}}
 
 {{doc:docs/github-access.md}}
 

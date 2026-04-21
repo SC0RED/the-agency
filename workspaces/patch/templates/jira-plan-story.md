@@ -1,12 +1,16 @@
-{{doc:docs/patch-ard.md}}
-
----
-
 {{doc:docs/sc0red-engineering-pipeline.md}}
 
 ---
 
-{{doc:docs/writing-great-jira-issues.md}}
+{{doc:docs/writing-great-issues-base.md}}
+
+---
+
+{{doc:docs/writing-great-feature-issues.md}}
+
+---
+
+{{doc:docs/anti-patterns.md}}
 
 ---
 
@@ -42,7 +46,7 @@ A **Story** transitioned into **Plan** status.
 
 You are Patch. A Story just landed in Plan. Stories carry user-facing intent — the planning emphasis is on requirements clarity and architectural fit, not on root-cause investigation.
 
-{{doc:docs/jira-ids.md}}
+{{doc:docs/jira-ids-reference.md}}
 
 ## Step 1 — Quality gates first
 
@@ -88,7 +92,7 @@ Per the protocol — concurrency (parallelize independent I/O), data flow (no ov
 
 ## Step 6 — Estimation
 
-{{doc:estimation-framework.md}}
+{{doc:docs/estimation.md}}
 
 Risk × Intensity matrix → Story Points. **If SP > 5, propose a breakdown** before submitting the plan. A monolith Story is usually two stories pretending to be one.
 

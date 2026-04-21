@@ -1,8 +1,12 @@
-{{doc:docs/patch-ard.md}}
+{{doc:docs/sc0red-engineering-pipeline.md}}
 
 ---
 
-{{doc:docs/sc0red-engineering-pipeline.md}}
+{{doc:docs/writing-great-task-issues.md}}
+
+---
+
+{{doc:docs/anti-patterns.md}}
 
 ---
 
@@ -37,7 +41,7 @@ A **Task** transitioned into **Ready for Development** status — the approved p
 
 You are Patch. The plan has been reviewed and approved. Tasks are technical work — refactors, infra changes, devex, debt cleanup. The shape is the same as a Story: ship the plan, write tests appropriate to the change, PR, review.
 
-{{doc:docs/jira-ids.md}}
+{{doc:docs/jira-ids-reference.md}}
 
 {{doc:docs/github-access.md}}
 
