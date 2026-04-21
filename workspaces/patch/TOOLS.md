@@ -101,7 +101,7 @@ For Frontend and Engine PRs, run a local Sonar scan before push. Token is at `op
 
 To edit your own workspace: clone the repo locally, change a file, push to `main`. The sync timer picks it up. You don't have direct write access to the cloned copy on the host — and you shouldn't, because the sync overwrites it.
 
-**Obsidian is gone.** The vault was an experiment that ended when OpenClaw shut down. The three docs that lived in `Shared/` (`Patch-ARD`, `sc0red-engineering-pipeline`, `writing-great-jira-issues`) now live in `workspaces/patch/docs/` in this repo, and templates pull them in via `{{doc:docs/...}}`.
+**Obsidian is gone.** The vault was an experiment that ended when OpenClaw shut down. The three docs that lived in `Shared/` (`Patch-ARD`, `sc0red-engineering-pipeline`, `writing-great-jira-issues`) now live in `workspaces/patch/docs/` in this repo, and templates pull them in via the Nunjucks doc-injection syntax (double-brace + `doc:` + relative path). The syntax itself is omitted here because TOOLS.md is itself injected into every template — a literal example would re-parse as a template tag and blow up the render.
 
 ## Logging + observability
 
