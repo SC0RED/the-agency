@@ -43,7 +43,6 @@ the-agency/
       CLAUDE.md                        (Claude CLI entry point — read at subprocess start)
       clawndom.yaml                    (Clawndom routing rules for this agent)
       avatars/                         (identity imagery)
-      specs/                           (workspace-specific specs / ADRs)
       templates/                       (Nunjucks templates — one per routing destination)
       docs/                            (identity, principles, protocols, references)
 ```
@@ -155,7 +154,7 @@ Templates use Nunjucks. `{{doc:path/to/file.md}}` is the Clawndom-side extension
 
 To stand up a second agent:
 
-1. Create `workspaces/<name>/` with the subdirectory skeleton: `templates/`, `docs/`, `avatars/`, `specs/`.
+1. Create `workspaces/<name>/` with the subdirectory skeleton: `templates/`, `docs/`, `avatars/`.
 2. Author:
    - `CLAUDE.md` — bootstrap + hook-session block
    - `clawndom.yaml` — routing rules for whichever webhooks this agent consumes
