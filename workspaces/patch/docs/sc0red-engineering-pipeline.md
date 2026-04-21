@@ -23,11 +23,11 @@ The SPE project lives at `sc0red.atlassian.net`. All Jira-side numbers — cloud
 | Role                    | Who                            | Responsibility                                                              |
 | ----------------------- | ------------------------------ | --------------------------------------------------------------------------- |
 | **Requester**           | Any user or team member        | Submits feature request or bug report                                       |
-| **Business Leadership** | Chris, Zack, Brian             | Prioritizes, sets requirements, moves to Plan                               |
+| **Business Leadership** | Product & exec team            | Prioritizes, sets requirements, moves to Plan                               |
 | **Patch** (Agent)       | Senior AI Engineer             | Investigation, design, implementation, PR creation, environment promotion   |
 | **Scarlett** (Agent)    | Senior Reviewer                | Plan review, PR code review, architectural oversight                        |
-| **Engineering Team**    | Srikanth, Vedratna, Srilakshmi | PR review, verification in dev/testing, production readiness                |
-| **Production Approver** | Chris Creel (only)             | Approves production deployments                                             |
+| **Engineering Team**    | Human engineers                | PR review, verification in dev/testing, production readiness                |
+| **Production Approver** | Designated human (single point) | Approves production deployments                                             |
 
 ---
 
@@ -181,7 +181,7 @@ Transition IDs for every move between these columns live in `docs/jira-ids-refer
 - **What it means:** PRs are open, Scarlett has approved, ready for human engineer review.
 - **Jira comment:** Patch posts a consolidated comment listing every open PR for this ticket.
 - **Human PR Review:**
-  - Human engineer reviews from Jira (any human team member, not Chris specifically)
+  - Human engineer reviews from Jira (any human team member, not restricted to a specific person)
   - Focus on: business logic correctness, UX implications, judgment calls
   - **If changes needed:** Move ticket back to **Ready for Development** (ID: 28). Patch picks it up, reworks, and cycles back through.
   - **If approved:** Move ticket to **Deploy to development** (ID: 8).
@@ -225,10 +225,10 @@ Transition IDs for every move between these columns live in `docs/jira-ids-refer
 - **Trigger:** Jira webhook → Clawndom → Patch
 - **Gate logic:** Patch checks if ANY tickets remain in **Deployed to Testing**
   - **If yes:** Posts comment listing what's still awaiting verification. Stops.
-  - **If no (all verified):** Creates a **single** testing → production PR per repo. **Does NOT merge.** Posts to #general-engineering alerting that a production PR is ready for Chris to review. Tickets stay in Verified in Testing.
+  - **If no (all verified):** Creates a **single** testing → production PR per repo. **Does NOT merge.** Posts to #general-engineering alerting that a production PR is ready for the Production Approver to review. Tickets stay in Verified in Testing.
 
 ### 10. Deployed to Production
-- **Who transitions:** Chris (after merging production PRs)
+- **Who transitions:** The Production Approver (after merging production PRs)
 - **What happens:** Done. Ticket closed.
 
 ---
@@ -237,7 +237,7 @@ Transition IDs for every move between these columns live in `docs/jira-ids-refer
 
 For critical fixes that must reach production immediately. Hotfixes bypass the normal pipeline entirely — no Plan Review, no Code Review column. The urgency is the process; review happens on the PR itself.
 
-**If production is truly catastrophic:** Chris goes off-script. It won't hit the board, and that's fine.
+**If production is truly catastrophic:** The Production Approver goes off-script. It won't hit the board, and that's fine.
 
 ### Process
 1. Engineer moves ticket to **Hotfix** (ID: 13) from wherever it is (New, Plan, Blocked — doesn't matter)
@@ -250,8 +250,8 @@ For critical fixes that must reach production immediately. Hotfixes bypass the n
    e. Opens PR against `production` — titled `HOTFIX(<key>): <summary>`
    f. Spawns Scarlett for **urgent** review (scope: does this fix the problem without breaking anything else?)
    g. Posts PR link to Jira + alerts #general-engineering
-   h. **Does NOT merge** — Chris merges the production PR
-4. **After Chris merges to production:**
+   h. **Does NOT merge** — the Production Approver merges the production PR
+4. **After the Production Approver merges to production:**
    a. Patch creates back-merge PRs: `production` → `testing` and `production` → `development`
    b. Posts back-merge PR links to Jira
    c. Human merges back-merge PRs (or Patch merges if instructed)
@@ -263,7 +263,7 @@ For critical fixes that must reach production immediately. Hotfixes bypass the n
 - This ensures the fix is authored against production from the start — no rebasing development work onto production, no conflict risk from unrelated changes
 
 ### What triggers the back-merge?
-The production merge itself. When Chris moves the ticket to Deployed to Production (or tells Patch to create back-merges), Patch creates the downward PRs. Not before — the production PR might get feedback and change, which would make premature back-merge PRs stale.
+The production merge itself. When the Production Approver moves the ticket to Deployed to Production (or tells Patch to create back-merges), Patch creates the downward PRs. Not before — the production PR might get feedback and change, which would make premature back-merge PRs stale.
 
 ---
 
@@ -313,19 +313,19 @@ Individual tickets merge to `development` via per-ticket PRs. Promotions between
 
 ### Testing → Production
 - **Trigger:** Ticket moves to "Verified in Testing"
-- **Who executes:** Patch creates PRs, **Chris merges**
+- **Who executes:** Patch creates PRs, **the Production Approver merges**
 - **Gate:** "Deployed to Testing" must be empty
 - **Process:**
   1. Patch checks "Deployed to Testing" - if any tickets remain, posts comment and stops
   2. Creates a **single** testing → production PR per repo (all 3 repos)
   3. Posts PR links to Jira + alerts #general-engineering
-  4. **Does NOT merge** - Chris reviews and merges
+  4. **Does NOT merge** — the Production Approver reviews and merges
 - **Key rule:** Never promote individual tickets. One PR per repo per batch.
 
 ### Rules
 - Development → testing: Patch can merge (automated gate)
 - Testing → production: Patch creates PR only, human merges (production gate stays human)
-- If CI fails on a promotion PR, something is fundamentally broken — escalate immediately to Chris
+- If CI fails on a promotion PR, something is fundamentally broken — escalate immediately in `#general-engineering`
 - Promotions are all-or-nothing per branch merge. If a specific ticket needs to be held back, it should not be merged to `development` until it's ready to travel with the batch.
 
 ---
@@ -372,7 +372,7 @@ All structured agent-to-agent communication for code review happens via `session
 |--------|-------------|---------|
 | `development` | Development | Active development, all feature branches merge here |
 | `testing` | Testing | Verified dev changes promoted for stakeholder testing |
-| `production` | Production | Release branch, Chris-only merge approval |
+| `production` | Production | Release branch, Production-Approver-only merge |
 
 - Feature/fix branches: `fix/<jira-key>-<short-slug>` off `development`
 - Hotfix branches: `fix/<jira-key>-<slug>` **rebased onto `production`**, with back-merge PRs to testing and development
@@ -395,7 +395,7 @@ All structured agent-to-agent communication for code review happens via `session
 
 ## Escalation Rules
 
-Patch escalates to Chris (moves to Blocked or flags in Slack) when:
+Patch escalates (moves to Blocked or flags in `#general-engineering`) when:
 - Fix touches auth or security
 - Root cause is in the backend API contract
 - Estimated risk is High
@@ -474,7 +474,7 @@ Even with local validation, CI can fail for reasons local scans don't catch (env
 - Clawndom serializes all agent work - one event at a time, completion-aware
 - No implementation without an approved plan
 - No merge without CI passing
-- No production merge without Chris's explicit approval (Patch creates PR only)
+- No production merge without the Production Approver's explicit approval (Patch creates PR only)
 - Development → testing promotion: Patch can merge (automated gate)
 - Testing → production promotion: Patch creates PR, human merges
 - A fix without unit tests is not done
