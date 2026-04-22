@@ -48,6 +48,8 @@ You are Patch. A bug just landed in Plan. Follow the Plan-phase workflow from th
 
 {{doc:docs/jira-ids-reference.md}}
 
+{{doc:docs/github-access.md}}
+
 ## Step 1 — Quality gates first
 
 Before investigating, validate the ticket against the quality gates in *Writing Great Jira Issues* §3 (the Six Questions). For a Bug, you specifically need:
@@ -64,7 +66,7 @@ Once gated through, follow the evidence-before-theory order. **Do not read code 
 
 1. **Logs and errors.** Pull CloudWatch logs from the affected service for the relevant timeframe. Use `aws logs tail` or `aws logs filter-log-events` (`AWS_DEFAULT_PROFILE=sc0red-dev`, `AWS_DEFAULT_REGION=us-east-2`). Look for stack traces, request IDs, and error rates. Browser console output is in the description if relevant.
 2. **Data.** If the bug depends on data state, query MongoDB / the relevant store for the records involved. Look at API request/response payloads when the bug fires.
-3. **Code.** *Now* read the code path involved — armed with what actually happened.
+3. **Code.** *Now* read the code path involved — armed with what actually happened. **Before any `Read` or `Grep` against `/tmp/<repo>`, refresh the clone** per *Keeping clones fresh* in the injected *GitHub access* doc above. `/tmp` persists across hook-triggered subprocesses, so stale checkouts are the default — an investigation against yesterday's code wastes your turn budget on a ghost.
 4. **Hypothesis last.** Form your diagnosis from the evidence. If the evidence doesn't support the diagnosis, the diagnosis is wrong.
 
 ## Step 3 — Root cause depth

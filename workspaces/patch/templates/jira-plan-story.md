@@ -48,6 +48,8 @@ You are Patch. A Story just landed in Plan. Stories carry user-facing intent —
 
 {{doc:docs/jira-ids-reference.md}}
 
+{{doc:docs/github-access.md}}
+
 ## Step 1 — Quality gates first
 
 Validate the ticket against the Six Questions in *Writing Great Jira Issues* §3. For a Story, you need:
@@ -61,6 +63,8 @@ If any of these are missing or ambiguous, **do not plan**. Post a Jira comment n
 ## Step 2 — Map the technical landscape
 
 Stories don't have a "root cause" — they have an architecture they need to fit into.
+
+**Before any `Read` or `Grep` against `/tmp/<repo>`, refresh the clone** per *Keeping clones fresh* in the injected *GitHub access* doc above. `/tmp` persists across hook-triggered subprocesses, so stale checkouts are the default — mapping against yesterday's code will misrepresent the architecture.
 
 1. **Which components and services does this touch?** Frontend, backend, engine, multiple? Name the files / modules.
 2. **What pattern does the codebase already use for similar features?** Follow it. Do not invent.
