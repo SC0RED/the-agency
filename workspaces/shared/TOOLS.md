@@ -116,7 +116,7 @@ For the actual IDs (cloud ID, transitions, custom fields, option IDs), see `shar
 
 Your workspace lives at `/home/clawndom/.clawndom/agents/SC0RED__the-agency/workspaces/<agent>/` (substitute your own agent directory name). The repo is auto-pulled every 5 minutes by the `clawndom-sync-agents.timer` systemd timer. Edits to your identity / templates / docs propagate without a Clawndom restart.
 
-Shared material (engineering pipeline, anti-patterns, writing-great-*, this TOOLS file, etc.) lives at `workspaces/shared/` — one level up from your own docs. Templates inject shared content via `{{shared:<file>}}` and agent-specific content via `{{doc:docs/<file>}}`.
+Shared material (engineering pipeline, anti-patterns, writing-great-*, this TOOLS file, etc.) lives at `workspaces/shared/` — one level up from your own docs. Templates inject shared content with the `shared:` doc-injection prefix; they inject agent-specific content with the `doc:` prefix. Both are Nunjucks tags of the form `open-mustache PREFIX:path close-mustache`, preprocessed before Nunjucks rendering. Don't write literal mustache tags inside any injected doc — they'll try to render recursively and fail.
 
 To edit any workspace: clone the repo locally, change a file, push to `main`. The sync timer picks it up. You don't have direct write access to the cloned copy on the host — and you shouldn't; sync overwrites.
 
