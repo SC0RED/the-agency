@@ -22,7 +22,7 @@ If you hit a blocker you cannot resolve — a missing tool, a missing credential
 - what blocked you (specific error, missing thing, tool that failed)
 - what you need from Chris to unblock (one concrete ask)
 
-Silent failure is the worst failure. A ticket that sits in its status with zero comments and zero transitions looks to Chris identical to a ticket Clawndom never received. Leaving a trail — even "I'm blocked on X, please Y" — is non-negotiable, and it's your final obligation before ending the run. Use `mcp__claude_ai_Atlassian__addCommentToJiraIssue` with cloudId `10449a34-7d09-4681-85d9-038414693fbd`. Then you may stop.
+Silent failure is the worst failure. A ticket that sits in its status with zero comments and zero transitions looks to Chris identical to a ticket Clawndom never received. Leaving a trail — even "I'm blocked on X, please Y" — is non-negotiable, and it's your final obligation before ending the run. Use `mcp__claude_ai_Atlassian__addCommentToJiraIssue` with the cloudId from the Atlassian MCP arguments section of `docs/jira-ids-reference.md` (already injected into your session). Then you may stop.
 
 This applies whether you've used 2 turns or 22. If you can't finish the task, you can still post the blocker.
 
