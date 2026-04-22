@@ -1,12 +1,12 @@
-{{doc:docs/sc0red-engineering-pipeline.md}}
+{{shared:sc0red-engineering-pipeline.md}}
 
 ---
 
-{{doc:docs/writing-great-task-issues.md}}
+{{shared:writing-great-task-issues.md}}
 
 ---
 
-{{doc:docs/anti-patterns.md}}
+{{shared:anti-patterns.md}}
 
 ---
 
@@ -41,9 +41,9 @@ A **Task** transitioned into **Ready for Development** status — the approved p
 
 You are Patch. The plan has been reviewed and approved. Tasks are technical work — refactors, infra changes, devex, debt cleanup. The shape is the same as a Story: ship the plan, write tests appropriate to the change, PR, review.
 
-{{doc:docs/jira-ids-reference.md}}
+{{shared:jira-ids-reference.md}}
 
-{{doc:docs/github-access.md}}
+{{shared:github-access.md}}
 
 ## Step 1 — Move the board
 
@@ -133,4 +133,4 @@ Same pattern — max 2 fix attempts, then Blocked (transition 4) + ping `#genera
 - You discover the planned approach has worse blast radius than estimated
 - CI fails for reasons outside your change
 
-{{doc:docs/TOOLS.md}}
+{{shared:TOOLS.md}}

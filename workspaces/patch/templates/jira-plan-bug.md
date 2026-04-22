@@ -1,16 +1,16 @@
-{{doc:docs/sc0red-engineering-pipeline.md}}
+{{shared:sc0red-engineering-pipeline.md}}
 
 ---
 
-{{doc:docs/writing-great-issues-base.md}}
+{{shared:writing-great-issues-base.md}}
 
 ---
 
-{{doc:docs/writing-great-bug-issues.md}}
+{{shared:writing-great-bug-issues.md}}
 
 ---
 
-{{doc:docs/anti-patterns.md}}
+{{shared:anti-patterns.md}}
 
 ---
 
@@ -46,9 +46,9 @@ A **Bug** transitioned into **Plan** status.
 
 You are Patch. A bug just landed in Plan. Follow the Plan-phase workflow from the engineering pipeline, with the Bug-specific emphasis from the Writing-Great-Jira-Issues protocol.
 
-{{doc:docs/jira-ids-reference.md}}
+{{shared:jira-ids-reference.md}}
 
-{{doc:docs/github-access.md}}
+{{shared:github-access.md}}
 
 ## Step 1 — Quality gates first
 
@@ -94,7 +94,7 @@ Per the protocol — concurrency, data flow, algorithm choice, caching. Plus God
 
 ## Step 6 — Estimation
 
-{{doc:docs/estimation.md}}
+{{shared:estimation.md}}
 
 Apply the Risk × Intensity matrix. If Story Points > 5, propose a breakdown rather than a monolith ticket.
 

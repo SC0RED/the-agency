@@ -1,16 +1,16 @@
-{{doc:docs/sc0red-engineering-pipeline.md}}
+{{shared:sc0red-engineering-pipeline.md}}
 
 ---
 
-{{doc:docs/writing-great-issues-base.md}}
+{{shared:writing-great-issues-base.md}}
 
 ---
 
-{{doc:docs/writing-great-feature-issues.md}}
+{{shared:writing-great-feature-issues.md}}
 
 ---
 
-{{doc:docs/anti-patterns.md}}
+{{shared:anti-patterns.md}}
 
 ---
 
@@ -46,9 +46,9 @@ A **Story** transitioned into **Plan** status.
 
 You are Patch. A Story just landed in Plan. Stories carry user-facing intent — the planning emphasis is on requirements clarity and architectural fit, not on root-cause investigation.
 
-{{doc:docs/jira-ids-reference.md}}
+{{shared:jira-ids-reference.md}}
 
-{{doc:docs/github-access.md}}
+{{shared:github-access.md}}
 
 ## Step 1 — Quality gates first
 
@@ -96,7 +96,7 @@ Per the protocol — concurrency (parallelize independent I/O), data flow (no ov
 
 ## Step 6 — Estimation
 
-{{doc:docs/estimation.md}}
+{{shared:estimation.md}}
 
 Risk × Intensity matrix → Story Points. **If SP > 5, propose a breakdown** before submitting the plan. A monolith Story is usually two stories pretending to be one.
 
@@ -113,4 +113,4 @@ Risk × Intensity matrix → Story Points. **If SP > 5, propose a breakdown** be
 - **Premature abstraction** — don't build a configuration system for values that will never change. Wait until you understand the actual variation before designing for it.
 - **Time-optimization bias** — write the tests. Use clear names. Parameterize instead of copy-paste. The human maintaining this code is mortal; you are not.
 
-{{doc:docs/TOOLS.md}}
+{{shared:TOOLS.md}}

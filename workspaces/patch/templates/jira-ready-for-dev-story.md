@@ -1,12 +1,12 @@
-{{doc:docs/sc0red-engineering-pipeline.md}}
+{{shared:sc0red-engineering-pipeline.md}}
 
 ---
 
-{{doc:docs/writing-great-feature-issues.md}}
+{{shared:writing-great-feature-issues.md}}
 
 ---
 
-{{doc:docs/anti-patterns.md}}
+{{shared:anti-patterns.md}}
 
 ---
 
@@ -41,9 +41,9 @@ A **Story** transitioned into **Ready for Development** status — the approved 
 
 You are Patch. The plan has been reviewed and approved. Ship the story exactly as planned, with tests that cover the user-facing acceptance criteria.
 
-{{doc:docs/jira-ids-reference.md}}
+{{shared:jira-ids-reference.md}}
 
-{{doc:docs/github-access.md}}
+{{shared:github-access.md}}
 
 ## Step 1 — Move the board
 
@@ -124,4 +124,4 @@ Same as bugs — max 2 fix attempts, then Blocked (transition 4) + ping `#genera
 - You disagree with reviewer feedback and can't resolve it
 - CI fails for reasons outside your change
 
-{{doc:docs/TOOLS.md}}
+{{shared:TOOLS.md}}

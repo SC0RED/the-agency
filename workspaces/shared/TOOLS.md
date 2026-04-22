@@ -1,6 +1,6 @@
-# TOOLS.md — Patch's Infrastructure (Linux / EC2)
+# TOOLS.md — Agent Infrastructure (Linux / EC2)
 
-You run on a dedicated c7i.large EC2 in `sc0red-dev` (us-east-1), reachable as `clawndom.tail708f46.ts.net` over Tailscale Funnel. You are on Linux (Ubuntu 24.04 LTS). This is your tool inventory.
+You run on a dedicated c7i.large EC2 in `sc0red-dev` (us-east-1), reachable as `clawndom.tail708f46.ts.net` over Tailscale Funnel. You are on Linux (Ubuntu 24.04 LTS). This is the tool inventory shared by every agent in the-agency.
 
 ## 1Password
 
@@ -19,7 +19,7 @@ op read "op://Engineering/Jira/hmac"
 - `Service Account Auth Token: Jira` (API Credential) — Atlassian API token for the `dump-jira-workflow.py` script
 - `Service Account Auth Token: The Agency` (API Credential) — your own service-account token (don't read it; it's already in env)
 - `Sonar Token` (Secure Note) — SonarCloud scans
-- `GitHub App: sc0red-patch` — see `docs/github-access.md`; the auth-flow doc owns this
+- `GitHub App: sc0red-patch` — see `shared/github-access.md`; the auth-flow doc owns this
 
 If you need a secret that isn't in `Engineering`, you can't get it. Ping Chris in `#general-engineering` to share the relevant item to the service account.
 
@@ -46,7 +46,7 @@ For prod investigation, override per-command: `aws --profile sc0red-prod logs ta
 
 ## Git + GitHub
 
-`git` and `gh` are installed. The SSH deploy key at `~/.ssh/id_ed25519` is read-only, scoped to `SC0RED/the-agency` only. For cloning or pushing to the three `SC0RED` private repos (`Platform-Frontend`, `Platform-Backend`, `assessment_engine`), see **`docs/github-access.md`** — that's the authoritative auth flow (GitHub App token via `scripts/generate-github-app-token.sh`).
+`git` and `gh` are installed. The SSH deploy key at `~/.ssh/id_ed25519` is read-only, scoped to `SC0RED/the-agency` only. For cloning or pushing to the three `SC0RED` private repos (`Platform-Frontend`, `Platform-Backend`, `assessment_engine`), see **`shared/github-access.md`** — that's the authoritative auth flow (GitHub App token via `scripts/generate-github-app-token.sh`).
 
 ## Language runtimes
 
@@ -96,7 +96,7 @@ Common tools:
 - `mcp__claude_ai_Atlassian__transitionJiraIssue` — apply transition
 - `mcp__claude_ai_Atlassian__editJiraIssue` — update fields
 
-For the actual IDs (cloud ID, transitions, custom fields, option IDs), see `docs/jira-ids-reference.md`.
+For the actual IDs (cloud ID, transitions, custom fields, option IDs), see `shared/jira-ids-reference.md`.
 
 ## Slack
 
@@ -112,11 +112,13 @@ For the actual IDs (cloud ID, transitions, custom fields, option IDs), see `docs
 
 `/tmp` is your scratch dir. `PrivateTmp=true` on the systemd unit — wiped on restart, isolated from other services. Clone target repos under `/tmp`, don't leave them anywhere else.
 
-## The Agency repo (this workspace)
+## The Agency repo (your workspace)
 
-`/home/clawndom/.clawndom/agents/SC0RED__the-agency/workspaces/patch/` — auto-pulled from `SC0RED/the-agency` every 5 minutes by the `clawndom-sync-agents.timer` systemd timer. Edits to your identity / templates / docs propagate without a Clawndom restart.
+Your workspace lives at `/home/clawndom/.clawndom/agents/SC0RED__the-agency/workspaces/<agent>/` (substitute your own agent directory name). The repo is auto-pulled every 5 minutes by the `clawndom-sync-agents.timer` systemd timer. Edits to your identity / templates / docs propagate without a Clawndom restart.
 
-To edit your own workspace: clone the repo locally, change a file, push to `main`. The sync timer picks it up. You don't have direct write access to the cloned copy on the host — and you shouldn't; sync overwrites.
+Shared material (engineering pipeline, anti-patterns, writing-great-*, this TOOLS file, etc.) lives at `workspaces/shared/` — one level up from your own docs. Templates inject shared content via `{{shared:<file>}}` and agent-specific content via `{{doc:docs/<file>}}`.
+
+To edit any workspace: clone the repo locally, change a file, push to `main`. The sync timer picks it up. You don't have direct write access to the cloned copy on the host — and you shouldn't; sync overwrites.
 
 ## Logging + observability
 

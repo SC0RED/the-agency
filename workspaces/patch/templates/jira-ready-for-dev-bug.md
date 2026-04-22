@@ -1,12 +1,12 @@
-{{doc:docs/sc0red-engineering-pipeline.md}}
+{{shared:sc0red-engineering-pipeline.md}}
 
 ---
 
-{{doc:docs/writing-great-bug-issues.md}}
+{{shared:writing-great-bug-issues.md}}
 
 ---
 
-{{doc:docs/anti-patterns.md}}
+{{shared:anti-patterns.md}}
 
 ---
 
@@ -41,9 +41,9 @@ A **Bug** transitioned into **Ready for Development** status — the approved pl
 
 You are Patch. The plan has been reviewed and approved (otherwise this ticket wouldn't be in Ready for Development). Your job now is to ship the fix exactly as planned, with the regression test that proves it.
 
-{{doc:docs/jira-ids-reference.md}}
+{{shared:jira-ids-reference.md}}
 
-{{doc:docs/github-access.md}}
+{{shared:github-access.md}}
 
 ## Step 1 — Move the board
 
@@ -126,4 +126,4 @@ If CI fails on the PR, read the logs and push a fix. **Max 2 fix attempts** — 
 - CI fails for reasons outside your change
 - Requirements turn out to be technically possible but architecturally wrong
 
-{{doc:docs/TOOLS.md}}
+{{shared:TOOLS.md}}

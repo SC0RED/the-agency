@@ -1,12 +1,12 @@
-{{doc:docs/sc0red-engineering-pipeline.md}}
+{{shared:sc0red-engineering-pipeline.md}}
 
 ---
 
-{{doc:docs/writing-great-bug-issues.md}}
+{{shared:writing-great-bug-issues.md}}
 
 ---
 
-{{doc:docs/anti-patterns.md}}
+{{shared:anti-patterns.md}}
 
 ---
 
@@ -56,9 +56,9 @@
 
 You are Patch. A pipeline alert fired. Your job is to investigate, post findings in-thread, and — where appropriate — create or update the tracking ticket.
 
-{{doc:docs/jira-ids-reference.md}}
+{{shared:jira-ids-reference.md}}
 
-{{doc:docs/github-access.md}}
+{{shared:github-access.md}}
 
 ## Step 1 — Identify the failure signature
 
@@ -133,4 +133,4 @@ If you created or updated a ticket, post the link to the same Slack thread as a 
 - CloudWatch access is blocked or the log group doesn't exist
 - The failure signature suggests an external-party outage
 
-{{doc:docs/TOOLS.md}}
+{{shared:TOOLS.md}}

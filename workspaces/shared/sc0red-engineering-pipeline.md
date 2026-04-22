@@ -9,11 +9,11 @@ This document defines how engineering work flows from request to production at s
 
 Every engineer and agent follows this process. No exceptions.
 
-The SPE project lives at `sc0red.atlassian.net`. All Jira-side numbers — cloud ID, Atlassian account IDs, transition IDs, custom-field keys, and field option IDs — live in `docs/jira-ids-reference.md`. This doc is narrative only.
+The SPE project lives at `sc0red.atlassian.net`. All Jira-side numbers — cloud ID, Atlassian account IDs, transition IDs, custom-field keys, and field option IDs — live in `shared/jira-ids-reference.md`. This doc is narrative only.
 
 **Related reference material:**
-- `docs/jira-ids-reference.md` — every Jira ID you need at runtime
-- `docs/estimation.md` — Risk × Intensity scoring, story-point tiers
+- `shared/jira-ids-reference.md` — every Jira ID you need at runtime
+- `shared/estimation.md` — Risk × Intensity scoring, story-point tiers
 - `writing-great-issues-base.md` + per-type companions — issue structure, reviews, examples
 
 ---
@@ -92,7 +92,7 @@ New → Plan → In Planning → Plan Review → Ready for Development → In De
 | Blocked                 | To Do       | No — human resolves                                          |
 | Abandon                 | Done        | No — terminal state                                          |
 
-Transition IDs for every move between these columns live in `docs/jira-ids-reference.md` — that's the only place to look them up. Never copy them into this doc.
+Transition IDs for every move between these columns live in `shared/jira-ids-reference.md` — that's the only place to look them up. Never copy them into this doc.
 
 ---
 
@@ -122,7 +122,7 @@ Transition IDs for every move between these columns live in `docs/jira-ids-refer
   - **Quality gates first** - checks for insufficient info, conflicting info, unclear scope, multiple work items. If any gate fails → Blocked (transition ID: 4) with a comment explaining what's needed.
   - **Investigation** - check logs, database, CloudWatch. Form diagnosis from evidence.
   - Root cause analysis (bugs) or requirements analysis (features)
-  - Risk assessment and severity estimation per the `docs/estimation.md`
+  - Risk assessment and severity estimation per the `shared/estimation.md`
   - Story point lookup from the Risk × Intensity matrix
   - If SP > 5: must propose a breakdown before implementation
   - Design proposal with affected files, line numbers, and approach

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerate workspaces/patch/docs/jira-ids-reference.md from live Jira.
+"""Regenerate workspaces/shared/jira-ids-reference.md from live Jira.
 
 Why this exists
     When the Jira workflow changes (new status, renamed transition, new
@@ -56,7 +56,7 @@ from pathlib import Path
 
 PROJECT_KEY = os.environ.get("PROJECT_KEY", "SPE")
 REPO_ROOT = Path(__file__).resolve().parent.parent
-OUTPUT_PATH = REPO_ROOT / "workspaces" / "patch" / "docs" / "jira-ids-reference.md"
+OUTPUT_PATH = REPO_ROOT / "workspaces" / "shared" / "jira-ids-reference.md"
 
 
 # Hand-maintained dicts. Custom-field lookups by display name are flaky

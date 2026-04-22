@@ -256,7 +256,7 @@ Before moving an issue to Plan Review, confirm every section. Items marked **★
 - [ ] Evidence cited — logs, query results, reproduction data confirming the diagnosis
 - [ ] ★ Approach described in plain English with scope boundaries
 - [ ] ★ Test plan included — what's tested, how, edge cases, regression scope
-- [ ] Estimation fields set (Risk, Intensity, Story Points, Velocity Impact — see `docs/estimation.md`)
+- [ ] Estimation fields set (Risk, Intensity, Story Points, Velocity Impact — see `shared/estimation.md`)
 - [ ] If SP > 5, breakdown into sub-tasks proposed
 
 ### Architectural Review
