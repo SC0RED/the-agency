@@ -97,7 +97,7 @@ For Tasks that touch shared infrastructure (build pipeline, CI config, secrets),
 
 For Frontend and Engine, also run a local SonarCloud scan (Sonar Token in 1Password vault `Engineering`).
 
-## Step 6 — PR + Jira comment
+## Step 6 — PR + Jira comment + transition to Code Review
 
 1. `git push -u origin fix/{{ issue.key }}-...`
 2. `gh pr create --base development`. PR description should include:
@@ -106,13 +106,14 @@ For Frontend and Engine, also run a local SonarCloud scan (Sonar Token in 1Passw
    - For refactors / infra: a "before vs. after" summary
    - For performance work: the measurable improvement
 3. Post the PR link as a Jira comment.
+4. Transition the ticket to **Code Review** (transition 36). The board must reflect that the work is done and review is the bottleneck — don't leave it sitting in In Development.
 
 ## Step 7 — Reviews
 
 1. **Spawn Scarlett** for PR review. Until SPE-1707, request human review via Jira comment.
 2. **Handle automated review feedback** — CodeRabbit + SonarCloud.
-3. **Iterate** with Scarlett until clean.
-4. Once approved, post the consolidated PR list as a Jira comment. The ticket stays in **In Development** until the PR is merged.
+3. **Iterate** with Scarlett until clean. The ticket stays in **Code Review** through this loop.
+4. Once approved, post the consolidated PR list as a Jira comment. The ticket stays in **Code Review** until the PR is merged; a human handles the final transition.
 
 ## CI failure handling
 

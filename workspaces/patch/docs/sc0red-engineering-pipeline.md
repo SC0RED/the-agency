@@ -166,20 +166,17 @@ Transition IDs for every move between these columns live in `docs/jira-ids-refer
   10. Spawns Scarlett subagent for PR review
 
 ### 5. In Development
-- **Scarlett reviews the PR:**
-  - Correctness - does it match the approved plan?
-  - Design quality - follows established patterns? Appropriate abstractions?
-  - Consistency - follows existing conventions in the codebase?
-  - Edge cases - stale refs, race conditions, missing null checks?
-  - Tests - adequate coverage?
-- **How:** Scarlett posts review comments on the **GitHub PR** (permanent record for humans), then sends verdict via `sessions_send`.
-- **Back-and-forth:** Patch addresses feedback, pushes updates, spawns another Scarlett review. Repeat until clean.
-- Once Scarlett approves → Patch transitions to **Code Review** (ID: 20), posts consolidated Jira comment listing all PRs
+- **What it means:** Patch is actively writing code — branch open, no PR yet.
+- **Tight loop:** implement approved plan → local validation (type check + tests per repo) → push → open PR.
+- As soon as the PR is open, Patch transitions to **Code Review** (transition 36). The board must not pretend the work is still in-progress when the bottleneck has moved to review.
 
 ### 6. Code Review
-- **Who transitions here:** Patch (after Scarlett approves)
-- **What it means:** PRs are open, Scarlett has approved, ready for human engineer review.
-- **Jira comment:** Patch posts a consolidated comment listing every open PR for this ticket.
+- **Who transitions here:** Patch (immediately after the PR is opened, before any review activity).
+- **What it means:** PR is open against `development`; review — automated and human — is the bottleneck.
+- **Jira comment:** Patch has posted the PR link. For multi-repo tickets, a single consolidated comment lists every PR.
+- **Review flow:**
+  - **Automated first:** CodeRabbit + SonarCloud land on the PR. Patch addresses each comment (accept or contest with reasoning), pushes fixes, re-runs. Ticket stays in Code Review through this.
+  - **Scarlett (once SPE-1707 ships):** correctness vs. plan, design quality, consistency, edge cases, test coverage. Until then, the Jira comment requests human plan-review stand-in.
 - **Human PR Review:**
   - Human engineer reviews from Jira (any human team member, not restricted to a specific person)
   - Focus on: business logic correctness, UX implications, judgment calls

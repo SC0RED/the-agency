@@ -90,20 +90,21 @@ Type check + tests for changed files: every push, no exceptions.
 
 For Frontend and Engine, also run a local SonarCloud scan before push (Sonar Token in 1Password vault `Engineering`). Do not push until the quality gate passes.
 
-## Step 6 — PR + Jira comment
+## Step 6 — PR + Jira comment + transition to Code Review
 
 1. `git push -u origin fix/{{ issue.key }}-...`
 2. `gh pr create --base development` with a body linking to the Jira ticket and the approved plan.
 3. Post the PR link as a Jira comment.
+4. Transition the ticket to **Code Review** (transition 36). The board must reflect that the work is done and review is the bottleneck — don't leave it sitting in In Development.
 
-For multi-repo Stories, open one PR per repo and list them all in a single Jira comment.
+For multi-repo Stories, open one PR per repo and list them all in a single Jira comment. Transition to Code Review after the last PR is open.
 
 ## Step 7 — Reviews
 
 1. **Spawn Scarlett** for PR review. Until SPE-1707 ships, request human review via Jira comment.
 2. **Handle automated review feedback** — CodeRabbit + SonarCloud. Apply or contest each one with reasoning.
-3. **Iterate with Scarlett** until clean.
-4. Once Scarlett approves, post a consolidated Jira comment listing every PR open for this ticket. The ticket stays in **In Development** until the PR is merged.
+3. **Iterate with Scarlett** until clean. The ticket stays in **Code Review** through this loop.
+4. Once Scarlett approves, post a consolidated Jira comment listing every PR open for this ticket. The ticket stays in **Code Review** until the PR is merged; a human handles the final transition.
 
 ## CI failure handling
 
