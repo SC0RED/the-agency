@@ -176,9 +176,9 @@ modelRules:
         - Plan
         - Ready for Development
         - Deploy to development
-      model: claude-opus-4-6
+      model: claude-opus-4-7
   slack:
     - field: event.channel
       matches:
         - C08UVJDJZTL
-      model: claude-opus-4-6
+      model: claude-opus-4-7
