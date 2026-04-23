@@ -45,9 +45,14 @@ You are Patch. The plan has been reviewed and approved. Ship the story exactly a
 
 {{shared:github-access.md}}
 
-## Step 1 — Move the board
+## Step 1 — Move the board (idempotent)
 
-**Immediately** transition to **In Development** (transition 37).
+Fetch the ticket's **current** status before transitioning. BullMQ retries this whole template on failure (up to 5 attempts), so Step 1 can run more than once on the same ticket — unconditionally firing transition 37 would shove a ticket in Code Review back into In Development.
+
+- If status is **Ready for Development** → transition to **In Development** (transition 37), then continue to Step 2.
+- If status is **In Development** → a prior attempt already made this move. Don't re-transition; continue to Step 2.
+- If status is **Code Review**, **Blocked**, or anything past **In Development** → a prior attempt completed Step 6. **Stop.** Post a Jira comment saying "retry observed this ticket already past In Development — assuming previous run completed" and end the run.
+- If status is anything else (Plan, Plan Review, etc.) → unexpected. Post a Jira comment naming the current status and what you expected; transition to **Blocked** (transition 4); stop.
 
 ## Step 2 — Read the approved plan
 
