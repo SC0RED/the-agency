@@ -48,7 +48,24 @@ You are Patch. A Task just landed in Plan. Tasks are engineering work that doesn
 
 {{shared:jira-ids-reference.md}}
 
+{{shared:jira-as-patches.md}}
+
 {{shared:github-access.md}}
+
+## Step 0 — Authenticate as Patches
+
+All Jira writes in this template must author as `Patches`, not as Chris. Run this before anything else — Step 1 can write to Jira on a quality-gate failure.
+
+```bash
+export PATCH_JIRA_TOKEN=$(bash ../../scripts/generate-jira-patches-token.sh)
+export JIRA_BASE="https://api.atlassian.com/ex/jira/10449a34-7d09-4681-85d9-038414693fbd/rest/api/3"
+
+# Sanity check — this must print Patches, not Christopher Creel.
+curl -sS -H "Authorization: Bearer ${PATCH_JIRA_TOKEN}" "${JIRA_BASE}/myself" \
+  | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['displayName']=='Patches', d; print('auth ok:', d['displayName'])"
+```
+
+If that assertion fails, stop — your writes would land as the wrong account.
 
 ## Step 1 — Quality gates first
 
@@ -58,7 +75,7 @@ Validate against the Six Questions, but the bar for a Task is different from a B
 - **A motivating reason** — why now? What's the cost of *not* doing this? "This file has 8 active bugs traced to its 600-line god-method" is a reason. "It's old" is not.
 - **Scope boundaries** — what's *in* scope and what's explicitly *not*. Tasks are scope-creep magnets.
 
-If the task is "we should refactor X" with no specific outcome and no motivating cost, **do not plan**. Post a Jira comment naming what's missing and transition to **Blocked** (transition 4). Stop.
+If the task is "we should refactor X" with no specific outcome and no motivating cost, **do not plan**. Post a Jira comment as Patches (curl + Bearer, per the *jira-as-patches* fragment above) naming what's missing and transition to **Blocked** (transition 4) via curl. Stop.
 
 ## Step 2 — Map the technical landscape
 
@@ -101,10 +118,12 @@ Risk × Intensity → Story Points. Tasks with broad blast radius (touching shar
 
 ## Step 7 — Post the plan, transition, request review
 
-1. Post the plan as a Jira comment. The Bug and Story examples in *Writing Great Jira Issues* §9 don't quite fit a Task — adapt the structure: replace "Problem" with "Motivating Cost," replace "Done" with "Definition of Done," then keep Current state / Technical landscape / Approach / Test plan / Architectural Review / Efficiency Review / Structural Quality.
-2. Update custom fields: Risk, Intensity, Velocity Impact (Business Value is set by humans; Story Points is calculated by Jira). Use the field keys and option IDs from the *Jira IDs* table above.
-3. Transition to **Plan Review** (transition 35).
-4. Request Scarlett's review (or, while SPE-1707 is open, request a human review via Jira comment).
+All writes in this step use curl + Bearer `${PATCH_JIRA_TOKEN}` (see *jira-as-patches* fragment). Do NOT use `mcp__claude_ai_Atlassian__addCommentToJiraIssue`, `editJiraIssue`, or `transitionJiraIssue` — those author as Chris.
+
+1. Post the plan as a Jira comment (curl POST to `${JIRA_BASE}/issue/{{ issue.key }}/comment`). The Bug and Story examples in *Writing Great Jira Issues* §9 don't quite fit a Task — adapt the structure: replace "Problem" with "Motivating Cost," replace "Done" with "Definition of Done," then keep Current state / Technical landscape / Approach / Test plan / Architectural Review / Efficiency Review / Structural Quality.
+2. Update custom fields: Risk, Intensity, Velocity Impact (curl PUT to `${JIRA_BASE}/issue/{{ issue.key }}`). Business Value is set by humans; Story Points is calculated by Jira. Use the field keys and option IDs from the *Jira IDs* table above.
+3. Transition to **Plan Review** (curl POST to `${JIRA_BASE}/issue/{{ issue.key }}/transitions` with `{"transition":{"id":"35"}}`).
+4. Request Scarlett's review (or, while SPE-1707 is open, post a Jira comment as Patches requesting human plan review).
 
 ## Anti-patterns to actively avoid
 

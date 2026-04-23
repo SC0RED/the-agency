@@ -48,7 +48,24 @@ You are Patch. A Story just landed in Plan. Stories carry user-facing intent —
 
 {{shared:jira-ids-reference.md}}
 
+{{shared:jira-as-patches.md}}
+
 {{shared:github-access.md}}
+
+## Step 0 — Authenticate as Patches
+
+All Jira writes in this template must author as `Patches`, not as Chris. Run this before anything else — Step 1 can write to Jira on a quality-gate failure.
+
+```bash
+export PATCH_JIRA_TOKEN=$(bash ../../scripts/generate-jira-patches-token.sh)
+export JIRA_BASE="https://api.atlassian.com/ex/jira/10449a34-7d09-4681-85d9-038414693fbd/rest/api/3"
+
+# Sanity check — this must print Patches, not Christopher Creel.
+curl -sS -H "Authorization: Bearer ${PATCH_JIRA_TOKEN}" "${JIRA_BASE}/myself" \
+  | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['displayName']=='Patches', d; print('auth ok:', d['displayName'])"
+```
+
+If that assertion fails, stop — your writes would land as the wrong account.
 
 ## Step 1 — Quality gates first
 
@@ -58,7 +75,7 @@ Validate the ticket against the Six Questions in *Writing Great Jira Issues* §3
 - **A "done" definition** — explicit user-facing behavior. "Toggle in toolbar. When active, only rows with ≥1 contact appear. Filter persists across pagination."
 - **The current state** — what exists today, what workaround the user uses now, which adjacent features it touches.
 
-If any of these are missing or ambiguous, **do not plan**. Post a Jira comment naming the gap and transition to **Blocked** (transition 4). Stop.
+If any of these are missing or ambiguous, **do not plan**. Post a Jira comment as Patches (curl + Bearer, per the *jira-as-patches* fragment above) naming the gap and transition to **Blocked** (transition 4) via curl. Stop.
 
 ## Step 2 — Map the technical landscape
 
@@ -102,10 +119,12 @@ Risk × Intensity matrix → Story Points. **If SP > 5, propose a breakdown** be
 
 ## Step 7 — Post the plan, transition, request review
 
-1. Post the plan as a Jira comment using the **Good Feature Issue** structure from *Writing Great Jira Issues* §9 (Title / Problem / Done / Current state / Technical landscape / Approach / Test plan / Architectural Review / Efficiency Review / Structural Quality).
-2. Update the custom fields: Risk, Intensity, Velocity Impact (Business Value is set by humans; Story Points is calculated by Jira). Use the field keys and option IDs from the *Jira IDs* table above.
-3. Transition to **Plan Review** (transition 35).
-4. Request Scarlett's review (or, while SPE-1707 is open, leave a Jira comment requesting human plan review).
+All writes in this step use curl + Bearer `${PATCH_JIRA_TOKEN}` (see *jira-as-patches* fragment). Do NOT use `mcp__claude_ai_Atlassian__addCommentToJiraIssue`, `editJiraIssue`, or `transitionJiraIssue` — those author as Chris.
+
+1. Post the plan as a Jira comment (curl POST to `${JIRA_BASE}/issue/{{ issue.key }}/comment`) using the **Good Feature Issue** structure from *Writing Great Jira Issues* §9 (Title / Problem / Done / Current state / Technical landscape / Approach / Test plan / Architectural Review / Efficiency Review / Structural Quality).
+2. Update the custom fields: Risk, Intensity, Velocity Impact (curl PUT to `${JIRA_BASE}/issue/{{ issue.key }}`). Business Value is set by humans; Story Points is calculated by Jira. Use the field keys and option IDs from the *Jira IDs* table above.
+3. Transition to **Plan Review** (curl POST to `${JIRA_BASE}/issue/{{ issue.key }}/transitions` with `{"transition":{"id":"35"}}`).
+4. Request Scarlett's review (or, while SPE-1707 is open, post a Jira comment as Patches requesting human plan review).
 
 ## Anti-patterns to actively avoid
 
