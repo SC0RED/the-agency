@@ -1,9 +1,14 @@
 # Patch's routing rules.
 #
 # All rules require webhookEvent == "jira:issue_updated" so comment-add and
-# other side-events don't trip them. Comment events fire with the issue's
-# current status snapshot but a different webhookEvent value — leaving them
-# out of all rules means routing:no-match, no run.
+# other side-events don't trip them.
+#
+# Status-keyed rules use `any_item` against `changelog.items` to match only
+# on TRANSITIONS INTO a status, not on state-while-in-status. Field edits
+# (Rank, Risk, Automation recomputes) made while a ticket is in Plan or
+# Ready for Development don't re-fire Patch — only the transition into the
+# status does. This was SPE-1774's fix; SPE-1733 was the incident that
+# surfaced the bug (5 jobs, 2 duplicate PRs).
 #
 # Rule order matters — first match wins. Only Bug / Story / Task are routed
 # for Plan and Ready for Development (those workflows carry type-specific
@@ -18,24 +23,39 @@ routing:
         condition:
           all_of:
             - equals: { field: webhookEvent, value: "jira:issue_updated" }
-            - equals: { field: issue.fields.status.name, value: Plan }
             - equals: { field: issue.fields.issuetype.name, value: Bug }
+            - any_item:
+                path: changelog.items
+                where:
+                  all_of:
+                    - equals: { field: field, value: status }
+                    - equals: { field: toString, value: Plan }
         messageTemplate: templates/jira-plan-bug.md
 
       - name: plan-story
         condition:
           all_of:
             - equals: { field: webhookEvent, value: "jira:issue_updated" }
-            - equals: { field: issue.fields.status.name, value: Plan }
             - equals: { field: issue.fields.issuetype.name, value: Story }
+            - any_item:
+                path: changelog.items
+                where:
+                  all_of:
+                    - equals: { field: field, value: status }
+                    - equals: { field: toString, value: Plan }
         messageTemplate: templates/jira-plan-story.md
 
       - name: plan-task
         condition:
           all_of:
             - equals: { field: webhookEvent, value: "jira:issue_updated" }
-            - equals: { field: issue.fields.status.name, value: Plan }
             - equals: { field: issue.fields.issuetype.name, value: Task }
+            - any_item:
+                path: changelog.items
+                where:
+                  all_of:
+                    - equals: { field: field, value: status }
+                    - equals: { field: toString, value: Plan }
         messageTemplate: templates/jira-plan-task.md
 
       # ── Ready for Development: per-type ──────────────────────────────
@@ -43,24 +63,39 @@ routing:
         condition:
           all_of:
             - equals: { field: webhookEvent, value: "jira:issue_updated" }
-            - equals: { field: issue.fields.status.name, value: Ready for Development }
             - equals: { field: issue.fields.issuetype.name, value: Bug }
+            - any_item:
+                path: changelog.items
+                where:
+                  all_of:
+                    - equals: { field: field, value: status }
+                    - equals: { field: toString, value: Ready for Development }
         messageTemplate: templates/jira-ready-for-dev-bug.md
 
       - name: ready-for-development-story
         condition:
           all_of:
             - equals: { field: webhookEvent, value: "jira:issue_updated" }
-            - equals: { field: issue.fields.status.name, value: Ready for Development }
             - equals: { field: issue.fields.issuetype.name, value: Story }
+            - any_item:
+                path: changelog.items
+                where:
+                  all_of:
+                    - equals: { field: field, value: status }
+                    - equals: { field: toString, value: Ready for Development }
         messageTemplate: templates/jira-ready-for-dev-story.md
 
       - name: ready-for-development-task
         condition:
           all_of:
             - equals: { field: webhookEvent, value: "jira:issue_updated" }
-            - equals: { field: issue.fields.status.name, value: Ready for Development }
             - equals: { field: issue.fields.issuetype.name, value: Task }
+            - any_item:
+                path: changelog.items
+                where:
+                  all_of:
+                    - equals: { field: field, value: status }
+                    - equals: { field: toString, value: Ready for Development }
         messageTemplate: templates/jira-ready-for-dev-task.md
 
   slack:
