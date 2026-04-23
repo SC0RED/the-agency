@@ -98,6 +98,54 @@ routing:
                     - equals: { field: toString, value: Ready for Development }
         messageTemplate: templates/jira-ready-for-dev-task.md
 
+      # ── Deploy to development: per-type ──────────────────────────────
+      # Fires when a human transitions the ticket into "Deploy to
+      # development" after Code Review — the human has approved the PR(s)
+      # and Patch's job is to merge + advance the ticket to "Deployed to
+      # Development".
+      # Same template for all three types — deploy is mechanical (merge PRs
+      # + transition), no per-type guidance like Plan/Ready-for-Development
+      # has. Three rules (not one any-of) to stay consistent with the
+      # existing per-type rule shape above.
+      - name: deploy-to-dev-bug
+        condition:
+          all_of:
+            - equals: { field: webhookEvent, value: "jira:issue_updated" }
+            - equals: { field: issue.fields.issuetype.name, value: Bug }
+            - any_item:
+                path: changelog.items
+                where:
+                  all_of:
+                    - equals: { field: field, value: status }
+                    - equals: { field: toString, value: Deploy to development }
+        messageTemplate: templates/jira-deploy-to-dev.md
+
+      - name: deploy-to-dev-story
+        condition:
+          all_of:
+            - equals: { field: webhookEvent, value: "jira:issue_updated" }
+            - equals: { field: issue.fields.issuetype.name, value: Story }
+            - any_item:
+                path: changelog.items
+                where:
+                  all_of:
+                    - equals: { field: field, value: status }
+                    - equals: { field: toString, value: Deploy to development }
+        messageTemplate: templates/jira-deploy-to-dev.md
+
+      - name: deploy-to-dev-task
+        condition:
+          all_of:
+            - equals: { field: webhookEvent, value: "jira:issue_updated" }
+            - equals: { field: issue.fields.issuetype.name, value: Task }
+            - any_item:
+                path: changelog.items
+                where:
+                  all_of:
+                    - equals: { field: field, value: status }
+                    - equals: { field: toString, value: Deploy to development }
+        messageTemplate: templates/jira-deploy-to-dev.md
+
   slack:
     rules:
       - name: alerts-production
@@ -127,6 +175,7 @@ modelRules:
       matches:
         - Plan
         - Ready for Development
+        - Deploy to development
       model: claude-opus-4-6
   slack:
     - field: event.channel
