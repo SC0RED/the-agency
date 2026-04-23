@@ -2,34 +2,45 @@
 
 Lookup card for Jira transition IDs, custom-field keys, and field option IDs when calling Atlassian MCP tools. Not a workflow narrative — for what each status *means*, see `sc0red-engineering-pipeline.md`.
 
-Verified from live Jira on 2026-04-20. If a `transitionJiraIssue` call fails with `400 Transition is not valid` or lands in an unexpected status, the Jira workflow changed — tell a human, don't guess.
+Verified from live Jira on 2026-04-23. If a transition call fails with `400 Transition is not valid` or lands in an unexpected status, the Jira workflow changed — tell a human, don't guess.
 
 ## Transitions
 
-Pass these as `transition.id` to `mcp__claude_ai_Atlassian__transitionJiraIssue`.
+All Patch transitions are curl POSTs to `${JIRA_BASE}/issue/<KEY>/transitions` with body `{"transition":{"id":"<id>"}}` and `Authorization: Bearer ${PATCH_JIRA_TOKEN}` — see the *jira-as-patches* fragment. Never call `mcp__claude_ai_Atlassian__transitionJiraIssue` (authors as Chris).
 
-| Destination             | transition.id |
-|-------------------------|--------------:|
-| Triage                  | 2             |
-| Blocked                 | 4             |
-| Verified in Testing     | 5             |
-| Abandon                 | 9             |
-| New                     | 11            |
-| Verified in Development | 12            |
-| Hotfix                  | 13            |
-| Ready for Development   | 15            |
-| Plan                    | 16            |
-| Backlog                 | 30            |
-| Deployed to Production  | 31            |
-| Deployed to Development | 32            |
-| Deployed to Testing     | 33            |
-| Plan Review             | 35            |
-| Code Review             | 36            |
-| In Development          | 37            |
+Named transitions (workflow-correct arrows — prefer these over the generic global ones):
+
+| id | Name           | From → To                         |
+|---:|----------------|-----------------------------------|
+| 14 | Start Planning | Plan → In Planning                |
+|  3 | Plan Complete  | In Planning → Plan Review         |
+| 15 | Plan Approved  | Plan Review → Ready for Development |
+|  6 | Replan         | Plan Review → Plan                |
+| 10 | Deploy         | Deploy to development → Deployed to Development |
+
+Global / `Manual` transitions (available from most statuses — use only when a named arrow above doesn't apply):
+
+| Destination             | id |
+|-------------------------|---:|
+| Triage                  | 2  |
+| Blocked                 | 4  |
+| Verified in Testing     | 5  |
+| Abandon                 | 9  |
+| New                     | 11 |
+| Verified in Development | 12 |
+| Hotfix                  | 13 |
+| Plan                    | 16 |
+| Backlog                 | 30 |
+| Deployed to Production  | 31 |
+| Deployed to Development | 32 |
+| Deployed to Testing     | 33 |
+| Plan Review             | 35 |
+| Code Review             | 36 |
+| In Development          | 37 |
 
 ## Custom fields 
 
-Pass these as field keys to `mcp__claude_ai_Atlassian__editJiraIssue`.
+Patch sets these with a curl PUT to `${JIRA_BASE}/issue/<KEY>` with body `{"fields":{"<key>":<value>}}` and `Authorization: Bearer ${PATCH_JIRA_TOKEN}`. Never call `mcp__claude_ai_Atlassian__editJiraIssue` (authors as Chris).
 
 | Field           | key                   |
 |-----------------|-----------------------|
@@ -39,7 +50,8 @@ Pass these as field keys to `mcp__claude_ai_Atlassian__editJiraIssue`.
 | Story Points    | `customfield_10016`   |
 | Velocity Impact | `customfield_10064`   |
 
-## Field option IDs (
+## Field option IDs
+
 Pass these as `{"id": "..."}` values when setting the custom fields above.
 
 **Risk** (`customfield_10038`):
@@ -69,6 +81,8 @@ Pass these as `{"id": "..."}` values when setting the custom fields above.
 | Strong Positive | 10043 |
 | Negative        | 10044 |
 
-## Atlassian MCP arguments
+## Atlassian identifiers
 
-Every Atlassian MCP call needs `cloudId: "10449a34-7d09-4681-85d9-038414693fbd"`. Project key is `SPE`. Patch's own Atlassian account ID is `712020:2fbdb38e-012b-43a6-b286-4339c24baabc`.
+- **Cloud ID** (for the `api.atlassian.com/ex/jira/<cloudId>/rest/api/3/...` gateway used by the Patches Bearer path, and for `cloudId` on the MCP-read tools): `10449a34-7d09-4681-85d9-038414693fbd`
+- **Project key**: `SPE`
+- **Patches account ID** (current assignee marker for Patch-owned tickets): `712020:2fbdb38e-012b-43a6-b286-4339c24baabc`
