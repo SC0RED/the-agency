@@ -67,7 +67,22 @@ curl -sS -H "Authorization: Bearer ${PATCH_JIRA_TOKEN}" "${JIRA_BASE}/myself" \
 
 If that assertion fails, stop — your writes would land as the wrong account.
 
-## Step 1 — Quality gates first
+## Step 1 — Move to In Planning (idempotent)
+
+The `In Planning` status is how humans see on the dashboard that Patch has picked up the ticket and is actively planning. Same pattern as `In Development` during Ready-for-Dev. Fetch the ticket's **current** status before transitioning — BullMQ retries this whole template up to 5 times, so Step 1 can run more than once on the same ticket.
+
+- If status is **Plan** → transition to **In Planning** (transition **14**, `Start Planning`), then continue to Step 2:
+  ```bash
+  curl -sS -X POST "${JIRA_BASE}/issue/{{ issue.key }}/transitions" \
+    -H "Authorization: Bearer ${PATCH_JIRA_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -d '{"transition":{"id":"14"}}'
+  ```
+- If status is **In Planning** → a prior attempt already made this move. Don't re-transition; continue to Step 2.
+- If status is **Plan Review**, **Blocked**, **Ready for Development**, or anything past **In Planning** → a prior attempt completed Step 8. **Stop.** Post a Jira comment as Patches saying "retry observed this ticket already past In Planning — assuming previous run completed" and end the run.
+- If status is anything else (New, Triage, etc.) → unexpected. Post a Jira comment naming the current status and what you expected; transition to **Blocked** (transition 4); stop.
+
+## Step 2 — Quality gates first
 
 Validate the ticket against the Six Questions in *Writing Great Jira Issues* §3. For a Story, you need:
 
@@ -77,7 +92,7 @@ Validate the ticket against the Six Questions in *Writing Great Jira Issues* §3
 
 If any of these are missing or ambiguous, **do not plan**. Post a Jira comment as Patches (curl + Bearer, per the *jira-as-patches* fragment above) naming the gap and transition to **Blocked** (transition 4) via curl. Stop.
 
-## Step 2 — Map the technical landscape
+## Step 3 — Map the technical landscape
 
 Stories don't have a "root cause" — they have an architecture they need to fit into.
 
@@ -90,7 +105,7 @@ Stories don't have a "root cause" — they have an architecture they need to fit
 
 Use `grep` and `git log` aggressively. Name the files and line numbers in your plan.
 
-## Step 3 — Design proposal
+## Step 4 — Design proposal
 
 Plain English (not code), per *Writing Great Jira Issues* §3.5:
 - Which files change and which are new
@@ -98,7 +113,7 @@ Plain English (not code), per *Writing Great Jira Issues* §3.5:
 - What it explicitly does **not** do (scope boundaries)
 - For features: smallest shippable increment. Can this be broken into phases?
 
-## Step 4 — Architectural review
+## Step 5 — Architectural review
 
 Required for Standard (2-5 SP) and Complex (8+ SP). Cover:
 
@@ -107,23 +122,23 @@ Required for Standard (2-5 SP) and Complex (8+ SP). Cover:
 - **Fix vs. Design** — for stories this is "expedient implementation vs. right design." Name both. If they differ, justify.
 - **What Stays Untouched** — list adjacent code you're explicitly *not* changing and why.
 
-## Step 5 — Efficiency review and structural quality
+## Step 6 — Efficiency review and structural quality
 
 Per the protocol — concurrency (parallelize independent I/O), data flow (no over-fetching, no N+1), algorithm choice, caching strategy. Plus structural quality (god files, missing abstractions, implicit coupling). "N/A — [reason]" is fine after consideration; never as avoidance.
 
-## Step 6 — Estimation
+## Step 7 — Estimation
 
 {{shared:estimation.md}}
 
 Risk × Intensity matrix → Story Points. **If SP > 5, propose a breakdown** before submitting the plan. A monolith Story is usually two stories pretending to be one.
 
-## Step 7 — Post the plan, transition, request review
+## Step 8 — Post the plan, transition, request review
 
 All writes in this step use curl + Bearer `${PATCH_JIRA_TOKEN}` (see *jira-as-patches* fragment). Do NOT use `mcp__claude_ai_Atlassian__addCommentToJiraIssue`, `editJiraIssue`, or `transitionJiraIssue` — those author as Chris.
 
 1. Post the plan as a Jira comment (curl POST to `${JIRA_BASE}/issue/{{ issue.key }}/comment`) using the **Good Feature Issue** structure from *Writing Great Jira Issues* §9 (Title / Problem / Done / Current state / Technical landscape / Approach / Test plan / Architectural Review / Efficiency Review / Structural Quality).
 2. Update the custom fields: Risk, Intensity, Velocity Impact (curl PUT to `${JIRA_BASE}/issue/{{ issue.key }}`). Business Value is set by humans; Story Points is calculated by Jira. Use the field keys and option IDs from the *Jira IDs* table above.
-3. Transition to **Plan Review** (curl POST to `${JIRA_BASE}/issue/{{ issue.key }}/transitions` with `{"transition":{"id":"35"}}`).
+3. Transition to **Plan Review** via transition **3** (`Plan Complete` — the workflow-named In Planning → Plan Review arrow, not the generic global `Manual` id 35): `curl POST ${JIRA_BASE}/issue/{{ issue.key }}/transitions` with `{"transition":{"id":"3"}}`.
 4. Request Scarlett's review (or, while SPE-1707 is open, post a Jira comment as Patches requesting human plan review).
 
 ## Anti-patterns to actively avoid
