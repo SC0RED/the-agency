@@ -111,15 +111,11 @@ If the Task is genuinely untestable in any meaningful sense, say so explicitly i
 
 Per *sc0red-engineering-pipeline* §5.3:
 
-| Repo | Command | Notes |
-| --- | --- | --- |
-| Platform-Frontend | `npx ng test --watch=false && npx tsc --noEmit` | Unit tests + type check |
-| Platform-Backend | `npm test` | Unit tests |
-| assessment_engine | `make check-all` | Full lint + type check + tests |
+Run `make check-all` in the repo root. All three repos expose this uniform target — the underlying commands are repo-appropriate (Frontend: tests + typecheck + Sonar; Backend: tests; Engine: lint + typecheck + tests + security + naming + Sonar) but the entry point is the same everywhere.
 
 For Tasks that touch shared infrastructure (build pipeline, CI config, secrets), the blast radius is wider than the diff. Run the full validation suite — don't shortcut.
 
-For Frontend and Engine, also run a local SonarCloud scan (Sonar Token in 1Password vault `Engineering`).
+`make check-all` on Frontend and Engine includes a SonarCloud scan — pull `SONAR_TOKEN` from 1Password (vault `Engineering`, item `Sonar Token`) and export it before running.
 
 ## Step 6 — PR + Jira comment + transition to Code Review
 

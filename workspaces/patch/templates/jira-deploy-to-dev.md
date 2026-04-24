@@ -106,17 +106,11 @@ done
 
 ## Step 5 — Local validation (belt-and-braces)
 
-CI is already green from Step 4, but the engineering pipeline requires a local validation pass before merge for the repos that have it wired up:
+CI is already green from Step 4, but the engineering pipeline requires a local validation pass before merge:
 
-| Repo | Command | Notes |
-| --- | --- | --- |
-| Platform-Frontend | `npx ng test --watch=false && npx tsc --noEmit` | Unit tests + type check |
-| Platform-Backend | `npm test` | Unit tests |
-| assessment_engine | `make check-all` | Full lint + type check + tests + sonar |
+Run `make check-all` in each repo's root. All three repos expose this uniform target — the underlying commands are repo-appropriate but the entry point is the same. On Frontend and Engine, export `SONAR_TOKEN` (1Password → `Engineering` → `Sonar Token`) first so the SonarCloud target can run.
 
-Refresh each repo (see *GitHub access* above), check out the PR branch, run the command. A mismatch between CI-green and local-red is a signal the PR is depending on CI-only state — **stop** and escalate to Blocked.
-
-(Today only `assessment_engine` has a unified `check-all`. Follow-up work is tracked to add equivalent targets to the Node/Angular repos. Until then, run the per-repo command above.)
+Refresh each repo (see *GitHub access* above), check out the PR branch, run `make check-all`. A mismatch between CI-green and local-red is a signal the PR is depending on CI-only state — **stop** and escalate to Blocked.
 
 ## Step 6 — Merge the PRs
 
