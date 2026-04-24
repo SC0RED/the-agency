@@ -55,7 +55,9 @@ Fetch the ticket's **current** status before doing anything. BullMQ retries this
 - If status is **Blocked** → a prior attempt escalated. **Stop.** Do not re-run.
 - Anything else → unexpected (something moved the ticket mid-retry). Post a Jira comment naming the current status and what you expected; transition to **Blocked** (transition 4); stop.
 
-## Step 2 — Authenticate as Patches
+## Step 2 — Authenticate as Patches and open a per-ticket scratch dir
+
+Tokens first:
 
 ```bash
 export PATCH_JIRA_TOKEN=$(bash ../../scripts/generate-jira-patches-token.sh)
@@ -69,12 +71,21 @@ curl -sS -H "Authorization: Bearer ${PATCH_JIRA_TOKEN}" "${JIRA_BASE}/myself" \
 
 If that assertion fails, stop — your writes would land as the wrong account.
 
+Then open a **per-ticket scratch directory**. `/tmp` is `PrivateTmp=true` on the clawndom systemd unit — wiped only on service restart, not between hook-triggered subprocesses. Unqualified paths like `/tmp/pr-list.json` collide across tickets and have already caused one ticket (SPE-1719) to short-circuit after reading a prior ticket's staged ADF comment. Fresh scratch each run:
+
+```bash
+export KEY={{ issue.key }}
+export SCRATCH=/tmp/patch-${KEY}
+rm -rf "${SCRATCH}" && mkdir -p "${SCRATCH}"
+```
+
+All downstream files (`pr-list.json`, `deploy-comment.json`, and anything else you stage) live under `${SCRATCH}/`. Never write to `/tmp/*.json` directly.
+
 ## Step 3 — Find the PRs for this ticket
 
 Search each of the three repos for open PRs whose title contains this ticket key. The convention is `fix(SPE-XXXX): …`, so the key is always in the title.
 
 ```bash
-KEY={{ issue.key }}
 for REPO in assessment_engine Platform-Backend Platform-Frontend; do
   echo "=== ${REPO} ==="
   gh pr list --repo SC0RED/${REPO} \
@@ -86,12 +97,12 @@ done
 
 Expected: one PR per repo that was changed by this fix, all targeting `development`. If zero PRs match across all three repos, **stop** — transition to **Blocked** with a comment saying "no open PRs found matching ${KEY}; can't deploy what doesn't exist."
 
-Write the found PR list to `/tmp/pr-list.json` for downstream steps. Keep repo name, PR number, and URL.
+Write the found PR list to `${SCRATCH}/pr-list.json` for downstream steps. Keep repo name, PR number, and URL.
 
 ## Step 4 — Confirm CI is green on every PR
 
 ```bash
-for row in $(cat /tmp/pr-list.json); do
+for row in $(cat "${SCRATCH}/pr-list.json"); do
   REPO=<repo from row>
   NUM=<pr number from row>
   gh pr checks "${NUM}" --repo SC0RED/${REPO} --watch --interval 30
@@ -123,7 +134,7 @@ Refresh each repo (see *GitHub access* above), check out the PR branch, run the 
 Merge order matters: engine-first so Frontend/Backend PRs can reference the new engine behavior if they integration-test against a deployed dev engine.
 
 ```bash
-# For each PR in /tmp/pr-list.json, in repo order [assessment_engine, Platform-Backend, Platform-Frontend]:
+# For each PR in ${SCRATCH}/pr-list.json, in repo order [assessment_engine, Platform-Backend, Platform-Frontend]:
 gh pr merge "${NUM}" --repo SC0RED/${REPO} --squash --delete-branch
 ```
 
@@ -136,12 +147,12 @@ If a merge fails for a *non-idempotent* reason (branch out of date, conflict app
 Compose one comment summarising what shipped. Include each merged PR's URL and the merge commit SHA.
 
 ```bash
-# Build ADF body in /tmp/deploy-comment.json (one paragraph with heading + bullet list of PRs).
+# Build ADF body in ${SCRATCH}/deploy-comment.json (one paragraph with heading + bullet list of PRs).
 # Then:
 curl -sS -X POST "${JIRA_BASE}/issue/${KEY}/comment" \
   -H "Authorization: Bearer ${PATCH_JIRA_TOKEN}" \
   -H "Content-Type: application/json" \
-  -d @/tmp/deploy-comment.json
+  -d @"${SCRATCH}/deploy-comment.json"
 ```
 
 Heading: `🩹 Deployed to development — {{ issue.key }}`. Body: the list of merged PRs + a note that the development environment auto-deploys on push.
