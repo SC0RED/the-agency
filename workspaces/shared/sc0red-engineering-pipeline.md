@@ -329,13 +329,7 @@ Individual tickets merge to `development` via per-ticket PRs. Promotions between
 
 ## Build Validation (by repo)
 
-Before opening a PR, the build must not be broken. What that means varies:
-
-| Repo | Validation Command | What It Checks |
-|------|-------------------|----------------|
-| Platform-Frontend | `tsc --noEmit` + test suite | Type safety + unit tests |
-| Platform-Backend | `pytest` | Unit + integration tests |
-| assessment_engine | `make check-all` | Full lint, type check, and test suite |
+Before opening a PR, the build must not be broken. Every repo exposes the same entry point: `make check-all` in the repo root. The underlying commands are repo-appropriate (Frontend: tests + typecheck + Sonar; Backend: tests; Engine: lint + typecheck + tests + security + naming + Sonar) but the entry point is uniform.
 
 If the command fails on code you didn't touch, **that's still our problem.** File a ticket immediately, fix it if you can, and note it in your PR. Nothing in this codebase is someone else's job.
 
@@ -421,11 +415,7 @@ Agents use **Claude Code** (via `sessions_spawn` with `runtime: "acp"`) as the i
 
 **Never push code that hasn't been validated locally.** CI is not your first line of defense - it's your last.
 
-| Repo | Command | What to check |
-|------|---------|---------------|
-| Platform-Frontend | `npx ng test --watch=false` + `npx tsc --noEmit` | Unit tests + type check |
-| Platform-Backend | `npm test` | Unit tests |
-| assessment_engine | `make check-all` | Full lint, type check, and test suite |
+Run `make check-all` in the repo root. All three repos expose this uniform target — the underlying commands are repo-appropriate but the entry point is the same everywhere. On Frontend and Engine, export `SONAR_TOKEN` from 1Password (vault `Engineering`, item `Sonar Token`) before running so the SonarCloud target can execute.
 
 **Rules:**
 - Type check: **every push, no exceptions**

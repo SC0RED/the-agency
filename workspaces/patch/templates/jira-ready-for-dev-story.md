@@ -104,15 +104,11 @@ For a Story, the tests need to verify the **user-facing behavior** in the "Done"
 
 Per *sc0red-engineering-pipeline* §5.3:
 
-| Repo | Command | Notes |
-| --- | --- | --- |
-| Platform-Frontend | `npx ng test --watch=false && npx tsc --noEmit` | Unit tests + type check |
-| Platform-Backend | `npm test` | Unit tests |
-| assessment_engine | `make check-all` | Full lint + type check + tests |
+Run `make check-all` in the repo root. All three repos expose this uniform target — the underlying commands are repo-appropriate (Frontend: tests + typecheck + Sonar; Backend: tests; Engine: lint + typecheck + tests + security + naming + Sonar) but the entry point is the same everywhere.
 
 Type check + tests for changed files: every push, no exceptions.
 
-For Frontend and Engine, also run a local SonarCloud scan before push (Sonar Token in 1Password vault `Engineering`). Do not push until the quality gate passes.
+`make check-all` on Frontend and Engine includes a SonarCloud scan — pull `SONAR_TOKEN` from 1Password (vault `Engineering`, item `Sonar Token`) and export it before running. Do not push until the quality gate passes.
 
 ## Step 6 — PR + Jira comment + transition to Code Review
 
