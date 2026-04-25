@@ -146,27 +146,33 @@ routing:
                     - equals: { field: toString, value: Deploy to development }
         messageTemplate: templates/jira-deploy-to-dev.md
 
+  # Slack rules: channel-id → environment mapping verified against the
+  # Slack API on 2026-04-25. Previous version of this file had all three
+  # rules pointed at the wrong channel, so Patch was labeling production
+  # failures as "development" etc. on every fire — same template,
+  # mislabeled output. Don't trust the rule name without checking the
+  # channel id.
   slack:
     rules:
       - name: alerts-production
         condition:
           equals:
             field: event.channel
-            value: C08V6MV0VNV
-        messageTemplate: templates/slack-alert.md
-
-      - name: alerts-development
-        condition:
-          equals:
-            field: event.channel
-            value: C08UWMQJFBN
+            value: C08UVJDJZTL  # #alerts-platform-failure-production
         messageTemplate: templates/slack-alert.md
 
       - name: alerts-testing
         condition:
           equals:
             field: event.channel
-            value: C08UVJDJZTL
+            value: C08UWMQJFBN  # #alerts-platform-failure-testing
+        messageTemplate: templates/slack-alert.md
+
+      - name: alerts-development
+        condition:
+          equals:
+            field: event.channel
+            value: C08V6MV0VNV  # #alerts-platform-failure-development
         messageTemplate: templates/slack-alert.md
 
 modelRules:
@@ -178,7 +184,11 @@ modelRules:
         - Deploy to development
       model: claude-opus-4-7
   slack:
+    # Production failures get the smartest model — those are the ones
+    # where misdiagnosis is most expensive. Dev/test stay on the runner
+    # default. (Pre-fix this matched C08UVJDJZTL but was labeled
+    # "testing" — the channel id was right, the label was wrong.)
     - field: event.channel
       matches:
-        - C08UVJDJZTL
+        - C08UVJDJZTL  # #alerts-platform-failure-production
       model: claude-opus-4-7
