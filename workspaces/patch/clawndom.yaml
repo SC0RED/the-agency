@@ -152,27 +152,49 @@ routing:
   # failures as "development" etc. on every fire — same template,
   # mislabeled output. Don't trust the rule name without checking the
   # channel id.
+  #
+  # Each rule has three predicates beyond the channel match:
+  #   - exists(event.bot_id) — only fire on bot-authored messages.
+  #     Alerts come from the alerting bot (or any monitor bot integration);
+  #     a human typing "hi" in the channel has no bot_id and is filtered.
+  #   - not(equals(event.bot_id, "B0ALY9FMKE2")) — never fire on our own
+  #     `patch` bot's replies. Patch posts in-thread diagnoses; without
+  #     this filter, that reply is itself a message.channels event and
+  #     Patch would fire on its own output → infinite self-loop until
+  #     Slack rate-limits or Claude CLI hits its turn cap.
   slack:
     rules:
       - name: alerts-production
         condition:
-          equals:
-            field: event.channel
-            value: C08UVJDJZTL  # #alerts-platform-failure-production
+          all_of:
+            - equals:
+                field: event.channel
+                value: C08UVJDJZTL  # #alerts-platform-failure-production
+            - exists: { field: event.bot_id }
+            - not:
+                equals: { field: event.bot_id, value: B0ALY9FMKE2 }
         messageTemplate: templates/slack-alert.md
 
       - name: alerts-testing
         condition:
-          equals:
-            field: event.channel
-            value: C08UWMQJFBN  # #alerts-platform-failure-testing
+          all_of:
+            - equals:
+                field: event.channel
+                value: C08UWMQJFBN  # #alerts-platform-failure-testing
+            - exists: { field: event.bot_id }
+            - not:
+                equals: { field: event.bot_id, value: B0ALY9FMKE2 }
         messageTemplate: templates/slack-alert.md
 
       - name: alerts-development
         condition:
-          equals:
-            field: event.channel
-            value: C08V6MV0VNV  # #alerts-platform-failure-development
+          all_of:
+            - equals:
+                field: event.channel
+                value: C08V6MV0VNV  # #alerts-platform-failure-development
+            - exists: { field: event.bot_id }
+            - not:
+                equals: { field: event.bot_id, value: B0ALY9FMKE2 }
         messageTemplate: templates/slack-alert.md
 
 modelRules:
