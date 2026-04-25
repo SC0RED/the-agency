@@ -1,0 +1,33 @@
+# Scarlett's routing rules.
+#
+# Scarlett is a reviewer agent. She never receives Jira or Slack webhooks
+# directly — Patch dispatches her via `POST /api/tasks` with a `taskType`
+# of `plan-review` or `code-review`. Clawndom routes those internal tasks
+# through `routing.internal.<taskType>.rules` (see `INTERNAL_PROVIDER` in
+# `src/services/task-worker.service.ts`).
+#
+# Conditions evaluate against a payload of the shape
+# `{ taskType, ...context }` where `context` is whatever Patch passed in
+# the `/api/tasks` body. So a rule like `equals: { field: taskType, value: plan-review }`
+# matches any task whose `taskType` is `plan-review`, regardless of context.
+#
+# No webhook side-effects, no `any_item` against `changelog.items` — those
+# patterns belong to webhook-driven agents like Patch. Scarlett is purely
+# request/response.
+routing:
+  internal:
+    rules:
+      - name: plan-review
+        condition:
+          equals: { field: taskType, value: plan-review }
+        messageTemplate: templates/review-plan.md
+
+      - name: code-review
+        condition:
+          equals: { field: taskType, value: code-review }
+        messageTemplate: templates/review-pr.md
+
+# No `modelRules` block: internal tasks bypass model selection in
+# `task-worker.service.ts` (it passes `model: undefined` to the runner).
+# Scarlett runs on whatever the runner's default model is until Clawndom
+# adds per-agent model config for internal tasks.
