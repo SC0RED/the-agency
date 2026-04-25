@@ -32,6 +32,19 @@ routing:
           equals: { field: taskType, value: daily-handoff }
         messageTemplate: templates/daily-handoff.md
 
+  # Scheduled work — fired by Clawndom's native scheduler
+  # (SPE-1827) at the cron pattern below. Lands on the same per-agent
+  # task queue as routing.internal dispatches; the task-worker
+  # discriminates and runs the same template either way. The
+  # routing.internal.daily-handoff rule above stays in place so manual
+  # /api/tasks dispatches (e.g. for testing) still work.
+  schedule:
+    rules:
+      - name: daily-handoff
+        cron: "45 7 * * 1-5"        # weekdays
+        timezone: "America/New_York"
+        messageTemplate: templates/daily-handoff.md
+
 # No `modelRules` block: internal tasks bypass model selection in
 # `task-worker.service.ts` (it passes `model: undefined` to the runner).
 # Scarlett runs on whatever the runner's default model is until Clawndom
