@@ -27,6 +27,11 @@ routing:
           equals: { field: taskType, value: code-review }
         messageTemplate: templates/review-pr.md
 
+      - name: daily-handoff
+        condition:
+          equals: { field: taskType, value: daily-handoff }
+        messageTemplate: templates/daily-handoff.md
+
 # No `modelRules` block: internal tasks bypass model selection in
 # `task-worker.service.ts` (it passes `model: undefined` to the runner).
 # Scarlett runs on whatever the runner's default model is until Clawndom
