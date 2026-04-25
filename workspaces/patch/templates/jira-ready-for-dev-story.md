@@ -123,10 +123,24 @@ For multi-repo Stories, open one PR per repo and list them all in a single Jira 
 
 ## Step 7 — Reviews
 
-1. **Spawn Scarlett** for PR review. Until SPE-1707 ships, post a Jira comment as Patches requesting human review.
+1. **Dispatch a `code-review` task to Scarlett.** SPE-1707 shipped — this is fire-and-forget. Scarlett posts line-level PR comments + a verdict comment in Jira authored as Scarlett, asynchronously. You don't wait or iterate.
+   ```bash
+   # ${PR_URLS_JSON} is the JSON-encoded array of PR URLs you opened in Step 6.
+   curl -sS -X POST "http://localhost:8793/api/tasks" \
+     -H "Authorization: Bearer ${CLAWNDOM_AGENT_TOKEN}" \
+     -H "Content-Type: application/json" \
+     -d "$(jq -n \
+            --arg key '{{ issue.key }}' \
+            --arg title '{{ issue.fields.summary }}' \
+            --arg type '{{ issue.fields.issuetype.name }}' \
+            --argjson urls "${PR_URLS_JSON}" \
+            '{agent:"scarlett", taskType:"code-review", context:{ticketKey:$key, ticketTitle:$title, ticketType:$type, prUrls:$urls}}')"
+   ```
+   If the dispatch returns non-2xx, post a single fallback Jira comment as Patches noting Scarlett dispatch failed — don't retry, don't block on it.
 2. **Handle automated review feedback** — CodeRabbit + SonarCloud. Apply or contest each one with reasoning.
-3. **Iterate with Scarlett** until clean. The ticket stays in **Code Review** through this loop.
-4. Once Scarlett approves, post a consolidated Jira comment as Patches listing every PR open for this ticket. The ticket stays in **Code Review** until the PR is merged; a human handles the final transition.
+3. Post a consolidated Jira comment as Patches listing every PR open for this ticket. The ticket stays in **Code Review** until a human merges; a human handles the final transition.
+
+(MVP scope: Patch dispatches once and ends. Scarlett's verdict is additive feedback for the human reviewer, not a gate.)
 
 ## CI failure handling
 

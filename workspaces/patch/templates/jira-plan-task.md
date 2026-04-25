@@ -135,10 +135,22 @@ Risk × Intensity → Story Points. Tasks with broad blast radius (touching shar
 
 All writes in this step use curl + Bearer `${PATCH_JIRA_TOKEN}` (see *jira-as-patches* fragment). Do NOT use `mcp__claude_ai_Atlassian__addCommentToJiraIssue`, `editJiraIssue`, or `transitionJiraIssue` — those author as Chris.
 
-1. Post the plan as a Jira comment (curl POST to `${JIRA_BASE}/issue/{{ issue.key }}/comment`). The Bug and Story examples in *Writing Great Jira Issues* §9 don't quite fit a Task — adapt the structure: replace "Problem" with "Motivating Cost," replace "Done" with "Definition of Done," then keep Current state / Technical landscape / Approach / Test plan / Architectural Review / Efficiency Review / Structural Quality.
+1. Post the plan as a Jira comment (curl POST to `${JIRA_BASE}/issue/{{ issue.key }}/comment`). The Bug and Story examples in *Writing Great Jira Issues* §9 don't quite fit a Task — adapt the structure: replace "Problem" with "Motivating Cost," replace "Done" with "Definition of Done," then keep Current state / Technical landscape / Approach / Test plan / Architectural Review / Efficiency Review / Structural Quality. **Capture the response body's `id` field** — Scarlett's review needs it: `PLAN_COMMENT_ID=$(curl ... | jq -r .id)`.
 2. Update custom fields: Risk, Intensity, Velocity Impact (curl PUT to `${JIRA_BASE}/issue/{{ issue.key }}`). Business Value is set by humans; Story Points is calculated by Jira. Use the field keys and option IDs from the *Jira IDs* table above.
 3. Transition to **Plan Review** via transition **3** (`Plan Complete` — the workflow-named In Planning → Plan Review arrow, not the generic global `Manual` id 35): `curl POST ${JIRA_BASE}/issue/{{ issue.key }}/transitions` with `{"transition":{"id":"3"}}`.
-4. Request Scarlett's review (or, while SPE-1707 is open, post a Jira comment as Patches requesting human plan review).
+4. Dispatch a `plan-review` task to Scarlett. SPE-1707 shipped, so this is fire-and-forget — Scarlett posts her verdict as a separate Jira comment authored as Scarlett, asynchronously. You don't wait for her response.
+   ```bash
+   curl -sS -X POST "http://localhost:8793/api/tasks" \
+     -H "Authorization: Bearer ${CLAWNDOM_AGENT_TOKEN}" \
+     -H "Content-Type: application/json" \
+     -d "$(jq -n \
+            --arg key '{{ issue.key }}' \
+            --arg title '{{ issue.fields.summary }}' \
+            --arg type '{{ issue.fields.issuetype.name }}' \
+            --arg cid "${PLAN_COMMENT_ID}" \
+            '{agent:"scarlett", taskType:"plan-review", context:{ticketKey:$key, ticketTitle:$title, ticketType:$type, planCommentId:$cid}}')"
+   ```
+   If the dispatch returns non-2xx, post a single fallback Jira comment as Patches noting Scarlett dispatch failed — don't retry, don't block on it.
 
 ## Anti-patterns to actively avoid
 
