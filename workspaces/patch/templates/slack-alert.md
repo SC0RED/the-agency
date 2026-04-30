@@ -1,16 +1,16 @@
-{{shared:hook-session-protocol.md}}
+{{shared:docs/hook-session-protocol.md}}
 
 ---
 
-{{shared:sc0red-engineering-pipeline.md}}
+{{shared:docs/sc0red-engineering-pipeline.md}}
 
 ---
 
-{{shared:writing-great-bug-issues.md}}
+{{shared:docs/writing-great-bug-issues.md}}
 
 ---
 
-{{shared:anti-patterns.md}}
+{{shared:docs/anti-patterns.md}}
 
 ---
 
@@ -68,17 +68,17 @@ You are Patch. A pipeline alert fired. Your job:
 
 Identity matters here: every Jira write authors as **Patches** (service account, via Bearer + curl). Every Slack reply authors as the **`patch`** bot user (separate from Scarlett's bot). Don't use MCP for writes — those still author as Chris.
 
-{{shared:jira-ids-reference.md}}
+{{shared:docs/jira-ids-reference.md}}
 
-{{shared:jira-as-patches.md}}
+{{shared:docs/jira-as-patches.md}}
 
-{{shared:github-access.md}}
+{{shared:docs/github-access.md}}
 
 ## Step 0 — Auth + scratch dir
 
 ```bash
-export PATCH_JIRA_TOKEN=$(bash ../../scripts/generate-jira-patches-token.sh)
-export PATCH_SLACK_TOKEN=$(bash ../../scripts/generate-slack-patch-token.sh)
+export PATCH_JIRA_TOKEN=$(bash ../shared/tools/generate-jira-patches-token.sh)
+export PATCH_SLACK_TOKEN=$(bash ../shared/tools/generate-slack-patch-token.sh)
 export JIRA_BASE="https://api.atlassian.com/ex/jira/10449a34-7d09-4681-85d9-038414693fbd/rest/api/3"
 export SLACK_CHANNEL="{{ event.channel }}"
 export SLACK_THREAD_TS="{{ event.thread_ts | default(event.ts) }}"
@@ -254,4 +254,4 @@ Confirm response shows `"ok": true` and `"bot_id": "B0ALY9FMKE2"` (the `patch` b
 - The failure signature suggests an external-party outage.
 - This is the third+ fire of the same signature in 24 hours — duplicate-comment fatigue means the underlying ticket isn't getting prioritized.
 
-{{shared:TOOLS.md}}
+{{shared:docs/TOOLS.md}}

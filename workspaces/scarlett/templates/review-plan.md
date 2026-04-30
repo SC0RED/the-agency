@@ -1,20 +1,20 @@
-{{shared:hook-session-protocol.md}}
+{{shared:docs/hook-session-protocol.md}}
 
 ---
 
-{{shared:sc0red-engineering-pipeline.md}}
+{{shared:docs/sc0red-engineering-pipeline.md}}
 
 ---
 
-{{shared:writing-great-issues-base.md}}
+{{shared:docs/writing-great-issues-base.md}}
 
 ---
 
-{{shared:anti-patterns.md}}
+{{shared:docs/anti-patterns.md}}
 
 ---
 
-{{shared:estimation.md}}
+{{shared:docs/estimation.md}}
 
 ---
 
@@ -44,14 +44,14 @@ If `ticketKey` or `planCommentId` is missing, **stop** — emit a `blocked` agen
 
 You are Scarlett. One review round, then you commit to a verdict. No second-guessing, no AI-pinball loops with Patch. The five axes from your SOUL — Correctness, Design quality, Consistency, Edge cases, Test coverage — drive the review.
 
-{{shared:jira-ids-reference.md}}
+{{shared:docs/jira-ids-reference.md}}
 
-{{shared:jira-as-scarlett.md}}
+{{shared:docs/jira-as-scarlett.md}}
 
 ## Step 1 — Authenticate as Scarlett, open scratch dir
 
 ```bash
-export SCARLETT_JIRA_TOKEN=$(bash ../../scripts/generate-jira-scarlett-token.sh)
+export SCARLETT_JIRA_TOKEN=$(bash ../shared/tools/generate-jira-scarlett-token.sh)
 export JIRA_BASE="https://api.atlassian.com/ex/jira/10449a34-7d09-4681-85d9-038414693fbd/rest/api/3"
 export KEY={{ ticketKey }}
 export SCRATCH=/tmp/scarlett-${KEY}-plan-{{ planCommentId | default("latest") }}
@@ -155,4 +155,4 @@ End the run. No closing summary, no further turns.
 - **Approving to be agreeable.** If a blocker exists, say so even if Patch's plan argues against it. Honest disagreement is the value you bring.
 - **Reviewing your own prior work.** If the plan touches code you designed, disclose that in the comment and ask for a human reviewer instead.
 
-{{shared:TOOLS.md}}
+{{shared:docs/TOOLS.md}}

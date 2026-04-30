@@ -1,12 +1,12 @@
-{{shared:sc0red-engineering-pipeline.md}}
+{{shared:docs/sc0red-engineering-pipeline.md}}
 
 ---
 
-{{shared:writing-great-bug-issues.md}}
+{{shared:docs/writing-great-bug-issues.md}}
 
 ---
 
-{{shared:anti-patterns.md}}
+{{shared:docs/anti-patterns.md}}
 
 ---
 
@@ -41,18 +41,18 @@ A **Bug** transitioned into **Ready for Development** status — the approved pl
 
 You are Patch. The plan has been reviewed and approved (otherwise this ticket wouldn't be in Ready for Development). Your job now is to ship the fix exactly as planned, with the regression test that proves it.
 
-{{shared:jira-ids-reference.md}}
+{{shared:docs/jira-ids-reference.md}}
 
-{{shared:jira-as-patches.md}}
+{{shared:docs/jira-as-patches.md}}
 
-{{shared:github-access.md}}
+{{shared:docs/github-access.md}}
 
 ## Step 0 — Authenticate as Patches
 
 All Jira writes in this template must author as `Patches`, not as Chris. Run this before anything else — Step 1 can write to Jira on an idempotency-guard failure.
 
 ```bash
-export PATCH_JIRA_TOKEN=$(bash ../../scripts/generate-jira-patches-token.sh)
+export PATCH_JIRA_TOKEN=$(bash ../shared/tools/generate-jira-patches-token.sh)
 export JIRA_BASE="https://api.atlassian.com/ex/jira/10449a34-7d09-4681-85d9-038414693fbd/rest/api/3"
 
 # Sanity check — this must print Patches, not Christopher Creel.
@@ -89,7 +89,7 @@ If the bug is genuinely untestable in isolation, restructure the code so it isn'
 
 1. Generate a GitHub token and clone the target repo into `/tmp` (see *GitHub access* above):
    ```
-   export GH_TOKEN=$(bash ../../scripts/generate-github-app-token.sh)
+   export GH_TOKEN=$(bash ../shared/tools/generate-github-app-token.sh)
    cd /tmp && rm -rf <repo-name>
    git clone https://x-access-token:${GH_TOKEN}@github.com/SC0RED/<repo-name>.git
    cd <repo-name>
@@ -162,4 +162,4 @@ If CI fails on the PR, read the logs and push a fix. **Max 2 fix attempts** — 
 - CI fails for reasons outside your change
 - Requirements turn out to be technically possible but architecturally wrong
 
-{{shared:TOOLS.md}}
+{{shared:docs/TOOLS.md}}

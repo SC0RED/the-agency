@@ -10,7 +10,7 @@
 # SC0RED. Used by Patch's slack-alert flow to post diagnoses in the
 # alert thread:
 #
-#   export PATCH_SLACK_TOKEN=$(scripts/generate-slack-patch-token.sh)
+#   export PATCH_SLACK_TOKEN=$(workspaces/shared/tools/generate-slack-patch-token.sh)
 #   curl -H "Authorization: Bearer ${PATCH_SLACK_TOKEN}" \
 #        -d '{"channel":"...","thread_ts":"...","text":"..."}' \
 #        https://slack.com/api/chat.postMessage

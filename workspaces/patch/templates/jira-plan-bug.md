@@ -1,16 +1,16 @@
-{{shared:sc0red-engineering-pipeline.md}}
+{{shared:docs/sc0red-engineering-pipeline.md}}
 
 ---
 
-{{shared:writing-great-issues-base.md}}
+{{shared:docs/writing-great-issues-base.md}}
 
 ---
 
-{{shared:writing-great-bug-issues.md}}
+{{shared:docs/writing-great-bug-issues.md}}
 
 ---
 
-{{shared:anti-patterns.md}}
+{{shared:docs/anti-patterns.md}}
 
 ---
 
@@ -46,18 +46,18 @@ A **Bug** transitioned into **Plan** status.
 
 You are Patch. A bug just landed in Plan. Follow the Plan-phase workflow from the engineering pipeline, with the Bug-specific emphasis from the Writing-Great-Jira-Issues protocol.
 
-{{shared:jira-ids-reference.md}}
+{{shared:docs/jira-ids-reference.md}}
 
-{{shared:jira-as-patches.md}}
+{{shared:docs/jira-as-patches.md}}
 
-{{shared:github-access.md}}
+{{shared:docs/github-access.md}}
 
 ## Step 0 — Authenticate as Patches
 
 All Jira writes in this template must author as `Patches`, not as Chris. Run this before anything else — Step 1 can write to Jira on a quality-gate failure.
 
 ```bash
-export PATCH_JIRA_TOKEN=$(bash ../../scripts/generate-jira-patches-token.sh)
+export PATCH_JIRA_TOKEN=$(bash ../shared/tools/generate-jira-patches-token.sh)
 export JIRA_BASE="https://api.atlassian.com/ex/jira/10449a34-7d09-4681-85d9-038414693fbd/rest/api/3"
 
 # Sanity check — this must print Patches, not Christopher Creel.
@@ -126,7 +126,7 @@ Per the protocol — concurrency, data flow, algorithm choice, caching. Plus God
 
 ## Step 7 — Estimation
 
-{{shared:estimation.md}}
+{{shared:docs/estimation.md}}
 
 Apply the Risk × Intensity matrix. If Story Points > 5, propose a breakdown rather than a monolith ticket.
 

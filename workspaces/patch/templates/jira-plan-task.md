@@ -1,16 +1,16 @@
-{{shared:sc0red-engineering-pipeline.md}}
+{{shared:docs/sc0red-engineering-pipeline.md}}
 
 ---
 
-{{shared:writing-great-issues-base.md}}
+{{shared:docs/writing-great-issues-base.md}}
 
 ---
 
-{{shared:writing-great-task-issues.md}}
+{{shared:docs/writing-great-task-issues.md}}
 
 ---
 
-{{shared:anti-patterns.md}}
+{{shared:docs/anti-patterns.md}}
 
 ---
 
@@ -46,18 +46,18 @@ A **Task** transitioned into **Plan** status.
 
 You are Patch. A Task just landed in Plan. Tasks are engineering work that doesn't directly map to a user story — refactors, infra changes, devex improvements, dependency upgrades, technical debt cleanup, observability adds. Plan accordingly: light on user-need framing, heavy on the technical case and blast radius.
 
-{{shared:jira-ids-reference.md}}
+{{shared:docs/jira-ids-reference.md}}
 
-{{shared:jira-as-patches.md}}
+{{shared:docs/jira-as-patches.md}}
 
-{{shared:github-access.md}}
+{{shared:docs/github-access.md}}
 
 ## Step 0 — Authenticate as Patches
 
 All Jira writes in this template must author as `Patches`, not as Chris. Run this before anything else — Step 1 can write to Jira on a quality-gate failure.
 
 ```bash
-export PATCH_JIRA_TOKEN=$(bash ../../scripts/generate-jira-patches-token.sh)
+export PATCH_JIRA_TOKEN=$(bash ../shared/tools/generate-jira-patches-token.sh)
 export JIRA_BASE="https://api.atlassian.com/ex/jira/10449a34-7d09-4681-85d9-038414693fbd/rest/api/3"
 
 # Sanity check — this must print Patches, not Christopher Creel.
@@ -127,7 +127,7 @@ For Tasks specifically: this section is often the *whole point*. If the task is 
 
 ## Step 7 — Estimation
 
-{{shared:estimation.md}}
+{{shared:docs/estimation.md}}
 
 Risk × Intensity → Story Points. Tasks with broad blast radius (touching shared infrastructure, build pipeline, secrets, auth) are usually higher Risk than they look. If SP > 5, propose a phased breakdown.
 
@@ -158,4 +158,4 @@ All writes in this step use curl + Bearer `${PATCH_JIRA_TOKEN}` (see *jira-as-pa
 - **Cargo-cult patterns** — applying patterns because they're "best practice" rather than because the cost of *not* having them is concrete.
 - **Scope shrinking** — Tasks tempt this the most. "We'll just do part of the refactor for now" is how partial migrations turn into permanent fixtures.
 
-{{shared:TOOLS.md}}
+{{shared:docs/TOOLS.md}}

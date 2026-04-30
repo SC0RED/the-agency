@@ -10,7 +10,7 @@
 # SC0RED. Used by Scarlett's daily-handoff template to post the daily
 # platform digest to #general-engineering:
 #
-#   export SCARLETT_SLACK_TOKEN=$(scripts/generate-slack-scarlett-token.sh)
+#   export SCARLETT_SLACK_TOKEN=$(workspaces/shared/tools/generate-slack-scarlett-token.sh)
 #   curl -H "Authorization: Bearer ${SCARLETT_SLACK_TOKEN}" \
 #        -d '{"channel":"...","blocks":[...]}' \
 #        https://slack.com/api/chat.postMessage

@@ -1,8 +1,8 @@
-{{shared:sc0red-engineering-pipeline.md}}
+{{shared:docs/sc0red-engineering-pipeline.md}}
 
 ---
 
-{{shared:anti-patterns.md}}
+{{shared:docs/anti-patterns.md}}
 
 ---
 
@@ -40,11 +40,11 @@ You are Patch. A human has reviewed the code and said go. Your job is narrow and
 
 No code changes at this stage. No test rewrites. No "while I'm here" cleanup. If something is broken, escalate — don't fix.
 
-{{shared:jira-ids-reference.md}}
+{{shared:docs/jira-ids-reference.md}}
 
-{{shared:jira-as-patches.md}}
+{{shared:docs/jira-as-patches.md}}
 
-{{shared:github-access.md}}
+{{shared:docs/github-access.md}}
 
 ## Step 1 — Idempotency guard
 
@@ -60,9 +60,9 @@ Fetch the ticket's **current** status before doing anything. BullMQ retries this
 Tokens first:
 
 ```bash
-export PATCH_JIRA_TOKEN=$(bash ../../scripts/generate-jira-patches-token.sh)
+export PATCH_JIRA_TOKEN=$(bash ../shared/tools/generate-jira-patches-token.sh)
 export JIRA_BASE="https://api.atlassian.com/ex/jira/10449a34-7d09-4681-85d9-038414693fbd/rest/api/3"
-export GH_TOKEN=$(bash ../../scripts/generate-github-app-token.sh)
+export GH_TOKEN=$(bash ../shared/tools/generate-github-app-token.sh)
 
 # Sanity check — this must print Patches, not Christopher Creel.
 curl -sS -H "Authorization: Bearer ${PATCH_JIRA_TOKEN}" "${JIRA_BASE}/myself" \
@@ -185,4 +185,4 @@ Expected: `HTTP 204`. Any other code → stop + comment + Blocked.
 - The merge succeeds but the environment doesn't come up healthy within 10 minutes of deploy.
 - Two unrelated tickets are in Deploy to development simultaneously and their PRs touch overlapping files.
 
-{{shared:TOOLS.md}}
+{{shared:docs/TOOLS.md}}
