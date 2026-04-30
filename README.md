@@ -1,10 +1,11 @@
 # the-agency
 
-<img src="workspaces/patch/avatars/patch.jpg" alt="Patch" width="160" align="right">
+<img src="workspaces/patch/avatars/patch.jpg" alt="Patch" width="140" align="right">
+<img src="workspaces/scarlett/avatars/scarlett.jpg" alt="Scarlett" width="140" align="right">
 
 Monorepo of agent workspaces consumed by [Clawndom](https://github.com/SC0RED/clawndom) at runtime. Each agent lives in its own directory under `workspaces/` — identity, principles, templates, reference docs, routing config. Clawndom pulls this repo on a 5-minute sync timer on the EC2 host and renders webhook-triggered prompts from the per-agent templates.
 
-Today the repo houses **Patch** (the AI software engineer, pictured) and **Scarlett** (the reviewer). Additional agents are added by creating a new `workspaces/<name>/` directory with the same layout — see *Adding a new agent* below.
+Today the repo houses **Patch** (the AI software engineer) and **Scarlett** (the reviewer), both pictured. Additional agents are added by creating a new `workspaces/<name>/` directory with the same layout — see *Adding a new agent* below.
 
 ---
 
