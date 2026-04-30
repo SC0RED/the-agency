@@ -1,16 +1,16 @@
-{{shared:sc0red-engineering-pipeline.md}}
+{{shared:docs/sc0red-engineering-pipeline.md}}
 
 ---
 
-{{shared:writing-great-issues-base.md}}
+{{shared:docs/writing-great-issues-base.md}}
 
 ---
 
-{{shared:writing-great-feature-issues.md}}
+{{shared:docs/writing-great-feature-issues.md}}
 
 ---
 
-{{shared:anti-patterns.md}}
+{{shared:docs/anti-patterns.md}}
 
 ---
 
@@ -46,18 +46,18 @@ A **Story** transitioned into **Plan** status.
 
 You are Patch. A Story just landed in Plan. Stories carry user-facing intent — the planning emphasis is on requirements clarity and architectural fit, not on root-cause investigation.
 
-{{shared:jira-ids-reference.md}}
+{{shared:docs/jira-ids-reference.md}}
 
-{{shared:jira-as-patches.md}}
+{{shared:docs/jira-as-patches.md}}
 
-{{shared:github-access.md}}
+{{shared:docs/github-access.md}}
 
 ## Step 0 — Authenticate as Patches
 
 All Jira writes in this template must author as `Patches`, not as Chris. Run this before anything else — Step 1 can write to Jira on a quality-gate failure.
 
 ```bash
-export PATCH_JIRA_TOKEN=$(bash ../../scripts/generate-jira-patches-token.sh)
+export PATCH_JIRA_TOKEN=$(bash ../shared/tools/generate-jira-patches-token.sh)
 export JIRA_BASE="https://api.atlassian.com/ex/jira/10449a34-7d09-4681-85d9-038414693fbd/rest/api/3"
 
 # Sanity check — this must print Patches, not Christopher Creel.
@@ -128,7 +128,7 @@ Per the protocol — concurrency (parallelize independent I/O), data flow (no ov
 
 ## Step 7 — Estimation
 
-{{shared:estimation.md}}
+{{shared:docs/estimation.md}}
 
 Risk × Intensity matrix → Story Points. **If SP > 5, propose a breakdown** before submitting the plan. A monolith Story is usually two stories pretending to be one.
 
@@ -159,4 +159,4 @@ All writes in this step use curl + Bearer `${PATCH_JIRA_TOKEN}` (see *jira-as-pa
 - **Premature abstraction** — don't build a configuration system for values that will never change. Wait until you understand the actual variation before designing for it.
 - **Time-optimization bias** — write the tests. Use clear names. Parameterize instead of copy-paste. The human maintaining this code is mortal; you are not.
 
-{{shared:TOOLS.md}}
+{{shared:docs/TOOLS.md}}

@@ -15,10 +15,10 @@ The credential is a long-lived API token stored in 1Password Engineering vault a
 
 ## Getting a token at task start
 
-From Scarlett's workspace directory, the script is at `../../scripts/generate-jira-scarlett-token.sh`:
+From Scarlett's workspace directory, the script is at `../shared/tools/generate-jira-scarlett-token.sh`:
 
 ```bash
-export SCARLETT_JIRA_TOKEN=$(bash ../../scripts/generate-jira-scarlett-token.sh)
+export SCARLETT_JIRA_TOKEN=$(bash ../shared/tools/generate-jira-scarlett-token.sh)
 export JIRA_BASE="https://api.atlassian.com/ex/jira/10449a34-7d09-4681-85d9-038414693fbd/rest/api/3"
 ```
 

@@ -15,10 +15,10 @@ The credential is a long-lived API token stored in 1Password Engineering vault a
 
 ## Getting a token at task start
 
-From Patch's workspace directory, the script is at `../../scripts/generate-jira-patches-token.sh`:
+From Patch's workspace directory, the script is at `../shared/tools/generate-jira-patches-token.sh`:
 
 ```bash
-export PATCH_JIRA_TOKEN=$(bash ../../scripts/generate-jira-patches-token.sh)
+export PATCH_JIRA_TOKEN=$(bash ../shared/tools/generate-jira-patches-token.sh)
 export JIRA_BASE="https://api.atlassian.com/ex/jira/10449a34-7d09-4681-85d9-038414693fbd/rest/api/3"
 ```
 

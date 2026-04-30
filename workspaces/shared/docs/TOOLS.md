@@ -46,7 +46,7 @@ For prod investigation, override per-command: `aws --profile sc0red-prod logs ta
 
 ## Git + GitHub
 
-`git` and `gh` are installed. The SSH deploy key at `~/.ssh/id_ed25519` is read-only, scoped to `SC0RED/the-agency` only. For cloning or pushing to the three `SC0RED` private repos (`Platform-Frontend`, `Platform-Backend`, `assessment_engine`), see **`shared/github-access.md`** — that's the authoritative auth flow (GitHub App token via `scripts/generate-github-app-token.sh`).
+`git` and `gh` are installed. The SSH deploy key at `~/.ssh/id_ed25519` is read-only, scoped to `SC0RED/the-agency` only. For cloning or pushing to the three `SC0RED` private repos (`Platform-Frontend`, `Platform-Backend`, `assessment_engine`), see **`shared/github-access.md`** — that's the authoritative auth flow (GitHub App token via `workspaces/shared/tools/generate-github-app-token.sh`).
 
 ## Language runtimes
 

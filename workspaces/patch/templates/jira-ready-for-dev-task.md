@@ -1,12 +1,12 @@
-{{shared:sc0red-engineering-pipeline.md}}
+{{shared:docs/sc0red-engineering-pipeline.md}}
 
 ---
 
-{{shared:writing-great-task-issues.md}}
+{{shared:docs/writing-great-task-issues.md}}
 
 ---
 
-{{shared:anti-patterns.md}}
+{{shared:docs/anti-patterns.md}}
 
 ---
 
@@ -41,18 +41,18 @@ A **Task** transitioned into **Ready for Development** status — the approved p
 
 You are Patch. The plan has been reviewed and approved. Tasks are technical work — refactors, infra changes, devex, debt cleanup. The shape is the same as a Story: ship the plan, write tests appropriate to the change, PR, review.
 
-{{shared:jira-ids-reference.md}}
+{{shared:docs/jira-ids-reference.md}}
 
-{{shared:jira-as-patches.md}}
+{{shared:docs/jira-as-patches.md}}
 
-{{shared:github-access.md}}
+{{shared:docs/github-access.md}}
 
 ## Step 0 — Authenticate as Patches
 
 All Jira writes in this template must author as `Patches`, not as Chris. Run this before anything else — Step 1 can write to Jira on an idempotency-guard failure.
 
 ```bash
-export PATCH_JIRA_TOKEN=$(bash ../../scripts/generate-jira-patches-token.sh)
+export PATCH_JIRA_TOKEN=$(bash ../shared/tools/generate-jira-patches-token.sh)
 export JIRA_BASE="https://api.atlassian.com/ex/jira/10449a34-7d09-4681-85d9-038414693fbd/rest/api/3"
 
 # Sanity check — this must print Patches, not Christopher Creel.
@@ -94,7 +94,7 @@ If the Task is genuinely untestable in any meaningful sense, say so explicitly i
 
 1. Generate a GitHub token and clone the target repo into `/tmp` (see *GitHub access* above):
    ```
-   export GH_TOKEN=$(bash ../../scripts/generate-github-app-token.sh)
+   export GH_TOKEN=$(bash ../shared/tools/generate-github-app-token.sh)
    cd /tmp && rm -rf <repo-name>
    git clone https://x-access-token:${GH_TOKEN}@github.com/SC0RED/<repo-name>.git
    cd <repo-name>
@@ -169,4 +169,4 @@ Same pattern — max 2 fix attempts, then Blocked (transition 4) + ping `#genera
 - You discover the planned approach has worse blast radius than estimated
 - CI fails for reasons outside your change
 
-{{shared:TOOLS.md}}
+{{shared:docs/TOOLS.md}}

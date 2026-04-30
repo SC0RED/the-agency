@@ -9,7 +9,7 @@
 # op signin required. Elsewhere, run `eval $(op signin)` first.
 #
 # Usage
-#   export GH_TOKEN=$(scripts/generate-github-app-token.sh)
+#   export GH_TOKEN=$(workspaces/shared/tools/generate-github-app-token.sh)
 #   gh repo clone SC0RED/Platform-Frontend
 #   # — or, for raw git:
 #   git clone https://x-access-token:${GH_TOKEN}@github.com/SC0RED/Platform-Frontend

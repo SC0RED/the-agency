@@ -1,12 +1,12 @@
-{{shared:hook-session-protocol.md}}
+{{shared:docs/hook-session-protocol.md}}
 
 ---
 
-{{shared:sc0red-engineering-pipeline.md}}
+{{shared:docs/sc0red-engineering-pipeline.md}}
 
 ---
 
-{{shared:anti-patterns.md}}
+{{shared:docs/anti-patterns.md}}
 
 ---
 
@@ -38,18 +38,18 @@ You are Scarlett. The plan was already reviewed (you approved it, or a human did
 
 Authority boundary from your SOUL: you do NOT write fix code. You do NOT merge PRs. You return one verdict (`approve` or `changes_requested`) per ticket.
 
-{{shared:jira-ids-reference.md}}
+{{shared:docs/jira-ids-reference.md}}
 
-{{shared:jira-as-scarlett.md}}
+{{shared:docs/jira-as-scarlett.md}}
 
-{{shared:github-access.md}}
+{{shared:docs/github-access.md}}
 
 ## Step 1 — Auth + scratch dir
 
 ```bash
-export SCARLETT_JIRA_TOKEN=$(bash ../../scripts/generate-jira-scarlett-token.sh)
+export SCARLETT_JIRA_TOKEN=$(bash ../shared/tools/generate-jira-scarlett-token.sh)
 export JIRA_BASE="https://api.atlassian.com/ex/jira/10449a34-7d09-4681-85d9-038414693fbd/rest/api/3"
-export GH_TOKEN=$(bash ../../scripts/generate-github-app-token.sh)
+export GH_TOKEN=$(bash ../shared/tools/generate-github-app-token.sh)
 export KEY={{ ticketKey }}
 export SCRATCH=/tmp/scarlett-${KEY}-pr
 rm -rf "${SCRATCH}" && mkdir -p "${SCRATCH}"
@@ -188,4 +188,4 @@ End the run. Don't transition the Jira ticket. Don't merge any PRs. Patch handle
 - **Refusing to call out structural problems because they're "out of scope."** Per your SOUL: everything in the codebase is on us. Scoping a real issue to a follow-up is fine; ignoring it isn't.
 - **Reviewing your own prior code.** Disclose it in the verdict comment and ask for a human reviewer.
 
-{{shared:TOOLS.md}}
+{{shared:docs/TOOLS.md}}
