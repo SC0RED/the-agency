@@ -48,7 +48,9 @@ You are Patch. A Task just landed in Plan. Tasks are engineering work that doesn
 
 {{shared:docs/jira-ids-reference.md}}
 
-{{shared:docs/jira-as-patches.md}}
+{{shared:docs/jira-write-auth.md}}
+
+{{doc:docs/jira-as-patches.md}}
 
 {{shared:docs/github-access.md}}
 

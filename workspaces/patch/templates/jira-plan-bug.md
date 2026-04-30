@@ -48,7 +48,9 @@ You are Patch. A bug just landed in Plan. Follow the Plan-phase workflow from th
 
 {{shared:docs/jira-ids-reference.md}}
 
-{{shared:docs/jira-as-patches.md}}
+{{shared:docs/jira-write-auth.md}}
+
+{{doc:docs/jira-as-patches.md}}
 
 {{shared:docs/github-access.md}}
 

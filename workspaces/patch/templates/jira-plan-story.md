@@ -48,7 +48,9 @@ You are Patch. A Story just landed in Plan. Stories carry user-facing intent —
 
 {{shared:docs/jira-ids-reference.md}}
 
-{{shared:docs/jira-as-patches.md}}
+{{shared:docs/jira-write-auth.md}}
+
+{{doc:docs/jira-as-patches.md}}
 
 {{shared:docs/github-access.md}}
 

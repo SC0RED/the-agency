@@ -42,7 +42,9 @@ No code changes at this stage. No test rewrites. No "while I'm here" cleanup. If
 
 {{shared:docs/jira-ids-reference.md}}
 
-{{shared:docs/jira-as-patches.md}}
+{{shared:docs/jira-write-auth.md}}
+
+{{doc:docs/jira-as-patches.md}}
 
 {{shared:docs/github-access.md}}
 

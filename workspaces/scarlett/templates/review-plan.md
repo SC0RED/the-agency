@@ -46,7 +46,9 @@ You are Scarlett. One review round, then you commit to a verdict. No second-gues
 
 {{shared:docs/jira-ids-reference.md}}
 
-{{shared:docs/jira-as-scarlett.md}}
+{{shared:docs/jira-write-auth.md}}
+
+{{doc:docs/jira-as-scarlett.md}}
 
 ## Step 1 — Authenticate as Scarlett, open scratch dir
 

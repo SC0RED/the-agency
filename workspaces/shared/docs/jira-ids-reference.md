@@ -6,7 +6,7 @@ Verified from live Jira on 2026-04-23. If a transition call fails with `400 Tran
 
 ## Transitions
 
-All Patch transitions are curl POSTs to `${JIRA_BASE}/issue/<KEY>/transitions` with body `{"transition":{"id":"<id>"}}` and `Authorization: Bearer ${PATCH_JIRA_TOKEN}` — see the *jira-as-patches* fragment. Never call `mcp__claude_ai_Atlassian__transitionJiraIssue` (authors as Chris).
+Agent transitions go through curl + Bearer on the `api.atlassian.com` gateway (see `jira-write-auth.md` for the full pattern). Body: `{"transition":{"id":"<id>"}}`. Never call `mcp__atlassian__transitionJiraIssue` — it authors as Chris. When multiple transitions point at the same destination (e.g. a specific gate like *Plan Approved* plus a generic *Manual*), both are listed — pick the one matching the workflow gate you intend.
 
 Named transitions (workflow-correct arrows — prefer these over the generic global ones):
 
@@ -40,7 +40,7 @@ Global / `Manual` transitions (available from most statuses — use only when a 
 
 ## Custom fields 
 
-Patch sets these with a curl PUT to `${JIRA_BASE}/issue/<KEY>` with body `{"fields":{"<key>":<value>}}` and `Authorization: Bearer ${PATCH_JIRA_TOKEN}`. Never call `mcp__claude_ai_Atlassian__editJiraIssue` (authors as Chris).
+Set with curl PUT to `${JIRA_BASE}/issue/<KEY>` and `Authorization: Bearer ${YOUR_AGENT_JIRA_TOKEN}` (see `jira-write-auth.md`). Body: `{"fields":{"<key>":<value>}}`. Never call `mcp__atlassian__editJiraIssue` — it authors as Chris.
 
 | Field           | key                   |
 |-----------------|-----------------------|

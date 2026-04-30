@@ -241,7 +241,10 @@ def render_markdown(
         "",
         "## Transitions",
         "",
-        "Pass the `id` as `transition.id` to `mcp__claude_ai_Atlassian__transitionJiraIssue`. "
+        "Agent transitions go through curl + Bearer on the `api.atlassian.com` gateway "
+        "(see `jira-write-auth.md` for the full pattern). Body: "
+        "`{\"transition\":{\"id\":\"<id>\"}}`. Never call "
+        "`mcp__atlassian__transitionJiraIssue` — it authors as Chris. "
         "When multiple transitions point at the same destination (e.g. a specific gate "
         "like *Plan Approved* plus a generic *Manual*), both are listed — pick the one "
         "matching the workflow gate you intend.",
@@ -256,7 +259,10 @@ def render_markdown(
         "",
         "## Custom fields",
         "",
-        "Pass these as field keys to `mcp__claude_ai_Atlassian__editJiraIssue`.",
+        "Set with curl PUT to `${JIRA_BASE}/issue/<KEY>` and "
+        "`Authorization: Bearer ${YOUR_AGENT_JIRA_TOKEN}` (see `jira-write-auth.md`). "
+        "Body: `{\"fields\":{\"<key>\":<value>}}`. Never call "
+        "`mcp__atlassian__editJiraIssue` — it authors as Chris.",
         "",
         "| Field | key |",
         "|---|---|",

@@ -70,7 +70,9 @@ Identity matters here: every Jira write authors as **Patches** (service account,
 
 {{shared:docs/jira-ids-reference.md}}
 
-{{shared:docs/jira-as-patches.md}}
+{{shared:docs/jira-write-auth.md}}
+
+{{doc:docs/jira-as-patches.md}}
 
 {{shared:docs/github-access.md}}
 

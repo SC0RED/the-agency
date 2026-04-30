@@ -40,7 +40,9 @@ Authority boundary from your SOUL: you do NOT write fix code. You do NOT merge P
 
 {{shared:docs/jira-ids-reference.md}}
 
-{{shared:docs/jira-as-scarlett.md}}
+{{shared:docs/jira-write-auth.md}}
+
+{{doc:docs/jira-as-scarlett.md}}
 
 {{shared:docs/github-access.md}}
 
