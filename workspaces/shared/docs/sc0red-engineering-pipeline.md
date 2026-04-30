@@ -1,6 +1,7 @@
-> Version: 2.7 - 2026-04-06
+> Version: 2.8 - 2026-04-30
 > Author: Scarlett, revised by Chris Creel
 > Status: Approved
+> Revision: Sync to Clawndom runtime; remove OpenClaw and `sessions_*` references (SPE-1762).
 ---
 
 ## Overview
@@ -25,7 +26,7 @@ The SPE project lives at `sc0red.atlassian.net`. All Jira-side numbers — cloud
 | **Requester**           | Any user or team member        | Submits feature request or bug report                                       |
 | **Business Leadership** | Product & exec team            | Prioritizes, sets requirements, moves to Plan                               |
 | **Patch** (Agent)       | Senior AI Engineer             | Investigation, design, implementation, PR creation, environment promotion   |
-| **Scarlett** (Agent)    | Senior Reviewer                | Plan review, PR code review, architectural oversight                        |
+| **Scarlett** (Agent)    | Senior Reviewer                | Architectural oversight                                                     |
 | **Engineering Team**    | Human engineers                | PR review, verification in dev/testing, production readiness                |
 | **Production Approver** | Designated human (single point) | Approves production deployments                                             |
 
@@ -33,7 +34,7 @@ The SPE project lives at `sc0red.atlassian.net`. All Jira-side numbers — cloud
 
 ## Event-Driven Architecture - Clawndom
 
-All agent work is triggered by **Jira webhooks** via **Clawndom**, a webhook proxy that sits between Jira and OpenClaw. Clawndom:
+All agent work is triggered by **Jira webhooks** via **Clawndom**, the runtime that hosts every agent on the EC2. Clawndom:
 
 1. Receives Jira webhooks via Tailscale Funnel
 2. Validates HMAC signatures
@@ -43,11 +44,9 @@ All agent work is triggered by **Jira webhooks** via **Clawndom**, a webhook pro
 6. Waits for the agent session to complete before delivering the next event
 7. Retries on failure (max 2 attempts, back-of-queue retry)
 
-Each webhook spawns an **isolated agent session** - Patch's main thread is never interrupted. Clawndom handles serialization, so agents do not need to implement their own work gates or priority selection. They process whatever Clawndom feeds them, in order.
+Each webhook spawns an **isolated Claude Code session** for the matched agent — the agent *is* that session, with its own workspace, identity, and Jira payload. Clawndom handles serialization, so agents do not need to implement their own work gates or priority selection. They process whatever Clawndom feeds them, in order.
 
-**Routing rules** match on `issue.fields.status.name` and render a Nunjucks message template with the Jira payload before delivering to the agent.
-
-**Config:** `PROVIDERS_CONFIG` JSON env var in the launchd plist. Templates live at `~/.openclaw/workspace-patch/templates/`.
+**Routing rules** match on `issue.fields.status.name` and render a Nunjucks message template with the Jira payload before delivering to the agent. Template and runtime configuration live in each agent's workspace; concrete paths and tooling are documented in `TOOLS.md`.
 
 ---
 
@@ -134,20 +133,18 @@ Transition IDs for every move between these columns live in `shared/jira-ids-ref
   - Small files, typed interfaces, consistent patterns. If you're adding to a god file, flag it.
   - A hack that ships is still a hack. Propose the right fix; if time/risk forces a compromise, document the tech debt explicitly.
 
-- **Review request:** Patch spawns a Scarlett subagent for review. Scarlett reviews and sends verdict via `sessions_send`.
 - **Transition:** Patch posts plan as Jira comment, updates custom fields (Risk, Intensity, Story Points, Velocity Impact), transitions to **In Planning** (ID: 14). Patch continues working; when plan is complete, transitions to **Plan Review** (ID: 3).
 
 ### 3. Plan Review
-- **Who reviews:** Scarlett (agent) + Engineering team (human)
-- **Scarlett checks:**
+- **Who reviews:** Engineering team (human gate)
+- **Review checklist:**
   - Is this solving the right problem? Root cause or symptom?
   - Does the design use appropriate patterns, or is it a hack?
-  - Structural/architectural implications - god files, tight coupling, missing abstractions?
+  - Structural/architectural implications — god files, tight coupling, missing abstractions?
   - Would a refactor serve better than a patch?
   - Edge cases, downstream consequences, cross-component impact
   - Is the estimation reasonable given the risk and severity?
-- **Human review:** Engineers review Patch's plan (already vetted by Scarlett). May refine or approve as-is.
-- **Next:** Engineer moves ticket to **Ready for Development**
+- **Next:** Engineer moves ticket to **Ready for Development** (approve) or back to **Plan** via *Replan* (transition 6) if the plan needs rework.
 
 ### 4. Ready for Development
 - **Who transitions:** Engineering team
@@ -158,12 +155,12 @@ Transition IDs for every move between these columns live in `shared/jira-ids-ref
   2. Gets Jira OAuth token
   3. Reads the approved plan from Jira comments
   4. Creates branch: `fix/<jira-key>-<short-slug>` off `development`
-  5. Spawns Claude Code to implement exactly the approved plan
-  6. Reviews output - diff matches plan, tests exist, no scope creep
+  5. Implements exactly the approved plan
+  6. Reviews own diff before push — matches plan, tests exist, no scope creep
   7. Opens PR against `development`
   8. Posts PR link as Jira comment
-  9. Handles automated review feedback (CodeRabbit, SonarCloud)
-  10. Spawns Scarlett subagent for PR review
+  9. Transitions to **Code Review** (ID: 36)
+  10. Handles automated review feedback (CodeRabbit, SonarCloud)
 
 ### 5. In Development
 - **What it means:** Patch is actively writing code — branch open, no PR yet.
@@ -176,10 +173,8 @@ Transition IDs for every move between these columns live in `shared/jira-ids-ref
 - **Jira comment:** Patch has posted the PR link. For multi-repo tickets, a single consolidated comment lists every PR.
 - **Review flow:**
   - **Automated first:** CodeRabbit + SonarCloud land on the PR. Patch addresses each comment (accept or contest with reasoning), pushes fixes, re-runs. Ticket stays in Code Review through this.
-  - **Scarlett (once SPE-1707 ships):** correctness vs. plan, design quality, consistency, edge cases, test coverage. Until then, the Jira comment requests human plan-review stand-in.
-- **Human PR Review:**
-  - Human engineer reviews from Jira (any human team member, not restricted to a specific person)
-  - Focus on: business logic correctness, UX implications, judgment calls
+  - **Human PR review (gate):** Any human team member reviews the PR from Jira. Focus on business logic correctness, UX implications, and judgment calls — automated review has already covered the mechanical concerns.
+- **Outcome:**
   - **If changes needed:** Move ticket back to **Ready for Development** (ID: 28). Patch picks it up, reworks, and cycles back through.
   - **If approved:** Move ticket to **Deploy to development** (ID: 8).
 
@@ -245,9 +240,8 @@ For critical fixes that must reach production immediately. Hotfixes bypass the n
    c. Implements the minimal fix — smallest possible change to resolve the issue
    d. Runs local validation against the production-based branch
    e. Opens PR against `production` — titled `HOTFIX(<key>): <summary>`
-   f. Spawns Scarlett for **urgent** review (scope: does this fix the problem without breaking anything else?)
-   g. Posts PR link to Jira + alerts #general-engineering
-   h. **Does NOT merge** — the Production Approver merges the production PR
+   f. Posts PR link to Jira + alerts #general-engineering
+   g. **Does NOT merge** — the Production Approver merges the production PR
 4. **After the Production Approver merges to production:**
    a. Patch creates back-merge PRs: `production` → `testing` and `production` → `development`
    b. Posts back-merge PR links to Jira
@@ -335,28 +329,6 @@ If the command fails on code you didn't touch, **that's still our problem.** Fil
 
 ---
 
-## Agent Communication - How Engineering Agents Talk
-
-All structured agent-to-agent communication for code review happens via `sessions_send` (spawned subagents):
-
-### Review Flow (sessions_send)
-- **Plan review requests:** Patch spawns a Scarlett subagent with Jira link + summary. Scarlett sends verdict via `sessions_send` to `agent:patch:main`.
-- **PR review requests:** Patch spawns a Scarlett subagent with PR link + ticket reference. Scarlett reviews on GitHub and sends verdict via `sessions_send`.
-- **Back-and-forth:** Patch fixes issues, spawns another Scarlett review. No passive monitoring needed - delivery is guaranteed.
-
-### GitHub PR Comments
-- **Code review feedback:** Scarlett posts line-level and summary comments directly on the GitHub PR via `gh`
-- **Patch responses:** Patch reads PR comments, pushes fixes, spawns another review
-- **Why GitHub:** This is where human engineers will also review. Keeping all code-level discussion on the PR means one place for everyone.
-
-### What goes where
-- Review requests → spawned Scarlett subagent
-- Code-level feedback → GitHub PR comments + verdict via `sessions_send`
-- PR approved, requesting human review → #general-engineering (Slack)
-- Blocked on something → #general-engineering (Slack)
-
----
-
 ## Branching Strategy
 
 | Branch | Environment | Purpose |
@@ -380,7 +352,7 @@ All structured agent-to-agent communication for code review happens via `session
 | **#alerts-platform-failure-*** | Slack | Various | Automated error alerts (dev/testing/production) |
 | **#general** | Discord (The Agency) | 1478849414629032154 | Cross-agent coordination, non-review discussion |
 | **Jira comments** | Jira | - | Plan proposals, review feedback, permanent technical record |
-| **GitHub PR comments** | GitHub | - | Code-level review (Scarlett + engineers) |
+| **GitHub PR comments** | GitHub | - | Code-level review (engineers + automated) |
 
 ---
 
@@ -397,7 +369,7 @@ Patch escalates (moves to Blocked or flags in `#general-engineering`) when:
 
 ## Implementation Tooling - Claude Code
 
-Agents use **Claude Code** (via `sessions_spawn` with `runtime: "acp"`) as the implementation engine. Agents don't edit files directly for multi-file changes - they spawn Claude Code sessions with full repo context, the approved plan, and coding standards.
+Each Jira webhook spawns an isolated **Claude Code** session via Clawndom — the agent *is* that session. There is no separate "spawn Claude Code" step; the session loads the workspace, the issue payload, and the rendered template (which includes the approved plan, when applicable), performs the work end-to-end, then terminates.
 
 ### Why Claude Code
 - Loads full repo into context - file trees, type definitions, imports, test suites
@@ -405,11 +377,10 @@ Agents use **Claude Code** (via `sessions_spawn` with `runtime: "acp"`) as the i
 - Runs in-process validation (type checking, linting)
 
 ### Session Lifecycle
-1. Agent receives work from Clawndom (ticket in the appropriate status)
-2. Agent spawns Claude Code with: repo path, branch, task description, constraints
-3. Claude Code executes - writes code, runs checks
-4. Agent reviews output - commits, test results, diff quality
-5. Session terminates - RAM freed
+1. Clawndom receives a Jira webhook and matches it to an agent template
+2. Clawndom spawns a Claude Code session with the agent's workspace, identity, and rendered template
+3. The agent performs investigation / implementation / promotion, running checks in-process
+4. Session terminates — RAM freed; Clawndom delivers the next queued event
 
 ### Local Validation - MANDATORY Before Push
 
