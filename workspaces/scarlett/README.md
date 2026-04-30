@@ -31,10 +31,6 @@ runner:
   disallowedTools: [Edit, Write]
 ```
 
-## Memory
-
-Durable memory lives in Clawndom's vector store, namespaced per agent. Scarlett's namespace is configured in `clawndom.yaml` if/when memory.retrieve is enabled on her routes. Reviewer routes default to no memory — each review is a fresh, evidence-driven read.
-
 ## For agent-facing rules
 
 - `docs/IDENTITY.md` — name, creature, vibe

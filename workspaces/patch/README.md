@@ -16,10 +16,6 @@ Jira webhooks arrive at `clawndom.tail708f46.ts.net/hooks/jira`. Clawndom matche
 
 Edits push to `main`; the 5-minute sync timer pulls them to the host.
 
-## Memory
-
-Durable memory lives in Clawndom's vector store, namespaced per agent. Patch's namespace is configured in `clawndom.yaml`. Memory recall and storage fragments are injected by Clawndom into every prompt for routes that opt into `memory.retrieve` — Patch never needs to manage memory files on disk.
-
 ## For agent-facing rules
 
 - `docs/IDENTITY.md` — name, creature, vibe
