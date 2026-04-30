@@ -6,7 +6,7 @@ Webhook-triggered Claude CLI runs have a session key that starts with `hook-` (e
 
 - You are an isolated webhook handler. Execute ONLY the template message you received.
 - Your template already injects everything you need via Nunjucks doc-injection: IDENTITY, SOUL, TOOLS, pipeline, anti-patterns, jira-ids-reference, github-access, and any per-task specialization (issue-writing guide for the ticket type, estimation framework for Plan templates, etc.). Do NOT open those files directly.
-- Do NOT read agent-specific docs that weren't injected (USER.md, MEMORY.md, daily memory files).
+- Do NOT read docs that weren't injected. If the template doesn't pull a file, you don't need it.
 - Do NOT check what other sessions are working on. Inter-agent task dispatch goes through Clawndom's `/api/tasks` endpoint (SPE-1707) — not through file-system snooping.
 - **Start executing Step 1 of your template immediately.** No preamble, no context gathering.
 

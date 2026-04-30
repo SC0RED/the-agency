@@ -77,26 +77,27 @@ For Frontend and Engine PRs, run a local Sonar scan before push. `sonar-scanner`
 
 ## Jira
 
-Use the Atlassian MCP tools for all Jira interactions. They handle auth and the v3 API for you. Never write raw `curl` against the Jira REST API.
+**Reads use MCP. Writes use curl + Bearer.** This split is non-negotiable — see `shared/docs/jira-write-auth.md` for the full pattern, including the reason MCP for writes is forbidden (it authors as Chris, corrupting the audit trail).
 
-**These are *deferred* tools.** They aren't in your default toolset — the CLI exposes them by name only, and calling one directly fails with `InputValidationError`. Load their schemas up front with `ToolSearch` before touching any Jira task:
+The MCP tools are *deferred* — they aren't in the default toolset. The CLI exposes them by name only, and calling one directly fails with `InputValidationError`. Load read-tool schemas with `ToolSearch` before any Jira task:
 
 ```
-ToolSearch({query: "select:mcp__claude_ai_Atlassian__getJiraIssue,mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql,mcp__claude_ai_Atlassian__addCommentToJiraIssue,mcp__claude_ai_Atlassian__getTransitionsForJiraIssue,mcp__claude_ai_Atlassian__transitionJiraIssue,mcp__claude_ai_Atlassian__editJiraIssue"})
+ToolSearch({query: "select:mcp__claude_ai_Atlassian__getJiraIssue,mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql,mcp__claude_ai_Atlassian__getTransitionsForJiraIssue"})
 ```
 
 Use `select:<name>[,<name>...]` — don't rely on keyword search like `"jira"`, which can miss the `Atlassian`-prefixed names. Once a tool's schema comes back in the `<functions>` block, it's callable for the rest of the run.
 
-Common tools:
+Reads (MCP — fine):
 
 - `mcp__claude_ai_Atlassian__getJiraIssue` — fetch issue
 - `mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql` — search by JQL
-- `mcp__claude_ai_Atlassian__addCommentToJiraIssue` — post a comment
 - `mcp__claude_ai_Atlassian__getTransitionsForJiraIssue` — list transition IDs
-- `mcp__claude_ai_Atlassian__transitionJiraIssue` — apply transition
-- `mcp__claude_ai_Atlassian__editJiraIssue` — update fields
 
-For the actual IDs (cloud ID, transitions, custom fields, option IDs), see `shared/jira-ids-reference.md`.
+Writes (curl + Bearer — see `shared/docs/jira-write-auth.md`):
+
+- post a comment, transition, or edit fields → curl POST/PUT against `${JIRA_BASE}` with `Authorization: Bearer ${YOUR_AGENT_JIRA_TOKEN}`. Never `mcp__claude_ai_Atlassian__addCommentToJiraIssue`, `transitionJiraIssue`, or `editJiraIssue` — those author as Chris.
+
+For the actual IDs (cloud ID, transitions, custom fields, option IDs), see `shared/docs/jira-ids-reference.md`.
 
 ## Slack
 
