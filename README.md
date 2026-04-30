@@ -123,7 +123,7 @@ Injected via `{{shared:docs/...}}`. Single source of truth for anything every ag
 | `hook-session-protocol.md` | Non-negotiable rules for webhook-triggered runs (isolation, tool loading, failure protocol) |
 | `jira-as-patches.md`, `jira-as-scarlett.md` | Per-agent Jira authoring guidelines |
 
-Every numeric Jira ID lives in **one place**: `shared/docs/jira-ids-reference.md`. Templates copy specific literal values from it; no other doc carries transition IDs.
+Every numeric Jira ID lives in **one place**: `workspaces/shared/docs/jira-ids-reference.md`. Templates copy specific literal values from it; no other doc carries transition IDs.
 
 ---
 
