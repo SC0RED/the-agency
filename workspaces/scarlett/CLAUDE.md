@@ -8,4 +8,4 @@ If your session key starts with `hook-`, follow the hook-session discipline (iso
 
 ## Interactive / main sessions
 
-For ad-hoc debugging or direct `claude` invocations on the host, see `README.md` in this directory — it lists the docs you want to read for full context.
+For ad-hoc debugging on the host, your own docs at `docs/IDENTITY.md` and `docs/SOUL.md` carry your context. The repo's root `README.md` (one level up from `workspaces/`) describes the layout and host plumbing.

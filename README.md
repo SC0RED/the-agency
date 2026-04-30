@@ -60,7 +60,6 @@ the-agency/
         generate-slack-scarlett-token.sh
     patch/
       CLAUDE.md                        (Claude CLI entry point — minimal, agent-specific)
-      README.md                        (host info + webhook routing for humans)
       clawndom.yaml                    (Clawndom routing rules for this agent)
       avatars/                         (identity imagery)
       templates/                       (Nunjucks templates — one per routing destination)
@@ -79,7 +78,7 @@ Each agent directory carries only its agent-specific docs (`IDENTITY.md`, `SOUL.
 
 ### `CLAUDE.md`
 
-Bootstrap file read by the Claude CLI at subprocess start. Deliberately minimal — names the agent, points hook sessions at `workspaces/shared/docs/hook-session-protocol.md` (which every template injects), and points interactive sessions at the workspace `README.md`. Everything agent-specific lives in `docs/IDENTITY.md` / `docs/SOUL.md`; everything shared lives one level up in `workspaces/shared/docs/`.
+Bootstrap file read by the Claude CLI at subprocess start. Deliberately minimal — names the agent and points hook sessions at `workspaces/shared/docs/hook-session-protocol.md` (which every template injects). Everything agent-specific lives in `docs/IDENTITY.md` / `docs/SOUL.md`; everything shared lives one level up in `workspaces/shared/docs/`.
 
 ### `clawndom.yaml`
 
