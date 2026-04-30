@@ -59,7 +59,6 @@ the-agency/
         generate-slack-patch-token.sh
         generate-slack-scarlett-token.sh
     patch/
-      CLAUDE.md                        (Claude CLI entry point — minimal, agent-specific)
       clawndom.yaml                    (Clawndom routing rules for this agent)
       avatars/                         (identity imagery)
       templates/                       (Nunjucks templates — one per routing destination)
@@ -76,9 +75,7 @@ Each agent directory carries only its agent-specific docs (`IDENTITY.md`, `SOUL.
 
 ## Agent workspace anatomy (`workspaces/<agent>/`)
 
-### `CLAUDE.md`
-
-Bootstrap file read by the Claude CLI at subprocess start. Deliberately minimal — names the agent and points hook sessions at `workspaces/shared/docs/hook-session-protocol.md` (which every template injects). Everything agent-specific lives in `docs/IDENTITY.md` / `docs/SOUL.md`; everything shared lives one level up in `workspaces/shared/docs/`.
+Note: there is no `CLAUDE.md` per agent. The Claude CLI auto-loads any `CLAUDE.md` in the cwd into the system prompt, which would inject content Clawndom didn't explicitly choose on every hook session. The template — which Clawndom controls byte-for-byte — is the prompt.
 
 ### `clawndom.yaml`
 
@@ -188,10 +185,10 @@ To stand up a new agent:
 
 1. Create `workspaces/<name>/` with the subdirectory skeleton: `templates/`, `docs/`, `avatars/`.
 2. Author:
-   - `CLAUDE.md` — bootstrap + hook-session block
    - `clawndom.yaml` — routing rules for whichever webhooks this agent consumes
    - `docs/IDENTITY.md`, `docs/SOUL.md` — only the truly agent-specific docs (everything else is inherited from `workspaces/shared/docs/`)
    - Per-status templates under `templates/`
+   - **Do not add a `CLAUDE.md`** — the CLI would auto-load it into the system prompt on every hook session, polluting the template-controlled prompt.
 3. Push. Clawndom picks up the new agent on next sync.
 
 ---
