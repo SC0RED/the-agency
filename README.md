@@ -12,17 +12,18 @@ Today the repo houses **Patch** (the AI software engineer) and **Scarlett** (the
 ## How Clawndom uses this repo
 
 ```
-Jira webhook ──► Clawndom ──► match routing rule ──► render template ──► spawn `claude -p`
+Jira webhook ──► Clawndom ──► match routing rule ──► render template ──► spawn `claude` (--system-prompt + -p)
                                   │                       │
-                                  │                       └─► {{doc:docs/*.md}} + {{shared:docs/*.md}} injected inline
+                                  │                       ├─► {{system-doc:...}} + {{system-shared:...}} → cacheable system slot
+                                  │                       └─► {{doc:...}} + {{shared:...}} → per-event user prompt
                                   │
                                   └─► uses clawndom.yaml at workspaces/<agent>/clawndom.yaml
 ```
 
 1. A webhook arrives at Clawndom (Jira, Slack, GitHub).
 2. Clawndom loads `workspaces/<agent>/clawndom.yaml` to find the routing rule matching the event.
-3. The rule names a template in `workspaces/<agent>/templates/`. Clawndom renders it with the webhook payload plus any `{{doc:...}}` / `{{shared:...}}` injections it pulls from `workspaces/<agent>/docs/` and `workspaces/shared/docs/`.
-4. Rendered prompt goes to a `claude -p` subprocess with the full context assembled at render time.
+3. The rule names a template in `workspaces/<agent>/templates/`. Clawndom renders it with the webhook payload plus any `{{doc:...}}` / `{{shared:...}}` / `{{system-doc:...}}` / `{{system-shared:...}}` injections it pulls from `workspaces/<agent>/docs/` and `workspaces/shared/docs/`. The `system-*` tier opts content into Anthropic's prompt cache by routing it through `claude --system-prompt`; the legacy tier inlines content into the per-event user prompt. See `workspaces/shared/docs/template-tags.md` for the decision rule.
+4. Rendered prompt goes to a `claude` subprocess with the full context assembled at render time.
 
 The agent sees **only** what the template includes. Nothing at the agent's workspace root is read unless the template injects it. This repo's structure is a tool for humans and Clawndom — the agent never navigates it directly.
 
@@ -38,7 +39,7 @@ the-agency/
   .gitignore
   workspaces/
     shared/                            (agent-neutral assets)
-      docs/                            (injected via {{shared:docs/<file>}})
+      docs/                            (injected via {{shared:docs/<file>}} or {{system-shared:docs/<file>}})
         sc0red-engineering-pipeline.md
         anti-patterns.md
         estimation.md
@@ -50,6 +51,7 @@ the-agency/
         USER.md
         TOOLS.md
         hook-session-protocol.md
+        template-tags.md               (system-vs-body decision rule for prompt caching)
       tools/                           (operator scripts — invoked from templates or by humans)
         dump-jira-workflow.py
         generate-github-app-token.sh
@@ -83,12 +85,14 @@ The routing config Clawndom reads to decide which template handles which event. 
 
 ### `templates/`
 
-Nunjucks templates rendered once per webhook. Each template carries the steps and transition IDs it needs; everything else comes in via two doc-injection prefixes:
+Nunjucks templates rendered once per webhook. Each template carries the steps and transition IDs it needs; everything else comes in via four doc-injection prefixes — two **body** tiers (legacy, per-event content in the user prompt) and two **system** tiers (cacheable, stable content in the `--system-prompt` slot):
 
-- `{{doc:docs/<file>.md}}` — resolves **inside this agent's workspace** (currently `IDENTITY.md` and `SOUL.md`)
-- `{{shared:docs/<file>.md}}` — resolves to `workspaces/shared/docs/<file>.md` (the agent-neutral library)
+- `{{doc:docs/<file>.md}}` / `{{system-doc:docs/<file>.md}}` — resolve **inside this agent's workspace** (e.g. `IDENTITY.md`, `SOUL.md`, `jira-as-<agent>.md`).
+- `{{shared:docs/<file>.md}}` / `{{system-shared:docs/<file>.md}}` — resolve to `workspaces/shared/docs/<file>.md` (the agent-neutral library).
 
-**Important:** because templates are Nunjucks, any literal `{{` sequence inside an injected doc will be parsed as a template tag. Don't put literal template syntax in injected docs — describe the syntax in prose instead.
+The `system-*` tier routes content through `claude --system-prompt`, where Anthropic's prompt cache engages (1-hour TTL by default). Stable docs (IDENTITY, SOUL, anti-patterns, estimation, the engineering pipeline, the writing-great-* guides, jira-ids-reference, jira-write-auth, jira-as-<agent>, github-access, TOOLS, hook-session-protocol) belong in `system-*`; per-event variable content stays in `doc:` / `shared:`. Full decision rule, anti-patterns, and migration checklist in `workspaces/shared/docs/template-tags.md`.
+
+**Important:** because templates are Nunjucks, any literal `{{` sequence inside an injected doc will be parsed as a template tag — including inside `system-*` content (the engine renders Nunjucks against system content too). Don't put literal template syntax in injected docs; describe the syntax in prose instead.
 
 ### `docs/` (per-agent)
 
@@ -102,7 +106,7 @@ Only truly agent-specific material:
 
 ### `workspaces/shared/docs/` (agent-neutral)
 
-Injected via `{{shared:docs/...}}`. Single source of truth for anything every agent needs.
+Injected via `{{shared:docs/...}}` (per-event body) or `{{system-shared:docs/...}}` (cacheable system slot). Single source of truth for anything every agent needs.
 
 | File | Purpose |
 |---|---|
@@ -120,6 +124,7 @@ Injected via `{{shared:docs/...}}`. Single source of truth for anything every ag
 | `TOOLS.md` | Host tool inventory — AWS CLI, 1Password, runtime versions, MCP tools, scratch space |
 | `hook-session-protocol.md` | Non-negotiable rules for webhook-triggered runs (isolation, tool loading, failure protocol) |
 | `jira-write-auth.md` | Bearer + `api.atlassian.com` gateway pattern; do-not-MCP-for-writes rule; reads vs writes; common curl recipes. Pairs with each agent's `docs/jira-as-<name>.md`. |
+| `template-tags.md` | System-vs-body decision rule for prompt caching — when to use `{{system-*:...}}` vs the legacy `{{doc:...}}` / `{{shared:...}}` |
 
 Every numeric Jira ID lives in **one place**: `workspaces/shared/docs/jira-ids-reference.md`. Templates copy specific literal values from it; no other doc carries transition IDs.
 
@@ -169,14 +174,18 @@ Emit short-lived bearer tokens for the per-agent Jira / Slack service accounts. 
 
 ---
 
-## Template doc-injection: `{{doc:...}}` and `{{shared:...}}` conventions
+## Template doc-injection: `{{doc:...}}`, `{{shared:...}}`, `{{system-doc:...}}`, `{{system-shared:...}}` conventions
 
-Templates use Nunjucks. Two Clawndom-side extensions inline files at render time:
+Templates use Nunjucks. Four Clawndom-side extensions inline files at render time — two **body** tiers and two **system** tiers:
 
-- `{{doc:path/to/file.md}}` — relative to the agent workspace root (so `{{doc:docs/SOUL.md}}` pulls `workspaces/patch/docs/SOUL.md`).
-- `{{shared:path/to/file.md}}` — relative to `workspaces/shared/` (so `{{shared:docs/USER.md}}` pulls `workspaces/shared/docs/USER.md`).
+- `{{doc:path/to/file.md}}` — relative to the agent workspace root (so `{{doc:docs/SOUL.md}}` pulls `workspaces/patch/docs/SOUL.md`). Body tier: rendered into the user prompt.
+- `{{shared:path/to/file.md}}` — relative to `workspaces/shared/` (so `{{shared:docs/USER.md}}` pulls `workspaces/shared/docs/USER.md`). Body tier.
+- `{{system-doc:path/to/file.md}}` — same path resolution as `doc:`. **System tier**: extracted from the rendered body and routed through `claude --system-prompt`, where Anthropic's prompt cache engages (1-hour TTL).
+- `{{system-shared:path/to/file.md}}` — same path resolution as `shared:`. System tier.
 
-**Safety rule:** nothing injected can contain a literal `{{` — Nunjucks will try to parse it as a template tag. When a doc needs to reference the doc-injection syntax in prose (e.g. `TOOLS.md` explaining how it all works), describe it in words rather than showing a literal example. Hitting this footgun blocks every template render.
+The decision rule (which doc goes in which tier) is the only thing that determines whether you pay full input-token rates or ~10% cached rates on a given doc per webhook firing. Stable across runs of the same template → `system-*`; per-event or memory-recall → `doc:` / `shared:`. Full guidance, anti-patterns, and migration checklist in `workspaces/shared/docs/template-tags.md`.
+
+**Safety rule:** nothing injected can contain a literal `{{` — Nunjucks will try to parse it as a template tag. The engine renders Nunjucks against `system-*` content too, so the rule applies in both tiers. When a doc needs to reference the doc-injection syntax in prose (e.g. `TOOLS.md` explaining how it all works, or `template-tags.md` explaining the system-vs-body split), describe it in words rather than showing a literal example. Hitting this footgun blocks every template render.
 
 ---
 
