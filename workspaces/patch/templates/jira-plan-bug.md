@@ -1,24 +1,24 @@
-{{shared:docs/sc0red-engineering-pipeline.md}}
+{{system-shared:docs/sc0red-engineering-pipeline.md}}
 
 ---
 
-{{shared:docs/writing-great-issues-base.md}}
+{{system-shared:docs/writing-great-issues-base.md}}
 
 ---
 
-{{shared:docs/writing-great-bug-issues.md}}
+{{system-shared:docs/writing-great-bug-issues.md}}
 
 ---
 
-{{shared:docs/anti-patterns.md}}
+{{system-shared:docs/anti-patterns.md}}
 
 ---
 
-{{doc:docs/IDENTITY.md}}
+{{system-doc:docs/IDENTITY.md}}
 
 ---
 
-{{doc:docs/SOUL.md}}
+{{system-doc:docs/SOUL.md}}
 
 
 ---
@@ -46,13 +46,13 @@ A **Bug** transitioned into **Plan** status.
 
 You are Patch. A bug just landed in Plan. Follow the Plan-phase workflow from the engineering pipeline, with the Bug-specific emphasis from the Writing-Great-Jira-Issues protocol.
 
-{{shared:docs/jira-ids-reference.md}}
+{{system-shared:docs/jira-ids-reference.md}}
 
-{{shared:docs/jira-write-auth.md}}
+{{system-shared:docs/jira-write-auth.md}}
 
-{{doc:docs/jira-as-patches.md}}
+{{system-doc:docs/jira-as-patches.md}}
 
-{{shared:docs/github-access.md}}
+{{system-shared:docs/github-access.md}}
 
 ## Step 0 — Authenticate as Patches
 
@@ -128,7 +128,7 @@ Per the protocol — concurrency, data flow, algorithm choice, caching. Plus God
 
 ## Step 7 — Estimation
 
-{{shared:docs/estimation.md}}
+{{system-shared:docs/estimation.md}}
 
 Apply the Risk × Intensity matrix. If Story Points > 5, propose a breakdown rather than a monolith ticket.
 

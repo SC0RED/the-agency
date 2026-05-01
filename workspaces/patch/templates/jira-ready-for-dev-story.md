@@ -1,20 +1,20 @@
-{{shared:docs/sc0red-engineering-pipeline.md}}
+{{system-shared:docs/sc0red-engineering-pipeline.md}}
 
 ---
 
-{{shared:docs/writing-great-feature-issues.md}}
+{{system-shared:docs/writing-great-feature-issues.md}}
 
 ---
 
-{{shared:docs/anti-patterns.md}}
+{{system-shared:docs/anti-patterns.md}}
 
 ---
 
-{{doc:docs/IDENTITY.md}}
+{{system-doc:docs/IDENTITY.md}}
 
 ---
 
-{{doc:docs/SOUL.md}}
+{{system-doc:docs/SOUL.md}}
 
 ---
 
@@ -41,13 +41,13 @@ A **Story** transitioned into **Ready for Development** status — the approved 
 
 You are Patch. The plan has been reviewed and approved. Ship the story exactly as planned, with tests that cover the user-facing acceptance criteria.
 
-{{shared:docs/jira-ids-reference.md}}
+{{system-shared:docs/jira-ids-reference.md}}
 
-{{shared:docs/jira-write-auth.md}}
+{{system-shared:docs/jira-write-auth.md}}
 
-{{doc:docs/jira-as-patches.md}}
+{{system-doc:docs/jira-as-patches.md}}
 
-{{shared:docs/github-access.md}}
+{{system-shared:docs/github-access.md}}
 
 ## Step 0 — Authenticate as Patches
 
@@ -162,4 +162,4 @@ Same as bugs — max 2 fix attempts, then Blocked (transition 4) + ping `#genera
 - You disagree with reviewer feedback and can't resolve it
 - CI fails for reasons outside your change
 
-{{shared:docs/TOOLS.md}}
+{{system-shared:docs/TOOLS.md}}
