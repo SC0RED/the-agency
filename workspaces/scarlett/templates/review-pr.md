@@ -1,20 +1,20 @@
-{{shared:docs/hook-session-protocol.md}}
+{{system-shared:docs/hook-session-protocol.md}}
 
 ---
 
-{{shared:docs/sc0red-engineering-pipeline.md}}
+{{system-shared:docs/sc0red-engineering-pipeline.md}}
 
 ---
 
-{{shared:docs/anti-patterns.md}}
+{{system-shared:docs/anti-patterns.md}}
 
 ---
 
-{{doc:docs/IDENTITY.md}}
+{{system-doc:docs/IDENTITY.md}}
 
 ---
 
-{{doc:docs/SOUL.md}}
+{{system-doc:docs/SOUL.md}}
 
 ---
 
@@ -38,13 +38,13 @@ You are Scarlett. The plan was already reviewed (you approved it, or a human did
 
 Authority boundary from your SOUL: you do NOT write fix code. You do NOT merge PRs. You return one verdict (`approve` or `changes_requested`) per ticket.
 
-{{shared:docs/jira-ids-reference.md}}
+{{system-shared:docs/jira-ids-reference.md}}
 
-{{shared:docs/jira-write-auth.md}}
+{{system-shared:docs/jira-write-auth.md}}
 
-{{doc:docs/jira-as-scarlett.md}}
+{{system-doc:docs/jira-as-scarlett.md}}
 
-{{shared:docs/github-access.md}}
+{{system-shared:docs/github-access.md}}
 
 ## Step 1 — Auth + scratch dir
 
@@ -190,4 +190,4 @@ End the run. Don't transition the Jira ticket. Don't merge any PRs. Patch handle
 - **Refusing to call out structural problems because they're "out of scope."** Per your SOUL: everything in the codebase is on us. Scoping a real issue to a follow-up is fine; ignoring it isn't.
 - **Reviewing your own prior code.** Disclose it in the verdict comment and ask for a human reviewer.
 
-{{shared:docs/TOOLS.md}}
+{{system-shared:docs/TOOLS.md}}

@@ -1,20 +1,20 @@
-{{shared:docs/sc0red-engineering-pipeline.md}}
+{{system-shared:docs/sc0red-engineering-pipeline.md}}
 
 ---
 
-{{shared:docs/writing-great-task-issues.md}}
+{{system-shared:docs/writing-great-task-issues.md}}
 
 ---
 
-{{shared:docs/anti-patterns.md}}
+{{system-shared:docs/anti-patterns.md}}
 
 ---
 
-{{doc:docs/IDENTITY.md}}
+{{system-doc:docs/IDENTITY.md}}
 
 ---
 
-{{doc:docs/SOUL.md}}
+{{system-doc:docs/SOUL.md}}
 
 ---
 
@@ -41,13 +41,13 @@ A **Task** transitioned into **Ready for Development** status — the approved p
 
 You are Patch. The plan has been reviewed and approved. Tasks are technical work — refactors, infra changes, devex, debt cleanup. The shape is the same as a Story: ship the plan, write tests appropriate to the change, PR, review.
 
-{{shared:docs/jira-ids-reference.md}}
+{{system-shared:docs/jira-ids-reference.md}}
 
-{{shared:docs/jira-write-auth.md}}
+{{system-shared:docs/jira-write-auth.md}}
 
-{{doc:docs/jira-as-patches.md}}
+{{system-doc:docs/jira-as-patches.md}}
 
-{{shared:docs/github-access.md}}
+{{system-shared:docs/github-access.md}}
 
 ## Step 0 — Authenticate as Patches
 
@@ -171,4 +171,4 @@ Same pattern — max 2 fix attempts, then Blocked (transition 4) + ping `#genera
 - You discover the planned approach has worse blast radius than estimated
 - CI fails for reasons outside your change
 
-{{shared:docs/TOOLS.md}}
+{{system-shared:docs/TOOLS.md}}

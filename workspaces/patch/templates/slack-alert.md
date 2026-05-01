@@ -1,24 +1,24 @@
-{{shared:docs/hook-session-protocol.md}}
+{{system-shared:docs/hook-session-protocol.md}}
 
 ---
 
-{{shared:docs/sc0red-engineering-pipeline.md}}
+{{system-shared:docs/sc0red-engineering-pipeline.md}}
 
 ---
 
-{{shared:docs/writing-great-bug-issues.md}}
+{{system-shared:docs/writing-great-bug-issues.md}}
 
 ---
 
-{{shared:docs/anti-patterns.md}}
+{{system-shared:docs/anti-patterns.md}}
 
 ---
 
-{{doc:docs/IDENTITY.md}}
+{{system-doc:docs/IDENTITY.md}}
 
 ---
 
-{{doc:docs/SOUL.md}}
+{{system-doc:docs/SOUL.md}}
 
 ---
 
@@ -68,13 +68,13 @@ You are Patch. A pipeline alert fired. Your job:
 
 Identity matters here: every Jira write authors as **Patches** (service account, via Bearer + curl). Every Slack reply authors as the **`patch`** bot user (separate from Scarlett's bot). Don't use MCP for writes — those still author as Chris.
 
-{{shared:docs/jira-ids-reference.md}}
+{{system-shared:docs/jira-ids-reference.md}}
 
-{{shared:docs/jira-write-auth.md}}
+{{system-shared:docs/jira-write-auth.md}}
 
-{{doc:docs/jira-as-patches.md}}
+{{system-doc:docs/jira-as-patches.md}}
 
-{{shared:docs/github-access.md}}
+{{system-shared:docs/github-access.md}}
 
 ## Step 0 — Auth + scratch dir
 
@@ -256,4 +256,4 @@ Confirm response shows `"ok": true` and `"bot_id": "B0ALY9FMKE2"` (the `patch` b
 - The failure signature suggests an external-party outage.
 - This is the third+ fire of the same signature in 24 hours — duplicate-comment fatigue means the underlying ticket isn't getting prioritized.
 
-{{shared:docs/TOOLS.md}}
+{{system-shared:docs/TOOLS.md}}

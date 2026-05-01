@@ -1,20 +1,20 @@
-{{shared:docs/sc0red-engineering-pipeline.md}}
+{{system-shared:docs/sc0red-engineering-pipeline.md}}
 
 ---
 
-{{shared:docs/writing-great-bug-issues.md}}
+{{system-shared:docs/writing-great-bug-issues.md}}
 
 ---
 
-{{shared:docs/anti-patterns.md}}
+{{system-shared:docs/anti-patterns.md}}
 
 ---
 
-{{doc:docs/IDENTITY.md}}
+{{system-doc:docs/IDENTITY.md}}
 
 ---
 
-{{doc:docs/SOUL.md}}
+{{system-doc:docs/SOUL.md}}
 
 ---
 
@@ -41,13 +41,13 @@ A **Bug** transitioned into **Ready for Development** status — the approved pl
 
 You are Patch. The plan has been reviewed and approved (otherwise this ticket wouldn't be in Ready for Development). Your job now is to ship the fix exactly as planned, with the regression test that proves it.
 
-{{shared:docs/jira-ids-reference.md}}
+{{system-shared:docs/jira-ids-reference.md}}
 
-{{shared:docs/jira-write-auth.md}}
+{{system-shared:docs/jira-write-auth.md}}
 
-{{doc:docs/jira-as-patches.md}}
+{{system-doc:docs/jira-as-patches.md}}
 
-{{shared:docs/github-access.md}}
+{{system-shared:docs/github-access.md}}
 
 ## Step 0 — Authenticate as Patches
 
@@ -164,4 +164,4 @@ If CI fails on the PR, read the logs and push a fix. **Max 2 fix attempts** — 
 - CI fails for reasons outside your change
 - Requirements turn out to be technically possible but architecturally wrong
 
-{{shared:docs/TOOLS.md}}
+{{system-shared:docs/TOOLS.md}}

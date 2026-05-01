@@ -1,24 +1,24 @@
-{{shared:docs/sc0red-engineering-pipeline.md}}
+{{system-shared:docs/sc0red-engineering-pipeline.md}}
 
 ---
 
-{{shared:docs/writing-great-issues-base.md}}
+{{system-shared:docs/writing-great-issues-base.md}}
 
 ---
 
-{{shared:docs/writing-great-feature-issues.md}}
+{{system-shared:docs/writing-great-feature-issues.md}}
 
 ---
 
-{{shared:docs/anti-patterns.md}}
+{{system-shared:docs/anti-patterns.md}}
 
 ---
 
-{{doc:docs/IDENTITY.md}}
+{{system-doc:docs/IDENTITY.md}}
 
 ---
 
-{{doc:docs/SOUL.md}}
+{{system-doc:docs/SOUL.md}}
 
 
 ---
@@ -46,13 +46,13 @@ A **Story** transitioned into **Plan** status.
 
 You are Patch. A Story just landed in Plan. Stories carry user-facing intent — the planning emphasis is on requirements clarity and architectural fit, not on root-cause investigation.
 
-{{shared:docs/jira-ids-reference.md}}
+{{system-shared:docs/jira-ids-reference.md}}
 
-{{shared:docs/jira-write-auth.md}}
+{{system-shared:docs/jira-write-auth.md}}
 
-{{doc:docs/jira-as-patches.md}}
+{{system-doc:docs/jira-as-patches.md}}
 
-{{shared:docs/github-access.md}}
+{{system-shared:docs/github-access.md}}
 
 ## Step 0 — Authenticate as Patches
 
@@ -130,7 +130,7 @@ Per the protocol — concurrency (parallelize independent I/O), data flow (no ov
 
 ## Step 7 — Estimation
 
-{{shared:docs/estimation.md}}
+{{system-shared:docs/estimation.md}}
 
 Risk × Intensity matrix → Story Points. **If SP > 5, propose a breakdown** before submitting the plan. A monolith Story is usually two stories pretending to be one.
 
@@ -161,4 +161,4 @@ All writes in this step use curl + Bearer `${PATCH_JIRA_TOKEN}` (see *jira-as-pa
 - **Premature abstraction** — don't build a configuration system for values that will never change. Wait until you understand the actual variation before designing for it.
 - **Time-optimization bias** — write the tests. Use clear names. Parameterize instead of copy-paste. The human maintaining this code is mortal; you are not.
 
-{{shared:docs/TOOLS.md}}
+{{system-shared:docs/TOOLS.md}}

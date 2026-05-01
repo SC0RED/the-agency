@@ -1,16 +1,16 @@
-{{shared:docs/sc0red-engineering-pipeline.md}}
+{{system-shared:docs/sc0red-engineering-pipeline.md}}
 
 ---
 
-{{shared:docs/anti-patterns.md}}
+{{system-shared:docs/anti-patterns.md}}
 
 ---
 
-{{doc:docs/IDENTITY.md}}
+{{system-doc:docs/IDENTITY.md}}
 
 ---
 
-{{doc:docs/SOUL.md}}
+{{system-doc:docs/SOUL.md}}
 
 ---
 
@@ -40,13 +40,13 @@ You are Patch. A human has reviewed the code and said go. Your job is narrow and
 
 No code changes at this stage. No test rewrites. No "while I'm here" cleanup. If something is broken, escalate — don't fix.
 
-{{shared:docs/jira-ids-reference.md}}
+{{system-shared:docs/jira-ids-reference.md}}
 
-{{shared:docs/jira-write-auth.md}}
+{{system-shared:docs/jira-write-auth.md}}
 
-{{doc:docs/jira-as-patches.md}}
+{{system-doc:docs/jira-as-patches.md}}
 
-{{shared:docs/github-access.md}}
+{{system-shared:docs/github-access.md}}
 
 ## Step 1 — Idempotency guard
 
@@ -187,4 +187,4 @@ Expected: `HTTP 204`. Any other code → stop + comment + Blocked.
 - The merge succeeds but the environment doesn't come up healthy within 10 minutes of deploy.
 - Two unrelated tickets are in Deploy to development simultaneously and their PRs touch overlapping files.
 
-{{shared:docs/TOOLS.md}}
+{{system-shared:docs/TOOLS.md}}
