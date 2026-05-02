@@ -14,6 +14,18 @@
 # No webhook side-effects, no `any_item` against `changelog.items` — those
 # patterns belong to webhook-driven agents like Patch. Scarlett is purely
 # request/response.
+
+# Memory namespace declaration — referenced by per-rule `memory.namespace`
+# below. One namespace shared across plan-review + code-review so
+# anti-patterns Scarlett flagged at plan time are recallable at PR time
+# (and vice versa). Defaults: pruneAfter=365d, maxStoresPerRun=5.
+# SPE-1988.
+memory:
+  namespaces:
+    scarlett-personal:
+      embeddingProvider: openai
+      vectorStore: redis
+
 routing:
   internal:
     rules:
@@ -21,11 +33,29 @@ routing:
         condition:
           equals: { field: taskType, value: plan-review }
         messageTemplate: templates/review-plan.md
+        # `ticketTitle` (not `ticketKey`) is the semantic-meaningful field
+        # in the /api/tasks payload — recall is similarity-ranked over
+        # past plans whose tickets share vocabulary, not exact keys.
+        memory:
+          namespace: scarlett-personal
+          retrieve:
+            queryField: ticketTitle
+            topK: 5
+            minSimilarity: 0.4
 
       - name: code-review
         condition:
           equals: { field: taskType, value: code-review }
         messageTemplate: templates/review-pr.md
+        # PR description isn't on the routing payload (Patch dispatches
+        # with `context: { ticketKey, ticketTitle, ticketType, prUrls }`),
+        # so `ticketTitle` is again the best available semantic key.
+        memory:
+          namespace: scarlett-personal
+          retrieve:
+            queryField: ticketTitle
+            topK: 5
+            minSimilarity: 0.4
 
       - name: daily-handoff
         condition:
