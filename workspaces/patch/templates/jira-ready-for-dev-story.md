@@ -77,7 +77,7 @@ All Jira writes in this step use curl + Bearer `${PATCH_JIRA_TOKEN}` (see *jira-
 
 ## Step 2 — Read the approved plan
 
-Pull the latest plan comment from the Jira ticket — Approach + Test plan + Architectural Review are the contract.
+Pull the latest plan comment from the Jira ticket — it's the contract. The canonical Story structure (per `writing-great-feature-issues.md`) is: Estimation · Job to be Done · Scope · Current State · Approach (with *Alternatives Considered*) · Acceptance Criteria · Definition of Done · Production Signal · *(conditional)* Rollback. The **Approach**, **Acceptance Criteria**, and **Definition of Done** sections are what you implement against.
 
 If the plan is missing or unclear: **stop**. Transition to **Blocked** (transition 4) via curl and post a Jira comment as Patches naming what's missing. No improvising.
 

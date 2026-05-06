@@ -1,107 +1,38 @@
 # Writing Great Feature (Story) Issues
 
-Type-specific guidance for Stories — user-facing features. Read alongside `writing-great-issues-base.md` for the universal rules. This doc specializes the six questions for feature work.
+Feature-specific specialization of the canonical sections in `writing-great-issues-base.md`. Read that first.
 
-Stories carry user-facing intent. The planning emphasis is on requirements clarity and architectural fit, not on root-cause investigation.
+Stories carry user-facing intent. The planning emphasis is requirements clarity and architectural fit, not root-cause investigation. The body / plan comment uses these sections in this order. Sections marked *(conditional)* appear only when applicable.
 
----
-
-## The Six Questions — Feature Specialization
-
-### 1. What problem are we solving?
-
-State the user need. What can't they do today that they should be able to? What workflow is painful or missing?
-
-- **Good:** *"Users need to filter the target list by whether companies have contacts, so they can focus outreach on reachable companies."*
-- **Bad:** *"Add contacts filter"*
-
-Include screenshots of the current state — the before picture. If relevant, sketch or describe the intended end state.
-
-### 2. What does done look like?
-
-What's the user experience when this ships? Be specific about behavior, not just UI elements.
-
-- **Good:** *"Toggle filter in toolbar. When active, only rows with ≥1 contact appear. Filter persists across pagination. Count in badge reflects filtered total."*
-- **Bad:** *"Add a toggle for contacts"*
-
-If the expected behavior is ambiguous or undefined, say so — that's a product question, not an engineering question. Don't invent acceptance criteria the user didn't agree to.
-
-### 3. What's the current state?
-
-Describe the current user experience (or lack of one). What exists today? What adjacent features does this interact with? What does the user currently do as a workaround, if anything?
-
-Grounds the implementation in reality. You can't build the right thing if you don't understand what's already there.
-
-### 4. What's the technical landscape?
-
-Map the existing architecture that this feature touches.
-
-- Which components, services, and data flows are involved?
-- What patterns does the codebase already use for similar features? (Follow them — don't invent.)
-- Are there API changes needed? New endpoints? Schema changes?
-- What's the data model — does it exist already, or does this feature need to create it?
-
-### 5. What's the approach?
-
-Plain English:
-
-- Which files change (and which are new)
-- What the change does conceptually
-- What the change does NOT do (scope boundaries)
-- **Smallest shippable increment.** Can this feature be broken into phases? Shipping 80% of a feature in one PR is usually worse than shipping two focused PRs. Name the phases.
-- Estimated size (SP, files touched)
-
-### 6. What's the test plan?
-
-For a Story, tests verify the **user-facing behavior** in the "Done" section — not just the underlying functions. Integration tests for the user flow; unit tests for the new logic. Each named edge case gets its own test.
-
-- **What you're testing:** User flow and acceptance criteria.
-- **How you're testing it:** Integration test for the flow, unit tests for new logic.
-- **Edge cases:** Empty state, max values, concurrent access, error conditions.
-- **Regression scope:** Which existing tests need to run? Name them.
+1. **Estimation** — Risk / Intensity / SP / Velocity Impact, top of the body.
+2. **Job to be Done** — *When [context], the user wants to [motivation], so they can [outcome].* Names the actor and the desired outcome, not the implementation. Include before/after screenshots or sketches when relevant.
+3. **Scope** — what's in, what's explicitly out. Be specific about boundaries — adjacent features that are NOT being touched, edge cases that are NOT being handled in this iteration.
+4. **Current State** — what exists today, what workaround the user uses, which adjacent features this interacts with. Grounds the implementation in reality.
+5. **Approach** — the design in plain English: which files change, which are new, what existing pattern is being followed (with a path to the precedent), what the smallest shippable increment is. Include *Alternatives Considered* — name the rejected design alternatives and why. Reuse check is not optional.
+6. **Acceptance Criteria** — Given/When/Then. Each criterion is testable and traces back to the Job to be Done.
+7. **Definition of Done** — coverage expectations: integration test for the user flow, unit tests for new logic, named edge cases each get their own test.
+8. **Production Signal** — how we'll know it's working post-deploy: the metric, telemetry event, or observation. Distinct from acceptance criteria, which only proves correctness in test. *"Time-to-first-result drops below 2s on the dashboard panel"* is a production signal; *"the unit test passes"* is not.
+9. **Rollback** *(conditional)* — only when the change is irreversible (schema migration, data shape change, infra mutation). `git revert` is not a rollback section.
 
 ---
 
-## Examples
+## Worked Example
 
-### Bad Feature Issue
-
-> **Title:** Add has_contacts filter
+> **Estimation:** Risk: Low · Intensity: Medium · SP: 5 · Velocity Impact: Weak Positive
 >
-> **Description:** Need to filter by contacts on evaluate tab.
-
-Filter where? What behavior? What happens to pagination? What's the API contract?
-
-### Good Feature Issue
-
-> **Title:** Has Contacts filter only applies to visible rows — move to backend
+> **Job to be Done:** *When evaluating a target list of 500+ companies, the user wants to filter to companies that have contacts, so they can focus outreach on reachable companies.*
 >
-> **Problem:** Users want to filter their target list to companies that have contacts, so they can focus outreach. Current client-side filter only works on the visible page — companies with contacts on other pages are invisible.
+> **Scope:** In — toggle in the Evaluate tab toolbar; backend query parameter `has_contacts`; pagination reflects filtered total; filter persists across page navigation. Out — Discover tab (contacts not relevant there); persisting filter state across sessions; combining with the existing label filter (independent toggles, unioned).
 >
-> **Done:** Toggle in toolbar filters the full dataset server-side. Pagination reflects filtered total. Filter state persists across page navigation. Badge count updates to filtered total.
+> **Current State:** No filter exists on Evaluate. Users manually scan rows looking for the contacts icon. On lists of 500+ companies, this is impractical and breaks across pagination boundaries.
 >
-> **Current state:** No filter exists on Evaluate. Users manually scan rows looking for the contacts icon. On large lists (500+ companies), this is impractical.
+> **Approach:** Follow the label-filter pattern at `Platform-Frontend/src/app/.../evaluate-tab.component.ts:412` and `Platform-Backend/handlers/target-lists/get-companies.js:88`. Frontend: add toggle to toolbar, pass `has_contacts=true` query param when active. Backend: when param present, `$lookup` against `contact_enrichments` (indexed on `target_list_id`) and filter to companies with at least one match. ~4 files across the two repos. *Alternatives Considered:* Considered client-side filtering for simpler implementation — rejected because pagination would break (current page might have 0 matches while later pages have matches). Considered a denormalized `has_contacts` boolean on the company doc — rejected because contacts are added asynchronously and the boolean would lag.
 >
-> **Technical landscape:** Evaluate tab renders from `store.savedWebsites` (paginated). Backend endpoint `GET /target-lists/:id/companies` supports query params for pagination but not contacts filtering. Label filter was added recently via `label` query param — same pattern applies. MongoDB `contact_enrichments` collection links to companies via `target_list_id`. Two repos: frontend (toolbar toggle + query param) and backend (query param handling + aggregation pipeline).
+> **Acceptance Criteria:**
+> - *Given* a target list of 10 companies, 5 with contacts, *when* the user toggles "Has Contacts" on, *then* only the 5 with contacts appear and the badge shows 5.
+> - *Given* the toggle is on and the user navigates to page 2, *when* page 2 renders, *then* it shows the next page of contacts-only results and the toggle remains on.
+> - *Given* the toggle is on, *when* the user toggles it off, *then* all companies reappear and the badge shows 10.
 >
-> **Approach:** Follow the label filter pattern. Frontend: add toggle to toolbar, pass `has_contacts=true` query param when active. Backend: when param present, join against `contact_enrichments` to filter. 2 SP. Two repos, ~4 files total.
+> **Definition of Done:** Backend integration test seeding 10 companies (5 with contacts), asserting filtered and unfiltered queries return the right counts. Frontend unit test asserting query param is included when toggle is on. End-to-end verification on dev. Pagination edge case (toggle on with 0 matches in current page range) covered.
 >
-> **Test plan:** Backend — integration test: seed 10 companies, 5 with contacts. Request with `has_contacts=true`, assert 5 returned. Request without param, assert 10. Frontend — unit test: toggle filter, verify query param included in next API call. Edge cases: list with 0 contacts (empty state), toggle on/off across pagination.
->
-> **Architectural Review:**
-> - Root cause depth: N/A (feature, not bug). The structural gap is that filtering is client-side for a server-paginated dataset — the architecture doesn't support what the user needs.
-> - Design patterns: The existing label filter established a Query Parameter → Aggregation Pipeline pattern for server-side filtering. Following it, not inventing a new one.
-> - Divergent implementations: Searched — only the label filter exists. Following the same pattern ensures one approach to server-side filtering.
-> - Fix vs. design: This IS the right design. Server-side filtering for paginated data.
-> - Untouched: Discover tab (contacts aren't relevant to search results). Contact enrichment service (read-only consumer).
->
-> **Efficiency Review:**
-> - Concurrency: Single aggregation pipeline — MongoDB handles internal parallelism.
-> - Data flow: `$lookup` against `contact_enrichments` adds one pipeline stage. Indexed on `target_list_id` — verify index exists or add it.
-> - N+1: No — single aggregation, not per-row lookup.
-> - Caching: N/A — filter state is transient (toolbar toggle).
->
-> **Structural Quality:**
-> - No god-file contribution — toolbar toggle is a small addition. Backend change is in the existing query builder.
-> - No missing abstraction — following existing query-param pattern.
-> - No implicit coupling — filter state lives in the toolbar component and is passed as a query param.
+> **Production Signal:** Toggle usage event recorded in product analytics (`evaluate_filter_toggled` with `filter=has_contacts`). Look at week-over-week usage 7 days post-deploy.
