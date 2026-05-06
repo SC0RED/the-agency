@@ -93,26 +93,24 @@ If the plan comment can't be found or its author isn't Patches, **stop** — emi
 
 ## Step 3 — Read the plan against the rubric
 
-The Six Questions from `writing-great-issues-base.md` are your spine:
+The canonical section spine from `writing-great-issues-base.md` is your rubric. Verify each section is present (or appropriately omitted), starts with a real signal, and points the implementer at concrete code.
 
-1. **Problem** — stated in the right terms (user-terms for Bug/Story, engineering-cost for Task)?
-2. **Done** — explicit, measurable outcome? Could the next engineer verify completion?
-3. **Current state** — reproducible / observable / honest about the divergence?
-4. **Technical landscape** — files, modules, services named specifically? Cross-repo contracts identified?
-5. **Approach** — plain-English design, scope boundaries (what does NOT change), rollback path where relevant?
-6. **Test plan** — specific behaviors and edge cases, not "it works"?
+**Universal — every plan:**
 
-Plus the **Architectural Review** block — every plan needs one for Standard (2-5 SP) or Complex (8+ SP) tiers (Trivial 1 SP gets a slimmer version):
+1. **Estimation at the top** — Risk / Intensity / SP / Velocity Impact appear before any prose. If they're buried, flag it.
+2. **Estimation sanity check** — Risk × Intensity → SP per `estimation.md`. A "Trivial 1 SP" plan touching three repos with a migration path is a miscalibration; flag it.
+3. **Approach includes *Alternatives Considered*** — Patch must name the existing pattern she's following with a path (e.g., *"`OperationProgressHub` at `Platform-Frontend/.../operation-progress-hub.service.ts`"*) or state plainly that none applies and why. *"Following the usual approach"* is a red flag — explicit references only.
+4. **Pattern fit named** — when the change implements or extends a pattern, name it (Strategy, Observer, State, Builder, Chain of Responsibility, Factory). *"We could just refactor this"* without a pattern name is a red flag.
+5. **Divergent implementations addressed** — has Patch grep'd for similar code? If she's adding a 4th retry implementation when 3 exist, the plan should consolidate, not extend.
+6. **Acceptance Criteria are Given/When/Then and testable** — each criterion is a deterministic check, not a vibe.
+7. **Definition of Done names the artifact** — bug: regression test; feature: integration coverage; task: observable end state.
+8. **Rollback discipline** — present only when the change is irreversible (DB migration, schema change, deleted data, infra mutation). Rollback present for an ordinary code change is noise — flag it. Rollback absent for an irreversible change is a gap — flag it.
 
-- **Root cause depth** — Symptom / Cause / Structural deficiency named explicitly. "Defensive spackle" plans skip the structural deficiency; flag those.
-- **Design Pattern Analysis** — what pattern *is* the code, what pattern *should* it be? Pattern names from your SOUL: Strategy, Observer, State, Builder, Command, Chain of Responsibility, Factory, Mediator. "We could just refactor this" without a pattern name is a red flag.
-- **Divergent Implementation Search** — has Patch grep'd for similar code elsewhere? If she's about to add a 4th retry implementation when 3 already exist, the plan should consolidate, not extend.
-- **Fix vs. Design** — is Patch shipping a patch or shipping the right design? Both are valid; the plan must say which and why.
-- **What Stays Untouched** — explicit list of adjacent code Patch is NOT changing (and why). Tasks especially attract scope creep.
+**Type-specific bars** (override generic guidance):
 
-For Bug/Story/Task, type-specific bars from the writing-great-*-issues fragments override generic guidance — e.g., a Bug needs reproduction steps, a Story needs user-facing acceptance criteria, a Task needs a motivating cost.
-
-**Estimation sanity check:** Risk × Intensity → Story Points (per `estimation.md`). If Patch claims Trivial (1 SP) on a plan that touches three repos and includes a migration path, that's a Risk/Intensity miscalibration — flag it.
+- **Bug** — Symptom in user terms. Reproduction with steps + environment + how it was detected. Diagnosis traced to file:line with evidence. Root-cause depth: Symptom / Cause / Structural deficiency named explicitly (or *"none — genuine logic error"*). Defensive-spackle plans skip the structural deficiency; flag those.
+- **Story** — Job to be Done in *When/I want/So I can* form. Scope is in/out explicit. Production Signal names a real metric or observation (not "it works in test").
+- **Task** — Motivating Cost is concrete (*"8 active bugs traced to this 600-line god method"*, not *"it's old"*). Scope guards against creep — every "while I was in here" idea is excluded or filed as a follow-up. For perf/infra tasks, Production Signal names the metric.
 
 ## Step 4 — Decide your verdict
 

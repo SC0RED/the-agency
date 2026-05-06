@@ -93,9 +93,9 @@ A short Task description usually carries most of its own answer when it names a 
 - **Pain symptoms** the Task cites — error rates, build times, file lengths, divergent implementations. Measure the current state directly.
 - **Linked issues** under `relates to` / `blocks` / `is blocked by` — read them for the upstream pain that motivated the Task.
 
-Capture what each anchor resolves to: file, line, function, governing pattern. Measure what the Task says it'll improve. Carry the findings forward into Step 3's landscape map and Step 5's architectural review.
+Capture what each anchor resolves to: file, line, function, governing pattern. Measure what the Task says it'll improve. Carry the findings forward into Step 3's landscape map and Step 4's Approach (with reuse check).
 
-Then validate against the Six Questions, with the Task-specific bar:
+Armed with what the preflight found, validate the ticket has the minimum input a Task needs (the bar is different from Bug or Story):
 
 - **A clear definition of done** — what's the observable end state? "All `services/*.ts` files are <300 lines" or "CI runs in under 4 minutes" or "Pino structured logging across the whole assessment_engine."
 - **A motivating reason** — why now? What's the cost of *not* doing this? "This file has 8 active bugs traced to its 600-line god-method" is a reason. "It's old" is not.
@@ -114,41 +114,32 @@ Block only when the investigation genuinely dead-ends — the named code is abse
 3. **Dependency graph.** What depends on the code you're changing? What's the blast radius? Tasks often have wide implicit reach.
 4. **Migration shape.** Is this a one-shot change, or does it need a feature flag / deprecation window / dual-write phase?
 
-## Step 4 — Design proposal
+## Step 4 — Approach (with reuse check)
 
-For a Task, the design *is* the plan. Be detailed:
+Decide the design and write it as a single **Approach** section. The architectural / efficiency / structural review questions are *thinking tools* — they feed into Approach, not separate output sections.
 
-- Files added, removed, modified
-- Sequence — which steps must be ordered
-- What you'll *delete* (be specific — refactors that only add are usually wrong)
-- Rollback path if the change goes sideways
+While planning, walk through each:
 
-## Step 5 — Architectural review
+- **Pattern fit.** Most refactor Tasks exist *because* a pattern is missing. Name the pattern with a path. *Strategy, Observer, State, Builder, Chain of Responsibility, Factory* are the usual suspects.
+- **Divergent implementations.** If the task is "consolidate divergent loggers," show all the divergent paths (with file paths) and the consolidated future shape.
+- **Incremental refactor vs. full rewrite.** Tasks often have this trade-off. Name both, explain the chosen approach.
+- **What stays untouched.** Tasks attract scope creep — pin down what you're *not* touching and why.
+- **Concurrency, data flow, complexity, caching.** For perf and N+1 tasks this analysis often *is* the plan. Don't shrink it when it's load-bearing.
+- **What you'll delete.** Refactors that only add are usually wrong. Be specific.
 
-Required for Standard (2-5 SP) and Complex (8+ SP). For Tasks, weight these heavily:
+Write the result as a single **Approach** section that includes an *Alternatives Considered* paragraph (especially "do nothing" and "smaller scope" if those were considered).
 
-- **Design Pattern Analysis** — most refactor Tasks exist *because* a pattern is missing. Name the pattern. Strategy, Observer, State, Builder, Chain of Responsibility, Factory.
-- **Divergent Implementation Search** — if the Task is "consolidate divergent loggers," show all the divergent paths and the consolidated future.
-- **Fix vs. Design** — for Tasks this is often "incremental refactor vs. full rewrite." Name both, explain the chosen tradeoff.
-- **What Stays Untouched** — adjacency to the change. Tasks attract scope creep; pin down what you're *not* touching and why.
-
-## Step 6 — Efficiency review and structural quality
-
-Per the protocol — concurrency, data flow, algorithm complexity, caching, god files, missing abstractions, implicit coupling.
-
-For Tasks specifically: this section is often the *whole point*. If the task is "fix the N+1 in the search endpoint," your Efficiency Review section is the entire body of the plan. Don't shrink it.
-
-## Step 7 — Estimation
+## Step 5 — Estimation
 
 {{system-shared:docs/estimation.md}}
 
-Risk × Intensity → Story Points. Tasks with broad blast radius (touching shared infrastructure, build pipeline, secrets, auth) are usually higher Risk than they look. If SP > 5, propose a phased breakdown.
+Risk × Intensity → Story Points. Tasks with broad blast radius (shared infrastructure, build pipeline, secrets, auth) are usually higher Risk than they look. If SP > 5, propose a phased breakdown. Estimation appears at the **top** of the plan comment (even though it's calculated last) — see Step 6's section list.
 
-## Step 8 — Post the plan, transition, request review
+## Step 6 — Post the plan, transition, request review
 
 All writes in this step use curl + Bearer `${PATCH_JIRA_TOKEN}` (see *jira-as-patches* fragment). Do NOT use `mcp__claude_ai_Atlassian__addCommentToJiraIssue`, `editJiraIssue`, or `transitionJiraIssue` — those author as Chris.
 
-1. Post the plan as a Jira comment (curl POST to `${JIRA_BASE}/issue/{{ issue.key }}/comment`). The Bug and Story examples in *Writing Great Jira Issues* §9 don't quite fit a Task — adapt the structure: replace "Problem" with "Motivating Cost," replace "Done" with "Definition of Done," then keep Current state / Technical landscape / Approach / Test plan / Architectural Review / Efficiency Review / Structural Quality. **Capture the response body's `id` field** — Scarlett's review needs it: `PLAN_COMMENT_ID=$(curl ... | jq -r .id)`.
+1. Post the plan as a Jira comment (curl POST to `${JIRA_BASE}/issue/{{ issue.key }}/comment`). Use the canonical Task section structure from `writing-great-task-issues.md`, in this order: **Estimation** (Risk / Intensity / SP / Velocity Impact, top of the body) · **Motivating Cost** · **Scope** (in / out) · **Current State** · **Approach** (with *Alternatives Considered* from Step 4) · **Acceptance Criteria** (deterministic, observable end state) · **Definition of Done** · **Production Signal** *(perf and infra tasks only — the metric that confirms cost reduction)*. Add **Rollback** *only* if the change is irreversible (schema migration, infra mutation, dependency upgrade with non-trivial revert path) — for ordinary code changes, omit it. **Capture the response body's `id` field** — Scarlett's review needs it: `PLAN_COMMENT_ID=$(curl ... | jq -r .id)`.
 2. Update custom fields: Risk, Intensity, Velocity Impact (curl PUT to `${JIRA_BASE}/issue/{{ issue.key }}`). Business Value is set by humans; Story Points is calculated by Jira. Use the field keys and option IDs from the *Jira IDs* table above.
 3. Transition to **Plan Review** via transition **3** (`Plan Complete` — the workflow-named In Planning → Plan Review arrow, not the generic global `Manual` id 35): `curl POST ${JIRA_BASE}/issue/{{ issue.key }}/transitions` with `{"transition":{"id":"3"}}`.
 4. Dispatch a `plan-review` task to Scarlett. SPE-1707 shipped, so this is fire-and-forget — Scarlett posts her verdict as a separate Jira comment authored as Scarlett, asynchronously. You don't wait for her response.

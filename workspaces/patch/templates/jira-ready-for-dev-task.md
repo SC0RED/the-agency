@@ -77,7 +77,7 @@ All Jira writes in this step use curl + Bearer `${PATCH_JIRA_TOKEN}` (see *jira-
 
 ## Step 2 — Read the approved plan
 
-Pull the latest plan comment. Approach + Test plan + Architectural Review + Efficiency Review are the contract. For Tasks, the **Definition of Done** in the plan is what you're shipping toward — verify the end state is observable.
+Pull the latest plan comment — it's the contract. The canonical Task structure (per `writing-great-task-issues.md`) is: Estimation · Motivating Cost · Scope · Current State · Approach (with *Alternatives Considered*) · Acceptance Criteria · Definition of Done · *(conditional)* Production Signal · *(conditional)* Rollback. The **Acceptance Criteria** and **Definition of Done** are what you ship toward — verify the end state is observable.
 
 If the plan is missing or unclear: **stop**. Transition to **Blocked** (transition 4) via curl and post a Jira comment as Patches naming what's missing.
 

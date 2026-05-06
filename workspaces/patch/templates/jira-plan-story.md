@@ -95,7 +95,7 @@ A short Story description usually carries most of its own answer when it names a
 
 Capture what each anchor resolves to: file, line, function, governing pattern. Carry the findings forward into Step 3's landscape map.
 
-Then validate the ticket against the Six Questions in *Writing Great Jira Issues* §3, armed with what the preflight found. For a Story, the gates are:
+Armed with what the preflight found, validate the ticket has the minimum input a Story needs:
 
 - **A user need stated in user terms.** "Users need to filter the target list by whether companies have contacts" — not "Add contacts filter."
 - **A "done" definition** — explicit user-facing behavior. "Toggle in toolbar. When active, only rows with ≥1 contact appear. Filter persists across pagination."
@@ -118,38 +118,32 @@ Stories don't have a "root cause" — they have an architecture they need to fit
 
 Use `grep` and `git log` aggressively. Name the files and line numbers in your plan.
 
-## Step 4 — Design proposal
+## Step 4 — Approach (with reuse check)
 
-Plain English (not code), per *Writing Great Jira Issues* §3.5:
-- Which files change and which are new
-- What the change does conceptually
-- What it explicitly does **not** do (scope boundaries)
-- For features: smallest shippable increment. Can this be broken into phases?
+Decide the design and write it as a single **Approach** section. The architectural / efficiency / structural review questions are *thinking tools* — they feed into Approach, not separate output sections.
 
-## Step 5 — Architectural review
+While planning, walk through each:
 
-Required for Standard (2-5 SP) and Complex (8+ SP). Cover:
+- **Pattern fit.** What pattern in the existing codebase matches this feature? Name it with a path (e.g., *"following `OperationProgressHub` at `Platform-Frontend/.../operation-progress-hub.service.ts`"*). If you're introducing a new pattern, justify why no existing one applies.
+- **Divergent implementations.** Is this feature doing something the codebase already does elsewhere with a different approach? If so, your design must reconcile the divergence, not add another path.
+- **Expedient implementation vs. right design.** If they differ, name both and justify the trade-off.
+- **What stays untouched.** Adjacent code you're *not* changing — name it only when the natural reading would suggest you might be.
+- **Concurrency, data flow, complexity, caching.** Apply the efficiency lens — but only if it produced findings worth the reader's time.
+- **Smallest shippable increment.** Can this feature be broken into phases? Shipping 80% of a feature in one PR is usually worse than shipping two focused PRs. Name the phases when they exist.
 
-- **Design Pattern Analysis** — what pattern fits this feature? Strategy, Observer, State, Builder, Chain of Responsibility, Factory? If the codebase already uses a relevant pattern, follow it. If you're inventing a new pattern, justify why.
-- **Divergent Implementation Search** — is this story doing something the codebase already does elsewhere with a different approach? If so, your design must reconcile the divergence, not add another path.
-- **Fix vs. Design** — for stories this is "expedient implementation vs. right design." Name both. If they differ, justify.
-- **What Stays Untouched** — list adjacent code you're explicitly *not* changing and why.
+Write the result as a single **Approach** section that includes an *Alternatives Considered* paragraph. Don't manufacture subsections to "show" you considered each lens.
 
-## Step 6 — Efficiency review and structural quality
-
-Per the protocol — concurrency (parallelize independent I/O), data flow (no over-fetching, no N+1), algorithm choice, caching strategy. Plus structural quality (god files, missing abstractions, implicit coupling). Walk through every lens during planning; only write up the ones that produced something the reader needs. Silent subsections don't appear.
-
-## Step 7 — Estimation
+## Step 5 — Estimation
 
 {{system-shared:docs/estimation.md}}
 
-Risk × Intensity matrix → Story Points. **If SP > 5, propose a breakdown** before submitting the plan. A monolith Story is usually two stories pretending to be one.
+Risk × Intensity matrix → Story Points. **If SP > 5, propose a breakdown** before submitting the plan. A monolith Story is usually two stories pretending to be one. Estimation appears at the **top** of the plan comment (even though it's calculated last) — see Step 6's section list.
 
-## Step 8 — Post the plan, transition, request review
+## Step 6 — Post the plan, transition, request review
 
 All writes in this step use curl + Bearer `${PATCH_JIRA_TOKEN}` (see *jira-as-patches* fragment). Do NOT use `mcp__claude_ai_Atlassian__addCommentToJiraIssue`, `editJiraIssue`, or `transitionJiraIssue` — those author as Chris.
 
-1. Post the plan as a Jira comment (curl POST to `${JIRA_BASE}/issue/{{ issue.key }}/comment`) using the **Good Feature Issue** structure from *Writing Great Jira Issues* §9 (Title / Problem / Done / Current state / Technical landscape / Approach / Test plan / Architectural Review / Efficiency Review / Structural Quality). **Capture the response body's `id` field** — Scarlett's review needs it: `PLAN_COMMENT_ID=$(curl ... | jq -r .id)`.
+1. Post the plan as a Jira comment (curl POST to `${JIRA_BASE}/issue/{{ issue.key }}/comment`). Use the canonical Story section structure from `writing-great-feature-issues.md`, in this order: **Estimation** (Risk / Intensity / SP / Velocity Impact, top of the body) · **Job to be Done** (*When [context], the user wants to [motivation], so they can [outcome]*) · **Scope** (in / out) · **Current State** · **Approach** (with *Alternatives Considered* from Step 4) · **Acceptance Criteria** (Given/When/Then) · **Definition of Done** · **Production Signal** (telemetry / metric / observation that confirms it works post-deploy). Add **Rollback** *only* if the change is irreversible (schema migration, data shape change, infra mutation) — for ordinary code changes, omit it. **Capture the response body's `id` field** — Scarlett's review needs it: `PLAN_COMMENT_ID=$(curl ... | jq -r .id)`.
 2. Update the custom fields: Risk, Intensity, Velocity Impact (curl PUT to `${JIRA_BASE}/issue/{{ issue.key }}`). Business Value is set by humans; Story Points is calculated by Jira. Use the field keys and option IDs from the *Jira IDs* table above.
 3. Transition to **Plan Review** via transition **3** (`Plan Complete` — the workflow-named In Planning → Plan Review arrow, not the generic global `Manual` id 35): `curl POST ${JIRA_BASE}/issue/{{ issue.key }}/transitions` with `{"transition":{"id":"3"}}`.
 4. Dispatch a `plan-review` task to Scarlett. SPE-1707 shipped, so this is fire-and-forget — Scarlett posts her verdict as a separate Jira comment authored as Scarlett, asynchronously. You don't wait for her response.

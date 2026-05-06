@@ -96,7 +96,7 @@ A short description usually carries most of its own answer when it names code-lo
 
 Capture what each anchor resolves to: file, line, function, governing pattern. Carry the findings forward into Step 3's full evidence chain and Step 4's root cause.
 
-Then validate the ticket against the Six Questions in *Writing Great Jira Issues* §3, armed with what the preflight found. For a Bug, the gates are:
+Armed with what the preflight found, validate the ticket has the minimum input a Bug needs:
 
 - **A reproducible symptom** — exact steps, environment, data conditions
 - **An expected outcome** — what should happen instead
@@ -115,40 +115,41 @@ Once gated through, follow the evidence-before-theory order. **Do not read code 
 3. **Code.** *Now* read the code path involved — armed with what actually happened. **Before any `Read` or `Grep` against `/tmp/<repo>`, refresh the clone** per *Keeping clones fresh* in the injected *GitHub access* doc above. `/tmp` persists across hook-triggered subprocesses, so stale checkouts are the default — an investigation against yesterday's code wastes your turn budget on a ghost.
 4. **Hypothesis last.** Form your diagnosis from the evidence. If the evidence doesn't support the diagnosis, the diagnosis is wrong.
 
-## Step 4 — Root cause depth
+## Step 4 — Diagnosis
 
-Name **all three** layers explicitly in your plan:
+Trace the symptom to the cause, with file:line references. Name three things in your diagnosis:
+
 - **Symptom** — what the user sees
 - **Cause** — what the code does wrong
-- **Structural deficiency** — why the code was written that way (or "none — genuine logic error in an otherwise sound design", if that's the truth)
+- **Structural deficiency** — why the code was written that way (or *"none — genuine logic error in an otherwise sound design"* when that's the truth)
 
-If your fix only addresses the symptom, you're patching. If it addresses the cause, you're fixing. If it addresses the structural deficiency, you're engineering. Know which one you're doing and why — and document it.
+If your fix only addresses the symptom, you're patching. If it addresses the cause, you're fixing. If it addresses the structural deficiency, you're engineering. Know which one you're doing.
 
-## Step 5 — Architectural review
+## Step 5 — Approach (with reuse check)
 
-Required for Standard (2-5 SP) and Complex (8+ SP) tiers. Trivial (1 SP) bugs need only "Fix vs. Design" and "What Stays Untouched."
+Decide the fix and write it up as a single **Approach** section. The architectural / efficiency / structural review questions are *thinking tools* — they feed into Approach, not separate output sections.
 
-Cover:
-- **Design Pattern Analysis** — what pattern is the code currently implementing (intentionally or accidentally)? What pattern *should* it implement, only if the current structure is causing the bug?
-- **Divergent Implementation Search** — `grep` for code doing the same thing elsewhere. If there are multiple paths, name them. If there are none, show what you searched for.
-- **Fix vs. Design** — "My fix does X. The right design is Y." If they're the same: great. If they differ: justify.
-- **What Stays Untouched** — list related code you're *not* changing and why.
+While planning, walk through each:
 
-## Step 6 — Efficiency review and structural quality
+- **Pattern fit.** Is there an existing pattern in the codebase that matches? Name it with a path. If none applies, state plainly that none does and why.
+- **Divergent implementations.** `grep` for code doing the same thing elsewhere. If there are multiple paths, your fix must reconcile divergence — not add another path. If there are none, show the grep — that's evidence too.
+- **Fix vs. design.** Is the fix also the right design? If yes, one line. If they differ, name both and justify the workaround as a workaround.
+- **What stays untouched.** Adjacent code you're *not* changing — name it only when the natural reading would suggest you might be.
+- **Concurrency, data flow, complexity, caching.** Apply the efficiency lens — but only if it produced findings worth the reader's time.
 
-Per the protocol — concurrency, data flow, algorithm choice, caching. Plus God Files / Missing Abstractions / Implicit State Coupling. Walk through every lens during planning; only write up the ones that produced something the reader needs. Silent subsections don't appear.
+Write the result as a single **Approach** section that includes an *Alternatives Considered* paragraph. Don't manufacture subsections to "show" you considered each lens. Silent checks don't appear.
 
-## Step 7 — Estimation
+## Step 6 — Estimation
 
 {{system-shared:docs/estimation.md}}
 
-Apply the Risk × Intensity matrix. If Story Points > 5, propose a breakdown rather than a monolith ticket.
+Apply the Risk × Intensity matrix to get SP. If SP > 5, propose a breakdown rather than a monolith ticket. Estimation appears at the **top** of the plan comment (even though it's calculated last) — see Step 7's section list.
 
-## Step 8 — Post the plan, transition, request review
+## Step 7 — Post the plan, transition, request review
 
 All writes in this step use curl + Bearer `${PATCH_JIRA_TOKEN}` (see *jira-as-patches* fragment). Do NOT use `mcp__claude_ai_Atlassian__addCommentToJiraIssue`, `editJiraIssue`, or `transitionJiraIssue` — those author as Chris.
 
-1. Post the plan as a Jira comment (curl POST to `${JIRA_BASE}/issue/{{ issue.key }}/comment`) using the **Good Bug Issue** structure from *Writing Great Jira Issues* §9 (Title / Problem / Done / Current state / Technical landscape / Approach / Test plan / Architectural Review / Efficiency Review / Structural Quality). **Capture the response body's `id` field** — Scarlett's review needs it: `PLAN_COMMENT_ID=$(curl ... | jq -r .id)`.
+1. Post the plan as a Jira comment (curl POST to `${JIRA_BASE}/issue/{{ issue.key }}/comment`). Use the canonical Bug section structure from `writing-great-bug-issues.md`, in this order: **Estimation** (Risk / Intensity / SP / Velocity Impact, top of the body) · **Symptom** · **Reproduction** · **Diagnosis** (with file:line refs and root-cause depth from Step 4) · **Approach** (with *Alternatives Considered* from Step 5) · **Acceptance Criteria** (Given/When/Then) · **Definition of Done** (including the regression test). Add **Rollback** *only* if the change is irreversible (DB migration, schema change, deleted data, infra mutation) — for ordinary code changes, omit it. **Capture the response body's `id` field** — Scarlett's review needs it: `PLAN_COMMENT_ID=$(curl ... | jq -r .id)`.
 2. Update the custom fields: Risk, Intensity, Velocity Impact (curl PUT to `${JIRA_BASE}/issue/{{ issue.key }}`). Business Value is set by humans; Story Points is calculated by Jira. Use the field keys and option IDs from the *Jira IDs* table above.
 3. Transition to **Plan Review** via transition **3** (`Plan Complete` — the workflow-named In Planning → Plan Review arrow, not the generic global `Manual` id 35): `curl POST ${JIRA_BASE}/issue/{{ issue.key }}/transitions` with `{"transition":{"id":"3"}}`.
 4. Dispatch a `plan-review` task to Scarlett. SPE-1707 shipped, so this is fire-and-forget — Scarlett posts her verdict as a separate Jira comment authored as Scarlett, asynchronously. You don't wait for her response.

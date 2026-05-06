@@ -179,7 +179,7 @@ Use the **Good Bug Issue** structure from the writing-great-bug-issues guide abo
     "project": {"key": "SPE"},
     "issuetype": {"name": "Bug"},
     "summary": "<service> — <one-line failure description> ({{ env }})",
-    "description": <ADF doc with Problem / Done / Current state / Technical landscape / Approach / Test plan / Architectural Review>,
+    "description": <ADF doc using the canonical Bug section structure from writing-great-bug-issues.md: Estimation · Symptom · Reproduction · Diagnosis · Approach (with Alternatives Considered) · Acceptance Criteria · Definition of Done · (conditional) Rollback>,
     "priority": {"name": "<High if production, Medium if testing/dev>"}
   }
 }
