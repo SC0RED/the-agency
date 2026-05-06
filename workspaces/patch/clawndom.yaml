@@ -107,6 +107,14 @@ routing:
             minSimilarity: 0.4
 
       # ── Ready for Development: per-type ──────────────────────────────
+      # Ready-for-development rules carry maxTurns: 500 because the
+      # implementation phase routinely cascades wider than the runner's
+      # 150-turn default. A single tuple-shape change in the engine can
+      # ripple through 18 test files = 60+ Edit calls = 60+ turns just
+      # for mechanical destructure updates, before tests run, before any
+      # PR. SPE-2010 hit the wall three times at 151 turns each ($13/run)
+      # before this lift. 500 is a generous ceiling — most rule firings
+      # finish well under it; the budget only matters for the worst case.
       - name: ready-for-development-bug
         condition:
           all_of:
@@ -119,6 +127,7 @@ routing:
                     - equals: { field: field, value: status }
                     - equals: { field: toString, value: Ready for Development }
         messageTemplate: templates/jira-ready-for-dev-bug.md
+        maxTurns: 500
         memory:
           namespace: patch-personal
           retrieve:
@@ -138,6 +147,7 @@ routing:
                     - equals: { field: field, value: status }
                     - equals: { field: toString, value: Ready for Development }
         messageTemplate: templates/jira-ready-for-dev-story.md
+        maxTurns: 500
         memory:
           namespace: patch-personal
           retrieve:
@@ -157,6 +167,7 @@ routing:
                     - equals: { field: field, value: status }
                     - equals: { field: toString, value: Ready for Development }
         messageTemplate: templates/jira-ready-for-dev-task.md
+        maxTurns: 500
         memory:
           namespace: patch-personal
           retrieve:

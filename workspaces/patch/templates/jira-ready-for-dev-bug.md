@@ -96,10 +96,21 @@ If the bug is genuinely untestable in isolation, restructure the code so it isn'
    git clone https://x-access-token:${GH_TOKEN}@github.com/SC0RED/<repo-name>.git
    cd <repo-name>
    ```
-2. Branch off `development`:
+2. **Check for prior work first.** A previous run of yours (interrupted by quota wall, max-turns, or a service restart) may have already pushed a branch and made commits for this ticket. Resuming from there beats redoing it:
    ```
-   git checkout development && git pull --ff-only
-   git checkout -b fix/{{ issue.key }}-<short-slug>
+   EXISTING=$(git ls-remote --heads origin "fix/{{ issue.key }}-*" | head -1 | awk '{print $2}' | sed 's|refs/heads/||')
+   if [ -n "${EXISTING}" ]; then
+     echo "Found prior branch: ${EXISTING}"
+     git fetch origin "${EXISTING}" && git checkout "${EXISTING}"
+     git log --oneline development..HEAD   # what did past-me already commit?
+     # Run `make check-all` to see current state. If green and the diff
+     # matches the approved plan: skip ahead to Step 6 (PR + transition).
+     # If red: fix the failing tests, then continue. DO NOT redo work
+     # that's already committed — your past self spent real money on it.
+   else
+     git checkout development && git pull --ff-only
+     git checkout -b fix/{{ issue.key }}-<short-slug>
+   fi
    ```
    (For hotfixes only: rebase onto `production` instead, with back-merge PRs to testing and development.)
 3. Implement the approved plan directly. Write the regression test. Follow existing patterns in the touched files. No scope creep, no extra refactors. Prefer design patterns over hacks.
@@ -140,7 +151,9 @@ All Jira writes in this step use curl + Bearer `${PATCH_JIRA_TOKEN}`. Do NOT use
             '{agent:"scarlett", taskType:"code-review", context:{ticketKey:$key, ticketTitle:$title, ticketType:$type, prUrls:$urls}}')"
    ```
    If the dispatch returns non-2xx, post a single fallback Jira comment as Patches noting Scarlett dispatch failed — don't retry, don't block on it.
-2. **Handle automated review feedback** — CodeRabbit + SonarCloud comments on the PR. Apply or contest each one with reasoning.
+2. **Handle automated review feedback** — CodeRabbit + SonarCloud comments on the PR.
+   - **CodeRabbit auto-skips bot-authored PRs.** You must trigger it manually after every push: `gh pr comment <PR> --repo <OWNER>/<REPO> --body "@coderabbitai review"`. Then wait ~2 min and read its inline comments.
+   - Triage each finding per `shared/docs/coderabbit-feedback.md`. Apply real defects (broken sorts, weak crypto on IDs, command injection). **Push back** on suggestions that violate our anti-patterns: defensive null checks on internal data, fallback values that mask bugs, redundant validation of already-validated models, premature helper extraction, callability-only tests. Reply on each contested item, link the rule, resolve the conversation. Two passes max — don't iterate forever.
 3. Post a consolidated Jira comment as Patches listing every PR open for this ticket. The ticket stays in **Code Review** until a human merges; a human handles the final transition.
 
 (MVP scope: Patch dispatches once and ends. Scarlett's verdict is additive feedback for the human reviewer, not a gate. A future iteration moves the iterate-with-Scarlett loop into Patch's flow with bounded retries.)
