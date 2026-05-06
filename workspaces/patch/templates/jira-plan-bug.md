@@ -136,7 +136,7 @@ Cover:
 
 ## Step 6 — Efficiency review and structural quality
 
-Per the protocol — concurrency, data flow, algorithm choice, caching. Plus God Files / Missing Abstractions / Implicit State Coupling. Skip with "N/A — [reason]" only if you've actually considered the question.
+Per the protocol — concurrency, data flow, algorithm choice, caching. Plus God Files / Missing Abstractions / Implicit State Coupling. Walk through every lens during planning; only write up the ones that produced something the reader needs. Silent subsections don't appear.
 
 ## Step 7 — Estimation
 

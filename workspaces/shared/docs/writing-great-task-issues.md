@@ -1,6 +1,6 @@
 # Writing Great Task Issues
 
-Type-specific guidance for Tasks — technical work that isn't a user-facing feature and isn't a bug. Read alongside `writing-great-issues-base.md` for the universal rules. This doc specializes the six questions for task work.
+Type-specific guidance for Tasks — technical work that isn't a user-facing feature and isn't a bug. Read alongside `writing-great-issues-base.md` for the Reader Contract, Title Rules, Comment Opening Rules, and review lenses. This doc specializes the six questions for task work.
 
 Tasks are: refactors, infrastructure changes, devex work, debt cleanup, dependency upgrades, performance work without a specific user-reported symptom. The shape is similar to a Story, but the motivating force is engineering-driven rather than user-driven.
 

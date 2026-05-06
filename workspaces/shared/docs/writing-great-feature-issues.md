@@ -1,6 +1,6 @@
 # Writing Great Feature (Story) Issues
 
-Type-specific guidance for Stories — user-facing features. Read alongside `writing-great-issues-base.md` for the universal rules. This doc specializes the six questions for feature work.
+Type-specific guidance for Stories — user-facing features. Read alongside `writing-great-issues-base.md` for the Reader Contract, Title Rules, Comment Opening Rules, and review lenses. This doc specializes the six questions for feature work.
 
 Stories carry user-facing intent. The planning emphasis is on requirements clarity and architectural fit, not on root-cause investigation.
 
@@ -89,19 +89,12 @@ Filter where? What behavior? What happens to pagination? What's the API contract
 > **Test plan:** Backend — integration test: seed 10 companies, 5 with contacts. Request with `has_contacts=true`, assert 5 returned. Request without param, assert 10. Frontend — unit test: toggle filter, verify query param included in next API call. Edge cases: list with 0 contacts (empty state), toggle on/off across pagination.
 >
 > **Architectural Review:**
-> - Root cause depth: N/A (feature, not bug). The structural gap is that filtering is client-side for a server-paginated dataset — the architecture doesn't support what the user needs.
+> - Structural gap: filtering is client-side for a server-paginated dataset — the architecture doesn't support what the user needs.
 > - Design patterns: The existing label filter established a Query Parameter → Aggregation Pipeline pattern for server-side filtering. Following it, not inventing a new one.
 > - Divergent implementations: Searched — only the label filter exists. Following the same pattern ensures one approach to server-side filtering.
-> - Fix vs. design: This IS the right design. Server-side filtering for paginated data.
+> - Fix vs. design: This IS the right design — server-side filtering for paginated data.
 > - Untouched: Discover tab (contacts aren't relevant to search results). Contact enrichment service (read-only consumer).
 >
 > **Efficiency Review:**
-> - Concurrency: Single aggregation pipeline — MongoDB handles internal parallelism.
 > - Data flow: `$lookup` against `contact_enrichments` adds one pipeline stage. Indexed on `target_list_id` — verify index exists or add it.
 > - N+1: No — single aggregation, not per-row lookup.
-> - Caching: N/A — filter state is transient (toolbar toggle).
->
-> **Structural Quality:**
-> - No god-file contribution — toolbar toggle is a small addition. Backend change is in the existing query builder.
-> - No missing abstraction — following existing query-param pattern.
-> - No implicit coupling — filter state lives in the toolbar component and is passed as a query param.

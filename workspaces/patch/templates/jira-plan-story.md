@@ -137,7 +137,7 @@ Required for Standard (2-5 SP) and Complex (8+ SP). Cover:
 
 ## Step 6 — Efficiency review and structural quality
 
-Per the protocol — concurrency (parallelize independent I/O), data flow (no over-fetching, no N+1), algorithm choice, caching strategy. Plus structural quality (god files, missing abstractions, implicit coupling). "N/A — [reason]" is fine after consideration; never as avoidance.
+Per the protocol — concurrency (parallelize independent I/O), data flow (no over-fetching, no N+1), algorithm choice, caching strategy. Plus structural quality (god files, missing abstractions, implicit coupling). Walk through every lens during planning; only write up the ones that produced something the reader needs. Silent subsections don't appear.
 
 ## Step 7 — Estimation
 

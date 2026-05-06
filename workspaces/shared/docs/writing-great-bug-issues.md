@@ -1,6 +1,6 @@
 # Writing Great Bug Issues
 
-Type-specific guidance for bugs. Read alongside `writing-great-issues-base.md` — the base doc has the universal rules (architectural review, efficiency review, structural quality, checklist). This doc specializes the six-questions for bug work.
+Type-specific guidance for bugs. Read alongside `writing-great-issues-base.md` — the base doc has the Reader Contract, Title Rules, Comment Opening Rules, and the review lenses (architectural / efficiency / structural quality). This doc specializes the six questions for bug work.
 
 ---
 
@@ -85,15 +85,12 @@ Tells engineering nothing. What count? Wrong how? Right number according to what
 >
 > **Architectural Review:**
 > - Root cause depth: Symptom — badge shows 0. Cause — `getTabSelectedCompanies()` filters against current-page results only. Structural deficiency — no single source of truth for selection count; each tab computes its own via different logic.
-> - Design patterns: No pattern applies — this is straightforward state consumption. The store already IS the single source of truth; Discover just wasn't using it.
 > - Divergent implementations: Evaluate tab has `getVisibleSelected()` which filters against `savedWebsites` (correct for its context — scopes to saved companies). Discover's `getTabSelectedCompanies()` is the divergent path. Searched `grep -r "selectedCompan" --include="*.ts"` and `grep -r "getSelected|getVisible" --include="*.ts"`. Fix removes the unnecessary filter on Discover.
-> - Fix vs. design: Fix IS the right design. Raw count is the correct semantic for Discover selections.
+> - Fix vs. design: Fix IS the right design — raw count is the correct semantic for Discover selections.
 > - Untouched: `evaluate-tab.component.ts` — its filter is correct (scopes to saved companies). `store-selection.ts` — raw count already correct, bug is in the consumer.
 >
 > **Efficiency Review:**
-> - Concurrency: N/A — single synchronous computation, no I/O.
 > - Data flow: Currently filtering a Map against an array on every render. Fix removes the filter entirely — O(1) `Map.size` instead of O(n) filter.
-> - Caching: N/A — `Map.size` is O(1), no caching needed.
 >
 > **Structural Quality:**
 > - Divergent logic identified and resolved in this fix. No god-file contribution (removing code, not adding). No implicit coupling introduced.
