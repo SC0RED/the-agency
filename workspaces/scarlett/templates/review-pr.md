@@ -159,7 +159,7 @@ The summary `--body` follows your SOUL voice: short sentences, specific files/li
 
 ## Step 6 — Post a consolidated Jira verdict comment as Scarlett
 
-The PR review covers the line-level. The Jira comment is the **summary** for the human/Patch — what's the verdict, which PRs cleared and which didn't.
+The PR review covers the line-level. The Jira comment is the **summary** for Patch and the human — what's the verdict, which PRs cleared and which didn't.
 
 Build `${SCRATCH}/verdict.json` (ADF) with:
 
@@ -170,17 +170,40 @@ Build `${SCRATCH}/verdict.json` (ADF) with:
 - **Closing line**: `One review round — if blockers remain after Patch addresses these, the next move is human review.`
 
 ```bash
-curl -sS -X POST "${JIRA_BASE}/issue/${KEY}/comment" \
+# Capture the response body's id field — the dispatch in Step 7 needs it.
+VERDICT_COMMENT_ID=$(curl -sS -X POST "${JIRA_BASE}/issue/${KEY}/comment" \
   -H "Authorization: Bearer ${SCARLETT_JIRA_TOKEN}" \
   -H "Content-Type: application/json" \
-  -d @"${SCRATCH}/verdict.json"
+  -d @"${SCRATCH}/verdict.json" | jq -r .id)
 ```
 
-Confirm response shows `author.displayName: Scarlett`. Otherwise stop and investigate.
+Confirm the verdict comment authors as Scarlett: read it back and assert `author.displayName == "Scarlett"`. Otherwise stop and investigate.
 
-## Step 7 — Done
+## Step 7 — Dispatch to Patch on `changes_requested`, end on `approve`
 
-End the run. Don't transition the Jira ticket. Don't merge any PRs. Patch handles transitions; humans handle merges. Your job is to land specific, evidence-backed feedback — that's it.
+On **`approve`**: end the run. The PRs are cleared as far as you're concerned; humans handle the merge.
+
+On **`changes_requested`**: dispatch an `address-pr-feedback` task to Patch. Patch will evaluate each must-fix on its merits — acting on the correct ones, declining the wrong ones, posting a single response comment. Same fire-and-forget pattern Patch uses to dispatch you.
+
+```bash
+# ${PR_URLS_JSON} is the JSON-encoded array of PR URLs you reviewed.
+curl -sS -X POST "http://localhost:8793/api/tasks" \
+  -H "Authorization: Bearer ${CLAWNDOM_AGENT_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d "$(jq -n \
+         --arg key "${KEY}" \
+         --arg title '{{ ticketTitle }}' \
+         --arg type '{{ ticketType }}' \
+         --arg cid "${VERDICT_COMMENT_ID}" \
+         --argjson urls "${PR_URLS_JSON}" \
+         '{agent:"patch", taskType:"address-pr-feedback", context:{ticketKey:$key, ticketTitle:$title, ticketType:$type, verdictCommentId:$cid, prUrls:$urls}}')"
+```
+
+If the dispatch returns non-2xx, post a single fallback Jira comment as Scarlett noting the dispatch failed — humans will pick it up from there. Don't retry, don't loop.
+
+## Step 8 — Done
+
+End the run. Don't transition the Jira ticket. Don't merge any PRs. Patch handles transitions and any follow-up commits; humans handle merges. Your job is to land specific, evidence-backed feedback and hand off — that's it.
 
 ## Anti-patterns to actively avoid
 

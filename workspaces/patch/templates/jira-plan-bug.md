@@ -84,15 +84,27 @@ The `In Planning` status is how humans see on the dashboard that Patch has picke
 - If status is **Plan Review**, **Blocked**, **Ready for Development**, or anything past **In Planning** → a prior attempt completed Step 8. **Stop.** Post a Jira comment as Patches saying "retry observed this ticket already past In Planning — assuming previous run completed" and end the run.
 - If status is anything else (New, Triage, etc.) → unexpected. Post a Jira comment naming the current status and what you expected; transition to **Blocked** (transition 4); stop.
 
-## Step 2 — Quality gates first
+## Step 2 — Preflight investigation, then quality gates
 
-Before investigating, validate the ticket against the quality gates in *Writing Great Jira Issues* §3 (the Six Questions). For a Bug, you specifically need:
+A short description usually carries most of its own answer when it names code-locatable anchors. Before assessing the gates, refresh the clone (per *Keeping clones fresh* in the injected *GitHub access* doc), then grep the affected repo for every anchor the ticket gives you:
+
+- **Field names, enum values, status strings** quoted in the description (e.g., `match_explanation`, `ownership_model`, `founder-owned`).
+- **File paths, route paths, URL paths.**
+- **Error messages and log fragments** — paste them into `grep -r`.
+- **Product surfaces** named (page, modal, button, screen).
+- **Linked issues** under `relates to` / `blocks` / `is blocked by` — read them for context the reporter assumed you already had.
+
+Capture what each anchor resolves to: file, line, function, governing pattern. Carry the findings forward into Step 3's full evidence chain and Step 4's root cause.
+
+Then validate the ticket against the Six Questions in *Writing Great Jira Issues* §3, armed with what the preflight found. For a Bug, the gates are:
 
 - **A reproducible symptom** — exact steps, environment, data conditions
 - **An expected outcome** — what should happen instead
 - **Enough context to start an investigation** — affected screen/route/endpoint, timeframe, user
 
-If any of these are missing or contradictory, **do not investigate**. Post a Jira comment as Patches (curl + Bearer, per the *jira-as-patches* fragment above) naming the specific gap (be precise — "no reproduction steps" beats "insufficient info"), and transition the ticket to **Blocked** (transition 4) via curl. Stop there. The reporter will fix it and re-route the ticket to you.
+A description that names two conflicting fields supplies the symptom (the conflict) and the expected outcome (consistency between them) together — the conflict *is* the bug. A linked issue often supplies the timeframe, the affected user, or the surface. Treat the gates as questions the preflight has likely already answered.
+
+Block only when the investigation genuinely dead-ends — the named anchors are absent from the codebase, the linked issues add no context, and the symptom can't be located. Post a Jira comment as Patches (curl + Bearer, per the *jira-as-patches* fragment above) stating **what was investigated and what dead-ended** (e.g., "Searched `assessment_engine` for `match_explanation` and `ownership_model` — both present and the structural conflict is reproducible, but the affected company isn't named so I can't verify the specific surface. Need: company name or target_list ID."), then transition to **Blocked** (transition 4) via curl. The reporter sees a precise gap, not a generic six-question questionnaire.
 
 ## Step 3 — Investigate, evidence first
 

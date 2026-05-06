@@ -27,6 +27,24 @@ memory:
       vectorStore: redis
 
 routing:
+  # Internal task dispatches — Scarlett dispatches Patch via POST /api/tasks
+  # when her code review returns `changes_requested`. Symmetric to how Patch
+  # dispatches Scarlett for plan-review and code-review (see scarlett/clawndom.yaml).
+  # Conditions evaluate against `{ taskType, ...context }` per Clawndom's
+  # internal-task routing convention.
+  internal:
+    rules:
+      - name: address-pr-feedback
+        condition:
+          equals: { field: taskType, value: address-pr-feedback }
+        messageTemplate: templates/address-pr-feedback.md
+        memory:
+          namespace: patch-personal
+          retrieve:
+            queryField: ticketTitle
+            topK: 5
+            minSimilarity: 0.4
+
   jira:
     rules:
 
