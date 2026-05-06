@@ -84,15 +84,26 @@ The `In Planning` status is how humans see on the dashboard that Patch has picke
 - If status is **Plan Review**, **Blocked**, **Ready for Development**, or anything past **In Planning** → a prior attempt completed Step 8. **Stop.** Post a Jira comment as Patches saying "retry observed this ticket already past In Planning — assuming previous run completed" and end the run.
 - If status is anything else (New, Triage, etc.) → unexpected. Post a Jira comment naming the current status and what you expected; transition to **Blocked** (transition 4); stop.
 
-## Step 2 — Quality gates first
+## Step 2 — Preflight investigation, then quality gates
 
-Validate the ticket against the Six Questions in *Writing Great Jira Issues* §3. For a Story, you need:
+A short Story description usually carries most of its own answer when it names a product surface, a workflow, or a similar-feature precedent. Before assessing the gates, refresh the clone (per *Keeping clones fresh* in the injected *GitHub access* doc), then grep the affected repos for every anchor the ticket gives you:
+
+- **Page, modal, route, or component names** quoted in the description.
+- **Existing similar features** the Story references ("like the X filter on Y page") — find the precedent and read how it works.
+- **API endpoints or data fields** named.
+- **Linked issues** under `relates to` / `blocks` / `is blocked by` — read them for context the reporter assumed you already had.
+
+Capture what each anchor resolves to: file, line, function, governing pattern. Carry the findings forward into Step 3's landscape map.
+
+Then validate the ticket against the Six Questions in *Writing Great Jira Issues* §3, armed with what the preflight found. For a Story, the gates are:
 
 - **A user need stated in user terms.** "Users need to filter the target list by whether companies have contacts" — not "Add contacts filter."
 - **A "done" definition** — explicit user-facing behavior. "Toggle in toolbar. When active, only rows with ≥1 contact appear. Filter persists across pagination."
 - **The current state** — what exists today, what workaround the user uses now, which adjacent features it touches.
 
-If any of these are missing or ambiguous, **do not plan**. Post a Jira comment as Patches (curl + Bearer, per the *jira-as-patches* fragment above) naming the gap and transition to **Blocked** (transition 4) via curl. Stop.
+A Story that names a precedent feature often supplies the current state and the done definition by analogy — when "X works like Y on the saved-list page," reading Y is the answer. Treat the gates as questions the preflight has likely already answered.
+
+Block only when the investigation genuinely dead-ends — the named surfaces and precedents are absent from the codebase and the linked issues add no context. Post a Jira comment as Patches (curl + Bearer, per the *jira-as-patches* fragment above) stating **what was investigated and what dead-ended**, then transition to **Blocked** (transition 4) via curl.
 
 ## Step 3 — Map the technical landscape
 

@@ -84,15 +84,26 @@ The `In Planning` status is how humans see on the dashboard that Patch has picke
 - If status is **Plan Review**, **Blocked**, **Ready for Development**, or anything past **In Planning** → a prior attempt completed Step 8. **Stop.** Post a Jira comment as Patches saying "retry observed this ticket already past In Planning — assuming previous run completed" and end the run.
 - If status is anything else (New, Triage, etc.) → unexpected. Post a Jira comment naming the current status and what you expected; transition to **Blocked** (transition 4); stop.
 
-## Step 2 — Quality gates first
+## Step 2 — Preflight investigation, then quality gates
 
-Validate against the Six Questions, but the bar for a Task is different from a Bug or Story:
+A short Task description usually carries most of its own answer when it names a file, module, service, or pattern. Before assessing the gates, refresh the clone (per *Keeping clones fresh* in the injected *GitHub access* doc), then grep the affected repos for every anchor the ticket gives you:
+
+- **File paths, modules, services** named in the description (e.g., "refactor `index_record_helper.js`", "consolidate the three logger calls").
+- **Patterns named** — "extract a Strategy from", "introduce structured logging", "kill the god method".
+- **Pain symptoms** the Task cites — error rates, build times, file lengths, divergent implementations. Measure the current state directly.
+- **Linked issues** under `relates to` / `blocks` / `is blocked by` — read them for the upstream pain that motivated the Task.
+
+Capture what each anchor resolves to: file, line, function, governing pattern. Measure what the Task says it'll improve. Carry the findings forward into Step 3's landscape map and Step 5's architectural review.
+
+Then validate against the Six Questions, with the Task-specific bar:
 
 - **A clear definition of done** — what's the observable end state? "All `services/*.ts` files are <300 lines" or "CI runs in under 4 minutes" or "Pino structured logging across the whole assessment_engine."
 - **A motivating reason** — why now? What's the cost of *not* doing this? "This file has 8 active bugs traced to its 600-line god-method" is a reason. "It's old" is not.
 - **Scope boundaries** — what's *in* scope and what's explicitly *not*. Tasks are scope-creep magnets.
 
-If the task is "we should refactor X" with no specific outcome and no motivating cost, **do not plan**. Post a Jira comment as Patches (curl + Bearer, per the *jira-as-patches* fragment above) naming what's missing and transition to **Blocked** (transition 4) via curl. Stop.
+A Task that names "refactor X" supplies its own DoD when the preflight measures X's current shape (line count, complexity, divergence count) and proposes the target shape. The motivating cost often shows up in the linked issues or in `git log` on the named files — bug density traces to the bug-prone code. Treat the gates as questions the preflight has likely already answered.
+
+Block only when the investigation genuinely dead-ends — the named code is absent, the cited pain is unmeasurable, and the linked issues add no motivating cost. Post a Jira comment as Patches (curl + Bearer, per the *jira-as-patches* fragment above) stating **what was investigated and what dead-ended**, then transition to **Blocked** (transition 4) via curl.
 
 ## Step 3 — Map the technical landscape
 
