@@ -72,7 +72,7 @@ All Jira writes in this step use curl + Bearer `${PATCH_JIRA_TOKEN}` (see *jira-
 
 - If status is **Ready for Development** → transition to **In Development** (curl POST to `${JIRA_BASE}/issue/{{ issue.key }}/transitions` with `{"transition":{"id":"37"}}`), then continue to Step 2.
 - If status is **In Development** → a prior attempt already made this move. Don't re-transition; continue to Step 2.
-- If status is **Code Review**, **Blocked**, or anything past **In Development** → a prior attempt completed Step 6. **Stop.** Post a Jira comment as Patches saying "retry observed this ticket already past In Development — assuming previous run completed" and end the run.
+- If status is **Code Review**, **Blocked**, or anything past **In Development** → a prior attempt completed Step 8. **Stop.** Post a Jira comment as Patches saying "retry observed this ticket already past In Development — assuming previous run completed" and end the run.
 - If status is anything else (Plan, Plan Review, etc.) → unexpected. Post a Jira comment as Patches naming the current status and what you expected; transition to **Blocked** (transition 4) via curl; stop.
 
 ## Step 2 — Read the approved plan
@@ -102,9 +102,10 @@ For a Story, the tests need to verify the **user-facing behavior** in the "Done"
      git fetch origin "${EXISTING}" && git checkout "${EXISTING}"
      git log --oneline development..HEAD   # what did past-me already commit?
      # Run `make check-all` to see current state. If green and the diff
-     # matches the approved plan: skip ahead to Step 6 (PR + transition).
-     # If red: fix the failing tests, then continue. DO NOT redo work
-     # that's already committed — your past self spent real money on it.
+     # matches the approved plan: skip ahead to Step 6 (open PR if not
+     # already up). If red: fix the failing tests, then continue. DO NOT
+     # redo work that's already committed — your past self spent real
+     # money on it.
    else
      git checkout development && git pull --ff-only
      git checkout -b fix/{{ issue.key }}-<short-slug>
@@ -123,18 +124,38 @@ Type check + tests for changed files: every push, no exceptions.
 
 `make check-all` on Frontend and Engine includes a SonarCloud scan — pull `SONAR_TOKEN` from 1Password (vault `Engineering`, item `Sonar Token`) and export it before running. Do not push until the quality gate passes.
 
-## Step 6 — PR + Jira comment + transition to Code Review
+## Step 6 — Open PR(s) + Jira link
 
 All Jira writes in this step use curl + Bearer `${PATCH_JIRA_TOKEN}`. Do NOT use MCP write tools.
 
-1. `git push -u origin fix/{{ issue.key }}-...`
-2. `gh pr create --base development` with a body linking to the Jira ticket and the approved plan.
-3. Post the PR link as a Jira comment (curl POST to `${JIRA_BASE}/issue/{{ issue.key }}/comment`).
-4. Transition the ticket to **Code Review** (curl POST to `${JIRA_BASE}/issue/{{ issue.key }}/transitions` with `{"transition":{"id":"36"}}`). The board must reflect that the work is done and review is the bottleneck — don't leave it sitting in In Development.
+1. `git push -u origin fix/{{ issue.key }}-...` for every repo touched.
+2. Open the PR (or capture the existing one if a prior run already did) — repeat per repo for multi-repo Stories:
+   ```bash
+   PR_URL=$(gh pr view --repo SC0RED/<repo-name> --json url -q .url 2>/dev/null || true)
+   if [ -z "${PR_URL}" ]; then
+     gh pr create --base development --title '...' --body '...'   # link the Jira ticket and approved plan
+     PR_URL=$(gh pr view --repo SC0RED/<repo-name> --json url -q .url)
+   fi
+   ```
+3. Post a single Jira comment listing every PR opened for this ticket. Skip if a prior run already posted one — check `${JIRA_BASE}/issue/{{ issue.key }}/comment` for a Patches-authored comment containing the PR URLs.
 
-For multi-repo Stories, open one PR per repo and list them all in a single Jira comment. Transition to Code Review after the last PR is open.
+The ticket stays **In Development** at the end of this step. It does NOT move to Code Review until every PR is verifiably green and CodeRabbit is handled (Steps 7-8). A red PR labeled "ready for review" wastes reviewer time and gives a false signal on the board.
 
-## Step 7 — Reviews
+## Step 7 — Verify CI green; trigger and handle CodeRabbit
+
+Every PR for this ticket must clear CI before transitioning to Code Review. Reviewers see a green PR or they don't see it at all.
+
+For each PR:
+
+1. **Trigger CodeRabbit manually** — bot-authored PRs are auto-skipped. After every push (including the initial one): `gh pr comment <PR> --repo <OWNER>/<REPO> --body "@coderabbitai review"`.
+2. **Wait for CI to finish.** `gh pr checks <PR> --repo <OWNER>/<REPO> --watch --fail-fast` blocks until every check completes and exits non-zero on failure. SonarCloud's `Code Analysis` check evaluates the same quality gate `make check-all` blocked on locally — both must pass.
+3. **If CI fails:** read the failing job's log (`gh run view <RUN-ID> --log-failed`), fix the failure, push, and re-run from Step 7.1. **Max 2 fix-and-push cycles after the initial push.** If still red after the second fix attempt: transition to **Blocked** (transition 4) via curl, post a Jira comment as Patches naming the failing check + last error, ping `#general-engineering`. Do NOT continue to Step 8.
+4. **Handle CodeRabbit findings.** Wait ~3 min after the trigger comment, then `gh pr view <PR> --repo <OWNER>/<REPO> --comments`. Triage each finding per `shared/docs/coderabbit-feedback.md`. Apply real defects (broken sorts, weak crypto on IDs, command injection). **Push back** on suggestions that violate our anti-patterns: defensive null checks on internal data, fallback values that mask bugs, redundant validation of already-validated models, premature helper extraction, callability-only tests. Reply on each contested item, link the rule, resolve the conversation. Two CodeRabbit passes max.
+5. **Re-verify after every push.** Any commit pushed in Step 7.4 re-triggers CI — restart from Step 7.1. Step 8 only runs against verifiably green PRs.
+
+## Step 8 — Dispatch Scarlett, transition to Code Review, close out
+
+Run this only once every PR for this ticket is green and CodeRabbit is satisfied.
 
 1. **Dispatch a `code-review` task to Scarlett.** SPE-1707 shipped — this is fire-and-forget. Scarlett posts line-level PR comments + a verdict comment in Jira authored as Scarlett, asynchronously. You don't wait or iterate.
    ```bash
@@ -150,16 +171,10 @@ For multi-repo Stories, open one PR per repo and list them all in a single Jira 
             '{agent:"scarlett", taskType:"code-review", context:{ticketKey:$key, ticketTitle:$title, ticketType:$type, prUrls:$urls}}')"
    ```
    If the dispatch returns non-2xx, post a single fallback Jira comment as Patches noting Scarlett dispatch failed — don't retry, don't block on it.
-2. **Handle automated review feedback** — CodeRabbit + SonarCloud.
-   - **CodeRabbit auto-skips bot-authored PRs.** You must trigger it manually after every push: `gh pr comment <PR> --repo <OWNER>/<REPO> --body "@coderabbitai review"`. Then wait ~2 min and read its inline comments.
-   - Triage each finding per `shared/docs/coderabbit-feedback.md`. Apply real defects (broken sorts, weak crypto on IDs, command injection). **Push back** on suggestions that violate our anti-patterns: defensive null checks on internal data, fallback values that mask bugs, redundant validation of already-validated models, premature helper extraction, callability-only tests. Reply on each contested item, link the rule, resolve the conversation. Two passes max — don't iterate forever.
-3. Post a consolidated Jira comment as Patches listing every PR open for this ticket. The ticket stays in **Code Review** until a human merges; a human handles the final transition.
+2. **Transition the ticket to Code Review** (curl POST to `${JIRA_BASE}/issue/{{ issue.key }}/transitions` with `{"transition":{"id":"36"}}`). The PR(s) are green and reviewable; the board now reflects "review is the bottleneck."
+3. **Post a consolidated Jira comment as Patches** listing every PR open for this ticket. The ticket stays in **Code Review** until a human merges; a human handles the final transition.
 
 (MVP scope: Patch dispatches once and ends. Scarlett's verdict is additive feedback for the human reviewer, not a gate.)
-
-## CI failure handling
-
-Same as bugs — max 2 fix attempts, then Blocked (transition 4) + ping `#general-engineering`.
 
 ## Anti-patterns to actively avoid
 
