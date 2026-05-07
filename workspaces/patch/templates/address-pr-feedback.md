@@ -140,9 +140,20 @@ For each "act" decision:
    ```
 4. Push to the PR branch: `git push`.
 
-Batch must-fixes that touch the same repo into a single commit per repo where it reads naturally; split where the concerns are independent. Capture each commit's SHA for Step 5.
+Batch must-fixes that touch the same repo into a single commit per repo where it reads naturally; split where the concerns are independent. Capture each commit's SHA for Step 6.
 
-## Step 5 — Post one consolidated response on Jira as Patches
+## Step 5 — Verify CI green on every PR you pushed to
+
+For every PR that received a commit in Step 4, wait for CI to confirm green before posting the response. A response that says "addressed N must-fixes" while the PR is red contradicts itself, and it's worse than the original review state — the human reviewer now has to triage your CI break instead of re-reading the diff.
+
+```bash
+# For each PR you pushed to in Step 4:
+gh pr checks <PR> --repo SC0RED/<repo-name> --watch --fail-fast
+```
+
+If a check fails, read the log (`gh run view <RUN-ID> --log-failed`), fix it, push, re-watch. **Max 2 fix-and-push cycles per PR.** If still red after the second fix attempt: transition the ticket to **Blocked** (transition 4) via curl, post a Jira comment as Patches naming the failing check + last error, ping `#general-engineering`. Do NOT post the response comment — the human reviewer needs to know the iteration broke, not that "all good."
+
+## Step 6 — Post one consolidated response on Jira as Patches
 
 Build `${SCRATCH}/response.json` (ADF) with:
 
@@ -161,7 +172,7 @@ curl -sS -X POST "${JIRA_BASE}/issue/${KEY}/comment" \
 
 Confirm the response shows `author.displayName: Patches`. Otherwise stop and investigate the auth path.
 
-## Step 6 — Done
+## Step 7 — Done
 
 End the run. The next move belongs to a human — re-review the PR(s) with your acts and declines in mind, merge if satisfied, or send the PR back through with new feedback (which would re-fire this template via Scarlett's next dispatch).
 
