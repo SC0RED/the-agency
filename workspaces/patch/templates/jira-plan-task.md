@@ -124,10 +124,10 @@ While planning, walk through each:
 - **Divergent implementations.** If the task is "consolidate divergent loggers," show all the divergent paths (with file paths) and the consolidated future shape.
 - **Incremental refactor vs. full rewrite.** Tasks often have this trade-off. Name both, explain the chosen approach.
 - **What stays untouched.** Tasks attract scope creep — pin down what you're *not* touching and why.
-- **Concurrency, data flow, complexity, caching.** For perf and N+1 tasks this analysis often *is* the plan. Don't shrink it when it's load-bearing.
-- **What you'll delete.** Refactors that only add are usually wrong. Be specific.
+- **Concurrency, data flow, complexity, caching.** Apply the efficiency lens — but only if it produced findings worth the reader's time. For perf and N+1 tasks the analysis often *is* the plan; for most other tasks it's silent.
+- **What you'll delete.** Refactors that only add are usually wrong. Name what's leaving — only when something actually is.
 
-Write the result as a single **Approach** section that includes an *Alternatives Considered* paragraph (especially "do nothing" and "smaller scope" if those were considered).
+Write the result as a single **Approach** section that includes an *Alternatives Considered* paragraph (especially "do nothing" and "smaller scope" if those were considered). Don't manufacture subsections to "show" you considered each lens. Silent checks don't appear.
 
 ## Step 5 — Estimation
 
