@@ -84,6 +84,17 @@ The `In Planning` status is how humans see on the dashboard that Patch has picke
 - If status is **Plan Review**, **Blocked**, **Ready for Development**, or anything past **In Planning** → a prior attempt completed Step 8. **Stop.** Post a Jira comment as Patches saying "retry observed this ticket already past In Planning — assuming previous run completed" and end the run.
 - If status is anything else (New, Triage, etc.) → unexpected. Post a Jira comment naming the current status and what you expected; transition to **Blocked** (transition 4); stop.
 
+Once the status branch resolves to "continue to Step 2", **set the assignee to Patches** so the dashboard shows Patch is on it (same surface as `In Development`'s owner field). The PUT is idempotent — re-assigning to the same accountId is a no-op:
+
+```bash
+curl -sS -X PUT "${JIRA_BASE}/issue/{{ issue.key }}/assignee" \
+  -H "Authorization: Bearer ${PATCH_JIRA_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{"accountId":"712020:2fbdb38e-012b-43a6-b286-4339c24baabc"}'
+```
+
+Patches' accountId is in the *Jira IDs* table above; check there if it has rotated.
+
 ## Step 2 — Preflight investigation, then quality gates
 
 A short Task description usually carries most of its own answer when it names a file, module, service, or pattern. Before assessing the gates, refresh the clone (per *Keeping clones fresh* in the injected *GitHub access* doc), then grep the affected repos for every anchor the ticket gives you:
