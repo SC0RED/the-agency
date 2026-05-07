@@ -18,6 +18,8 @@ Stories carry user-facing intent. The planning emphasis is requirements clarity 
 
 ## Worked Example
 
+> **Title:** Add Has Contacts filter to Evaluate toolbar
+>
 > **Estimation:** Risk: Low · Intensity: Medium · SP: 5 · Velocity Impact: Weak Positive
 >
 > **Job to be Done:** *When evaluating a target list of 500+ companies, the user wants to filter to companies that have contacts, so they can focus outreach on reachable companies.*
