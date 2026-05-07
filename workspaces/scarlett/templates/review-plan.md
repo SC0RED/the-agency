@@ -93,22 +93,22 @@ If the plan comment can't be found or its author isn't Patches, **stop** — emi
 
 ## Step 3 — Read the plan against the rubric
 
-The canonical section spine from `writing-great-issues-base.md` is your rubric. Verify each section is present (or appropriately omitted), starts with a real signal, and points the implementer at concrete code.
+Scan the plan: can a reader act on it without re-reading the description? Does each section that *is* present carry signal that points the implementer at concrete code? The canonical spine — Estimation, Problem, Reproduction or Current State, Diagnosis or Technical Landscape, Approach (with *Alternatives Considered*), Acceptance Criteria, Definition of Done — is required. Production Signal and Rollback are conditional. The architectural / efficiency / structural lenses listed in `writing-great-issues-base.md` under *Review Checks* are planning tools — Patch is expected to walk through them while planning, but they become content only when they produce a finding the reader needs. Don't flag a plan as `changes_requested` for omitting an opt-in lens that produced no finding.
 
 **Universal — every plan:**
 
 1. **Estimation at the top** — Risk / Intensity / SP / Velocity Impact appear before any prose. If they're buried, flag it.
 2. **Estimation sanity check** — Risk × Intensity → SP per `estimation.md`. A "Trivial 1 SP" plan touching three repos with a migration path is a miscalibration; flag it.
 3. **Approach includes *Alternatives Considered*** — Patch must name the existing pattern she's following with a path (e.g., *"`OperationProgressHub` at `Platform-Frontend/.../operation-progress-hub.service.ts`"*) or state plainly that none applies and why. *"Following the usual approach"* is a red flag — explicit references only.
-4. **Pattern fit named** — when the change implements or extends a pattern, name it (Strategy, Observer, State, Builder, Chain of Responsibility, Factory). *"We could just refactor this"* without a pattern name is a red flag.
-5. **Divergent implementations addressed** — has Patch grep'd for similar code? If she's adding a 4th retry implementation when 3 exist, the plan should consolidate, not extend.
+4. **Pattern fit named** — when the change implements or extends a pattern, name it (Strategy, Observer, State, Builder, Chain of Responsibility, Factory). Vague plans are the red flag — *"we could just refactor this somehow"* without a target. A small targeted edit that doesn't extend a named pattern is fine; only flag missing pattern naming when the design *is* a Gang-of-Four pattern and Patch hasn't named it.
+5. **Divergent implementations addressed** — if the change-area has divergent implementations of the same concern (multiple retry helpers, multiple progress hubs, multiple loggers), the plan should consolidate, not add a fourth path. If Patch claims the area is novel and no precedent exists, the plan should show the grep result as evidence-of-absence. Plans that don't mention divergence and don't claim novelty are fine — assume Patch checked the lens during planning and found nothing relevant to the reader.
 6. **Acceptance Criteria are Given/When/Then and testable** — each criterion is a deterministic check, not a vibe.
 7. **Definition of Done names the artifact** — bug: regression test; feature: integration coverage; task: observable end state.
 8. **Rollback discipline** — present only when the change is irreversible (DB migration, schema change, deleted data, infra mutation). Rollback present for an ordinary code change is noise — flag it. Rollback absent for an irreversible change is a gap — flag it.
 
 **Type-specific bars** (override generic guidance):
 
-- **Bug** — Symptom in user terms. Reproduction with steps + environment + how it was detected. Diagnosis traced to file:line with evidence. Root-cause depth: Symptom / Cause / Structural deficiency named explicitly (or *"none — genuine logic error"*). Defensive-spackle plans skip the structural deficiency; flag those.
+- **Bug** — Symptom in user terms. Reproduction with steps + environment + how it was detected. Diagnosis traced to file:line with evidence. The diagnosis should distinguish the cause (what's coded wrong) from any structural deficiency (god file, missing abstraction, implicit coupling) when one exists — defensive-spackle plans that fix a symptom while leaving an active structural deficiency are flag-worthy. A genuine logic error doesn't need an explicit *"no structural deficiency"* label.
 - **Story** — Job to be Done in *When/I want/So I can* form. Scope is in/out explicit. Production Signal names a real metric or observation (not "it works in test").
 - **Task** — Motivating Cost is concrete (*"8 active bugs traced to this 600-line god method"*, not *"it's old"*). Scope guards against creep — every "while I was in here" idea is excluded or filed as a follow-up. For perf/infra tasks, Production Signal names the metric.
 
