@@ -223,6 +223,38 @@ routing:
                     - equals: { field: toString, value: Deploy to development }
         messageTemplate: templates/jira-deploy-to-dev.md
 
+  # GitHub rules: catch-all for PR check failures that arrive AFTER the
+  # run that opened the PR has ended (typical case: ready-for-dev or
+  # address-pr-feedback hits its turn budget right when CI is reporting
+  # red, so the in-template Step-7 watcher exits before seeing the
+  # failure). The ready-for-dev / address-pr-feedback flows already
+  # have their own CI loops; this is the out-of-band fallback.
+  #
+  # Trigger condition: check_suite.completed with conclusion=failure on
+  # a PR-attached check suite. Filter:
+  #   - action == "completed"          (one event per suite; ignore created/requested)
+  #   - check_suite.conclusion=failure (skip success/cancelled/neutral/skipped)
+  #   - check_suite.pull_requests has ≥1 entry (skip pushes to base branches)
+  github:
+    rules:
+      - name: pr-broken
+        condition:
+          all_of:
+            - equals: { field: action, value: completed }
+            - equals: { field: check_suite.conclusion, value: failure }
+            - any_item:
+                path: check_suite.pull_requests
+                where:
+                  exists: { field: number }
+        messageTemplate: templates/github-pr-broken.md
+        maxTurns: 200
+        memory:
+          namespace: patch-personal
+          retrieve:
+            queryField: check_suite.head_commit.message
+            topK: 5
+            minSimilarity: 0.4
+
   # Slack rules: channel-id → environment mapping verified against the
   # Slack API on 2026-04-25. Previous version of this file had all three
   # rules pointed at the wrong channel, so Patch was labeling production
@@ -299,6 +331,17 @@ modelRules:
         - Plan
         - Ready for Development
         - Deploy to development
+      model: claude-opus-4-7
+  github:
+    # PR-broken triage needs to read failing-job logs (often verbose),
+    # diff against base, and decide whether the fix is mechanical
+    # (rename, add test) or structural (rule misfire, base-branch
+    # rot). Misdiagnosis spends a turn budget on the wrong fix and
+    # potentially escalates to Blocked when the issue was tractable.
+    # Default Opus to match the cost/quality of the ready-for-dev path.
+    - field: check_suite.conclusion
+      matches:
+        - failure
       model: claude-opus-4-7
   slack:
     # Production failures get the smartest model — those are the ones
