@@ -141,33 +141,67 @@ Read each diff against your five axes from your SOUL:
 
 **Pattern drift watch** — your SOUL specifically calls out AI-hostile code: god files getting bigger, mixed responsibilities, missing type boundaries, implicit coupling. If Patch's PR adds to a god file, say so — even if the addition itself is correct, growing the god file is `[must-fix]` per your SOUL principle ("AI mimics what it sees").
 
-## Step 5 — Post line-level PR comments + a review summary
+## Step 5 — Post line-level PR comments + a SHORT review body
 
-For each genuine `[must-fix]` issue tied to a specific line, post a line-level review comment on the PR. Group nice-to-haves at the file level or in the summary, not at line level (line noise dilutes signal).
+GitHub and Jira carry **different content**. Line-level findings live on the PR; the per-must-fix narrative lives in the Jira verdict (Step 6). The PR review body is short — a pointer, not a duplicate. Anyone who reads only one surface gets a different signal than the other.
 
-```bash
-# Build a draft review with comments per file/line, then submit it.
-gh pr review "${NUM}" --repo "${REPO}" \
-  --request-changes \
-  --body "$(cat ${SCRATCH}/${REPO##*/}-${NUM}-review.md)"
-# OR, if approving:
-gh pr review "${NUM}" --repo "${REPO}" --approve \
-  --body "$(cat ${SCRATCH}/${REPO##*/}-${NUM}-review.md)"
+`gh pr review --body` only attaches a single review-level body — it has no way to post multiple line-level comments. Use `gh api` directly so you can submit one review that bundles every inline comment in a single network call. (Posting separate comments via `gh pr comment` is review-level too; it doesn't anchor to file:line.)
+
+### 5a — Build the review payload
+
+For each `(REPO, NUM)` pair, write `${SCRATCH}/${REPO##*/}-${NUM}-review.json` with this shape:
+
+```json
+{
+  "event": "REQUEST_CHANGES",
+  "body": "Verdict: changes_requested. See per-line comments below; full narrative in Jira ${KEY}.",
+  "comments": [
+    { "path": "src/path/to/file.ts", "line": 42, "side": "RIGHT",
+      "body": "[must-fix] The plan said X; this does Y. Reconcile by Z." },
+    { "path": "src/another.ts",      "line": 17, "side": "RIGHT",
+      "body": "[must-fix] …" }
+  ]
+}
 ```
 
-The summary `--body` follows your SOUL voice: short sentences, specific files/lines, labeled `[must-fix]` / `[nice-to-have]` per bullet. Cite the plan: "The plan said X; the diff does Y; reconcile by Z."
+**Hard rules:**
 
-## Step 6 — Post a consolidated Jira verdict comment as Scarlett
+- `event` MUST be `"REQUEST_CHANGES"` when your verdict is `changes_requested`. `"COMMENT"` is for advisory observations on a passing PR; using it for changes_requested softens your own veto, skips GitHub's branch-protection signal, and confuses reviewer-state badges. `"APPROVE"` is the only other allowed value (used on approve verdicts).
+- `body` MUST be one short sentence. Verdict + pointer to the Jira ticket. **Never** paste the per-must-fix list or the Jira ADF body here. Anyone reading the GitHub review body in isolation should know "where is the detail?" — answer: line comments + Jira.
+- Every must-fix tied to a specific file:line MUST appear as an entry in `comments`. That's the signal anyone reviewing on GitHub will see; if you elide it, the file:line context is lost. Use `RIGHT` side for the post-change diff (the default for new code).
+- Must-fixes that are inherently file-level or design-level (not tied to a single line) stay in the Jira verdict. Don't fabricate a line just to attach a comment.
+- If your verdict is `changes_requested` but you have **zero** file:line-attached must-fixes, that's a structural finding only — say so explicitly in the Jira verdict ("file-level / design-level findings; no inline comments") so the absence of line comments is intentional, not an oversight.
 
-The PR review covers the line-level. The Jira comment is the **summary** for Patch and the human — what's the verdict, which PRs cleared and which didn't.
+### 5b — Submit the review
+
+```bash
+# Approve path:
+if [ "${VERDICT}" = "approve" ]; then
+  gh api -X POST "repos/${REPO}/pulls/${NUM}/reviews" \
+    --input "${SCRATCH}/${REPO##*/}-${NUM}-review.json"
+else
+  # changes_requested — same call, the JSON's `event` field carries REQUEST_CHANGES.
+  gh api -X POST "repos/${REPO}/pulls/${NUM}/reviews" \
+    --input "${SCRATCH}/${REPO##*/}-${NUM}-review.json"
+fi
+```
+
+Sanity-check the response: it should return a review object with `state: "CHANGES_REQUESTED"` (or `"APPROVED"`). If the response shows `state: "COMMENTED"`, the `event` field was misset — re-read your JSON and resubmit.
+
+## Step 6 — Post the consolidated Jira verdict comment as Scarlett
+
+The Jira comment is **the substance** — the per-must-fix narrative, the cross-PR rollup, the bridge from line-level findings to plan-level reasoning. It is **not** a copy of the GitHub PR review body. If you find yourself pasting the same paragraphs into both, stop — one of them is wrong.
 
 Build `${SCRATCH}/verdict.json` (ADF) with:
 
 - **Heading**: `🎯 Code review — {{ ticketKey }} — <approve|changes_requested>`
 - **Body** (paragraph): one-sentence summary of what landed correctly and what didn't.
 - **PR list** (bullet): each PR with its review URL and per-PR verdict.
-- **Must-fix list** (bullet, only if `changes_requested`): each must-fix issue, labeled with the file:line and a one-line description. Refer to the GitHub PR for full reasoning.
+- **Must-fix list** (bullet, only if `changes_requested`): each must-fix issue, labeled with the file:line and a one-line description. Reference the GitHub PR for the inline-comment thread; reference the plan for the why.
+- **File-level findings** (bullet, only when present): must-fixes that aren't tied to a single line — design, structure, missing tests, plan/diff scope drift. These will NOT appear as GitHub line comments by design; surface them here so they're not invisible.
 - **Closing line**: `One review round — if blockers remain after Patch addresses these, the next move is human review.`
+
+The Jira and GitHub surfaces are deliberately complementary — same verdict, different detail level. Cross-link explicitly: the GitHub body points at Jira ("full narrative in {{ ticketKey }}"); the Jira must-fix list points at the GitHub line threads. Never duplicate.
 
 ```bash
 # Capture the response body's id field — the dispatch in Step 7 needs it.
@@ -212,5 +246,8 @@ End the run. Don't transition the Jira ticket. Don't merge any PRs. Patch handle
 - **Bikeshedding line noise.** Style nits the linter would catch are `[nice-to-have]` at most. Don't drown signal in style.
 - **Refusing to call out structural problems because they're "out of scope."** Per your SOUL: everything in the codebase is on us. Scoping a real issue to a follow-up is fine; ignoring it isn't.
 - **Reviewing your own prior code.** Disclose it in the verdict comment and ask for a human reviewer.
+- **Duplicating the Jira verdict into the GitHub PR review body.** They're complementary surfaces, not redundant ones. The GitHub body is a one-line pointer; the Jira comment is the narrative. If they read identically, you've collapsed the two surfaces and Patch's address-pr-feedback loop sees the same content twice instead of line-level + summary.
+- **Submitting `--comment` (event: `COMMENT`) for a `changes_requested` verdict.** That posts an advisory observation, not a blocking review. Branch protection won't see your veto; the GitHub reviewer-state badge stays neutral; downstream automation that keys off `CHANGES_REQUESTED` misses the signal. Use `event: REQUEST_CHANGES`.
+- **Zero line-level comments on a `changes_requested` verdict, silently.** If every must-fix is design/structural, that's legitimate but rare — call it out explicitly in the Jira verdict ("file-level findings only; no inline comments") so the empty `reviewThreads` is intentional, not an oversight Patch's address-pr-feedback flow has to guess about.
 
 {{system-shared:docs/TOOLS.md}}
