@@ -24,7 +24,7 @@ A GitHub `check_suite.completed` webhook fired with `conclusion: failure` on a P
 | Check suite head SHA | {{ check_suite.head_sha }} |
 | Conclusion | {{ check_suite.conclusion }} |
 | App | {{ check_suite.app.slug }} |
-| PR(s) | {{ check_suite.pull_requests | map(attribute='number') | join(', ') | default('(no PR association)') }} |
+| PR | {{ check_suite.pull_requests[0].number | default('(no PR association)') }} |
 
 If `check_suite.pull_requests` is empty, **stop** — this is a check on a non-PR ref (push to a branch, scheduled run, etc.). Not your job. End the run.
 
