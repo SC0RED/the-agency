@@ -223,6 +223,55 @@ routing:
                     - equals: { field: toString, value: Deploy to development }
         messageTemplate: templates/jira-deploy-to-dev.md
 
+      # ── Verified in Development: pulse-promote development → testing ─
+      # Trigger fires per ticket but the action is batched. The three
+      # repos share a single `testing` branch and the only safe promote
+      # is `development → testing` carrying every commit that's ahead.
+      # Cherry-picking a single ticket's commits would corrupt history.
+      # The template's Step-2 quiet-pipeline guard ensures nothing in
+      # Deploy-to-Dev or Deployed-to-Dev is silently riding along — if
+      # something is, the run posts a deferral comment and exits without
+      # transitioning the trigger ticket, so the next pulse picks it up.
+      # See workspaces/patch/templates/jira-verified-in-dev.md.
+      - name: verified-in-dev-bug
+        condition:
+          all_of:
+            - equals: { field: webhookEvent, value: "jira:issue_updated" }
+            - equals: { field: issue.fields.issuetype.name, value: Bug }
+            - any_item:
+                path: changelog.items
+                where:
+                  all_of:
+                    - equals: { field: field, value: status }
+                    - equals: { field: toString, value: Verified in Development }
+        messageTemplate: templates/jira-verified-in-dev.md
+
+      - name: verified-in-dev-story
+        condition:
+          all_of:
+            - equals: { field: webhookEvent, value: "jira:issue_updated" }
+            - equals: { field: issue.fields.issuetype.name, value: Story }
+            - any_item:
+                path: changelog.items
+                where:
+                  all_of:
+                    - equals: { field: field, value: status }
+                    - equals: { field: toString, value: Verified in Development }
+        messageTemplate: templates/jira-verified-in-dev.md
+
+      - name: verified-in-dev-task
+        condition:
+          all_of:
+            - equals: { field: webhookEvent, value: "jira:issue_updated" }
+            - equals: { field: issue.fields.issuetype.name, value: Task }
+            - any_item:
+                path: changelog.items
+                where:
+                  all_of:
+                    - equals: { field: field, value: status }
+                    - equals: { field: toString, value: Verified in Development }
+        messageTemplate: templates/jira-verified-in-dev.md
+
   # GitHub rules: catch-all for PR check failures that arrive AFTER the
   # run that opened the PR has ended (typical case: ready-for-dev or
   # address-pr-feedback hits its turn budget right when CI is reporting
@@ -331,6 +380,7 @@ modelRules:
         - Plan
         - Ready for Development
         - Deploy to development
+        - Verified in Development
       model: claude-opus-4-7
   github:
     # PR-broken triage needs to read failing-job logs (often verbose),
