@@ -6,14 +6,6 @@
 
 ---
 
-{{system-doc:identity/IDENTITY.md}}
-
----
-
-{{system-doc:identity/SOUL.md}}
-
----
-
 # Current Trigger
 
 A **{{ issue.fields.issuetype.name }}** transitioned into **Verified in Development** — a human ran the change in the development environment, confirmed it works, and approved promoting it to testing.

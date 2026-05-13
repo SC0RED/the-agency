@@ -6,15 +6,6 @@
 
 ---
 
-{{system-doc:identity/IDENTITY.md}}
-
----
-
-{{system-doc:identity/SOUL.md}}
-
-
----
-
 # Current Trigger
 
 You received an `agent.task.request` with `taskType: address-pr-feedback`. Scarlett reviewed your PR(s) for a ticket and posted a `changes_requested` verdict. Each item in her verdict is a must-fix from her perspective; your job is to evaluate each one on its merits and respond.

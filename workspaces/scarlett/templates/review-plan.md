@@ -18,14 +18,6 @@
 
 ---
 
-{{system-doc:identity/IDENTITY.md}}
-
----
-
-{{system-doc:identity/SOUL.md}}
-
----
-
 # Current Trigger
 
 You received an `agent.task.request` with `taskType: plan-review`. Patch has just posted a plan comment on a Jira ticket and is asking you to review it before it advances out of `Plan Review` to `Ready for Development`.

@@ -1,0 +1,15 @@
+name: Audit
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  audit:
+    uses: SC0RED/clawndom/.github/workflows/audit-agent-workspace.yml@main
+    with:
+      workspaces: |
+        workspaces/patch
+        workspaces/scarlett
+      shared_dir: workspaces/shared

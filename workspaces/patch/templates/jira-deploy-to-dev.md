@@ -6,14 +6,6 @@
 
 ---
 
-{{system-doc:identity/IDENTITY.md}}
-
----
-
-{{system-doc:identity/SOUL.md}}
-
----
-
 # Current Trigger
 
 A **{{ issue.fields.issuetype.name }}** transitioned into **Deploy to development** status — a human reviewed the open PR(s) in Code Review, approved the change, and moved the ticket here meaning *ship it to development*.
