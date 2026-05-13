@@ -4,10 +4,10 @@ The EC2 has a GitHub App (`sc0red-patch`, install id `125627395`) with Contents 
 
 ## Generating a token
 
-From Patch's workspace directory, the script is at `../shared/tools/generate-github-app-token.sh`:
+From Patch's workspace directory, the script is at `../../scripts/generate-github-app-token.sh`:
 
 ```bash
-export GH_TOKEN=$(bash ../shared/tools/generate-github-app-token.sh)
+export GH_TOKEN=$(bash ../../scripts/generate-github-app-token.sh)
 ```
 
 If you expect to work longer than an hour, re-run the one-liner before the next `git push` or `gh` call — tokens don't auto-refresh.
@@ -31,7 +31,7 @@ Swap `Platform-Frontend` for whichever of the three repos the task touches. Mult
 **Before reading code in any task, refresh the target repo.** Idempotent pattern — clone if absent, hard-reset to `origin/development` if present:
 
 ```bash
-export GH_TOKEN=$(bash ../shared/tools/generate-github-app-token.sh)
+export GH_TOKEN=$(bash ../../scripts/generate-github-app-token.sh)
 REPO=<repo-name>   # Platform-Frontend | Platform-Backend | assessment_engine
 cd /tmp
 if [ -d "$REPO/.git" ]; then

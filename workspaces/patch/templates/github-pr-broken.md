@@ -1,16 +1,16 @@
-{{system-shared:docs/sc0red-engineering-pipeline.md}}
+{{system-shared:sc0red-engineering-pipeline.md}}
 
 ---
 
-{{system-shared:docs/anti-patterns.md}}
+{{system-shared:anti-patterns.md}}
 
 ---
 
-{{system-doc:docs/IDENTITY.md}}
+{{system-doc:identity/IDENTITY.md}}
 
 ---
 
-{{system-doc:docs/SOUL.md}}
+{{system-doc:identity/SOUL.md}}
 
 ---
 
@@ -34,19 +34,19 @@ If `check_suite.pull_requests` is empty, **stop** — this is a check on a non-P
 
 You are Patch. A PR you (or your past self) opened has failed CI after the run that opened or last touched it ended. The "Step 7" or "Step 5" CI-watching loop in your other templates only runs while a single agent invocation is alive; this is the catch-all for failures that arrive after the fact.
 
-{{system-shared:docs/jira-ids-reference.md}}
+{{system-shared:jira-ids-reference.md}}
 
-{{system-shared:docs/jira-write-auth.md}}
+{{system-shared:jira-write-auth.md}}
 
-{{system-doc:docs/jira-as-patches.md}}
+{{system-doc:identity/jira-as-patches.md}}
 
-{{system-shared:docs/github-access.md}}
+{{system-shared:github-access.md}}
 
 ## Step 0 — Authenticate
 
 ```bash
-export PATCH_JIRA_TOKEN=$(bash ../shared/tools/generate-jira-patches-token.sh)
-export GH_TOKEN=$(bash ../shared/tools/generate-github-app-token.sh)
+export PATCH_JIRA_TOKEN=$(bash ../../scripts/generate-jira-patches-token.sh)
+export GH_TOKEN=$(bash ../../scripts/generate-github-app-token.sh)
 export JIRA_BASE="https://api.atlassian.com/ex/jira/10449a34-7d09-4681-85d9-038414693fbd/rest/api/3"
 
 curl -sS -H "Authorization: Bearer ${PATCH_JIRA_TOKEN}" "${JIRA_BASE}/myself" \
@@ -162,4 +162,4 @@ In all three cases, do not amend the PR diff with workarounds. The fix lives out
 - **Loop-reading the same failure.** If your second fix attempt is approaching the same diff as your first, you're guessing — stop, escalate to Blocked, leave a clear note. Two attempts max.
 - **Triggering this template from another template's CI loop.** The ready-for-dev / address-pr-feedback flows already wait for CI green inside their own runs. github-pr-broken is the *out-of-band* catch-all for failures that arrive after a run ended. If you find yourself responding to a check failure that your alive-self already saw, you've duplicated a fix in a way that confuses the audit trail.
 
-{{system-shared:docs/TOOLS.md}}
+{{system-shared:TOOLS.md}}

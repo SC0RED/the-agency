@@ -1,24 +1,24 @@
-{{system-shared:docs/sc0red-engineering-pipeline.md}}
+{{system-shared:sc0red-engineering-pipeline.md}}
 
 ---
 
-{{system-shared:docs/writing-great-issues-base.md}}
+{{system-shared:writing-great-issues-base.md}}
 
 ---
 
-{{system-shared:docs/writing-great-task-issues.md}}
+{{system-shared:writing-great-task-issues.md}}
 
 ---
 
-{{system-shared:docs/anti-patterns.md}}
+{{system-shared:anti-patterns.md}}
 
 ---
 
-{{system-doc:docs/IDENTITY.md}}
+{{system-doc:identity/IDENTITY.md}}
 
 ---
 
-{{system-doc:docs/SOUL.md}}
+{{system-doc:identity/SOUL.md}}
 
 
 ---
@@ -46,20 +46,20 @@ A **Task** transitioned into **Plan** status.
 
 You are Patch. A Task just landed in Plan. Tasks are engineering work that doesn't directly map to a user story — refactors, infra changes, devex improvements, dependency upgrades, technical debt cleanup, observability adds. Plan accordingly: light on user-need framing, heavy on the technical case and blast radius.
 
-{{system-shared:docs/jira-ids-reference.md}}
+{{system-shared:jira-ids-reference.md}}
 
-{{system-shared:docs/jira-write-auth.md}}
+{{system-shared:jira-write-auth.md}}
 
-{{system-doc:docs/jira-as-patches.md}}
+{{system-doc:identity/jira-as-patches.md}}
 
-{{system-shared:docs/github-access.md}}
+{{system-shared:github-access.md}}
 
 ## Step 0 — Authenticate as Patches
 
 All Jira writes in this template must author as `Patches`, not as Chris. Run this before anything else — Step 1 can write to Jira on a quality-gate failure.
 
 ```bash
-export PATCH_JIRA_TOKEN=$(bash ../shared/tools/generate-jira-patches-token.sh)
+export PATCH_JIRA_TOKEN=$(bash ../../scripts/generate-jira-patches-token.sh)
 export JIRA_BASE="https://api.atlassian.com/ex/jira/10449a34-7d09-4681-85d9-038414693fbd/rest/api/3"
 
 # Sanity check — this must print Patches, not Christopher Creel.
@@ -142,7 +142,7 @@ Write the result as a single **Approach** section that includes an *Alternatives
 
 ## Step 5 — Estimation
 
-{{system-shared:docs/estimation.md}}
+{{system-shared:estimation.md}}
 
 Risk × Intensity → Story Points. Tasks with broad blast radius (shared infrastructure, build pipeline, secrets, auth) are usually higher Risk than they look. If SP > 5, propose a phased breakdown. Estimation appears at the **top** of the plan comment (even though it's calculated last) — see Step 6's section list.
 
@@ -173,4 +173,4 @@ All writes in this step use curl + Bearer `${PATCH_JIRA_TOKEN}` (see *jira-as-pa
 - **Cargo-cult patterns** — applying patterns because they're "best practice" rather than because the cost of *not* having them is concrete.
 - **Scope shrinking** — Tasks tempt this the most. "We'll just do part of the refactor for now" is how partial migrations turn into permanent fixtures.
 
-{{system-shared:docs/TOOLS.md}}
+{{system-shared:TOOLS.md}}

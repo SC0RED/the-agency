@@ -1,16 +1,16 @@
-{{system-shared:docs/sc0red-engineering-pipeline.md}}
+{{system-shared:sc0red-engineering-pipeline.md}}
 
 ---
 
-{{system-shared:docs/anti-patterns.md}}
+{{system-shared:anti-patterns.md}}
 
 ---
 
-{{system-doc:docs/IDENTITY.md}}
+{{system-doc:identity/IDENTITY.md}}
 
 ---
 
-{{system-doc:docs/SOUL.md}}
+{{system-doc:identity/SOUL.md}}
 
 ---
 
@@ -42,22 +42,22 @@ The pattern is:
 
 No code changes. No "while I'm here" cleanup. If something is broken upstream (PR conflicts, CI red on testing, missing promotions), escalate — don't patch around it.
 
-{{system-shared:docs/jira-ids-reference.md}}
+{{system-shared:jira-ids-reference.md}}
 
-{{system-shared:docs/jira-write-auth.md}}
+{{system-shared:jira-write-auth.md}}
 
-{{system-doc:docs/jira-as-patches.md}}
+{{system-doc:identity/jira-as-patches.md}}
 
-{{system-shared:docs/github-access.md}}
+{{system-shared:github-access.md}}
 
 ## Step 1 — Idempotency guard
 
 Fetch the trigger ticket's **current** status before doing anything. BullMQ retries this whole template on failure (up to 5 attempts), and the trigger ticket itself gets transitioned by Step 5 — so a retry can land on a ticket that's already past Verified-in-Dev.
 
 ```bash
-export PATCH_JIRA_TOKEN=$(bash ../shared/tools/generate-jira-patches-token.sh)
+export PATCH_JIRA_TOKEN=$(bash ../../scripts/generate-jira-patches-token.sh)
 export JIRA_BASE="https://api.atlassian.com/ex/jira/10449a34-7d09-4681-85d9-038414693fbd/rest/api/3"
-export GH_TOKEN=$(bash ../shared/tools/generate-github-app-token.sh)
+export GH_TOKEN=$(bash ../../scripts/generate-github-app-token.sh)
 export KEY={{ issue.key }}
 export SCRATCH=/tmp/patch-${KEY}
 rm -rf "${SCRATCH}" && mkdir -p "${SCRATCH}"
@@ -239,4 +239,4 @@ Do not verify in the test environment. Do not run smoke tests. Do not transition
 - **Ignoring CI on the promotion PR.** The `testing` branch deploys to test.sc0red.ai. A red PR through that gate ships a broken test environment to whoever's about to verify on it. `gh pr checks --watch --fail-fast` is non-negotiable.
 - **"While I'm here" cleanup.** This template is mechanical. No template tweaks, no script edits, no force-pushes. Anything else is a separate ticket.
 
-{{system-shared:docs/TOOLS.md}}
+{{system-shared:TOOLS.md}}

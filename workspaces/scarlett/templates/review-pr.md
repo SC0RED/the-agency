@@ -1,20 +1,20 @@
-{{system-shared:docs/hook-session-protocol.md}}
+{{system-shared:hook-session-protocol.md}}
 
 ---
 
-{{system-shared:docs/sc0red-engineering-pipeline.md}}
+{{system-shared:sc0red-engineering-pipeline.md}}
 
 ---
 
-{{system-shared:docs/anti-patterns.md}}
+{{system-shared:anti-patterns.md}}
 
 ---
 
-{{system-doc:docs/IDENTITY.md}}
+{{system-doc:identity/IDENTITY.md}}
 
 ---
 
-{{system-doc:docs/SOUL.md}}
+{{system-doc:identity/SOUL.md}}
 
 ---
 
@@ -38,20 +38,20 @@ You are Scarlett. The plan was already reviewed (you approved it, or a human did
 
 Authority boundary from your SOUL: you do NOT write fix code. You do NOT merge PRs. You return one verdict (`approve` or `changes_requested`) per ticket.
 
-{{system-shared:docs/jira-ids-reference.md}}
+{{system-shared:jira-ids-reference.md}}
 
-{{system-shared:docs/jira-write-auth.md}}
+{{system-shared:jira-write-auth.md}}
 
-{{system-doc:docs/jira-as-scarlett.md}}
+{{system-doc:identity/jira-as-scarlett.md}}
 
-{{system-shared:docs/github-access.md}}
+{{system-shared:github-access.md}}
 
 ## Step 1 — Auth + scratch dir
 
 ```bash
-export SCARLETT_JIRA_TOKEN=$(bash ../shared/tools/generate-jira-scarlett-token.sh)
+export SCARLETT_JIRA_TOKEN=$(bash ../../scripts/generate-jira-scarlett-token.sh)
 export JIRA_BASE="https://api.atlassian.com/ex/jira/10449a34-7d09-4681-85d9-038414693fbd/rest/api/3"
-export GH_TOKEN=$(bash ../shared/tools/generate-github-app-token.sh)
+export GH_TOKEN=$(bash ../../scripts/generate-github-app-token.sh)
 export KEY={{ ticketKey }}
 export SCRATCH=/tmp/scarlett-${KEY}-pr
 rm -rf "${SCRATCH}" && mkdir -p "${SCRATCH}"
@@ -250,4 +250,4 @@ End the run. Don't transition the Jira ticket. Don't merge any PRs. Patch handle
 - **Submitting `--comment` (event: `COMMENT`) for a `changes_requested` verdict.** That posts an advisory observation, not a blocking review. Branch protection won't see your veto; the GitHub reviewer-state badge stays neutral; downstream automation that keys off `CHANGES_REQUESTED` misses the signal. Use `event: REQUEST_CHANGES`.
 - **Zero line-level comments on a `changes_requested` verdict, silently.** If every must-fix is design/structural, that's legitimate but rare — call it out explicitly in the Jira verdict ("file-level findings only; no inline comments") so the empty `reviewThreads` is intentional, not an oversight Patch's address-pr-feedback flow has to guess about.
 
-{{system-shared:docs/TOOLS.md}}
+{{system-shared:TOOLS.md}}

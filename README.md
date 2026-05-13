@@ -3,216 +3,92 @@
 <img src="workspaces/patch/avatars/patch.jpg" alt="Patch" width="140" align="right">
 <img src="workspaces/scarlett/avatars/scarlett.jpg" alt="Scarlett" width="140" align="right">
 
-Monorepo of agent workspaces consumed by [Clawndom](https://github.com/SC0RED/clawndom) at runtime. Each agent lives in its own directory under `workspaces/` — identity, principles, templates, reference docs, routing config. Clawndom pulls this repo on a 5-minute sync timer on the EC2 host and renders webhook-triggered prompts from the per-agent templates.
+Workspaces for sc0red's engineering agents: **Patch** (AI software engineer) and **Scarlett** (reviewer). They share an EC2 host, share an engineering pipeline, and share most of the prose docs that define how sc0red builds software.
 
-Today the repo houses **Patch** (the AI software engineer) and **Scarlett** (the reviewer), both pictured. Additional agents are added by creating a new `workspaces/<name>/` directory with the same layout — see *Adding a new agent* below.
+## Who they are and what they do
 
----
+**Patch** is the AI engineer. Triggered by Jira webhooks when a ticket transitions into a status that's his to act on:
 
-## How Clawndom uses this repo
+- **Plan** — investigate, propose an Approach + Acceptance Criteria + Definition of Done, post the plan as a Jira comment, transition to Plan Review and dispatch Scarlett.
+- **Ready for Development** — implement the approved plan, push a PR, verify CI green, handle CodeRabbit, transition to Code Review and dispatch Scarlett.
+- **Deploy to development** — merge the approved PRs into `development`, transition to Deployed to Development.
+- **Verified in Development** — pulse-promote `development → testing` across the three repos when the pipeline is quiet.
 
-```
-Jira webhook ──► Clawndom ──► match routing rule ──► render template ──► spawn `claude` (--system-prompt + -p)
-                                  │                       │
-                                  │                       ├─► {{system-doc:...}} + {{system-shared:...}} → cacheable system slot
-                                  │                       └─► {{doc:...}} + {{shared:...}} → per-event user prompt
-                                  │
-                                  └─► uses clawndom.yaml at workspaces/<agent>/clawndom.yaml
-```
+Patch also wakes up on:
 
-1. A webhook arrives at Clawndom (Jira, Slack, GitHub).
-2. Clawndom loads `workspaces/<agent>/clawndom.yaml` to find the routing rule matching the event.
-3. The rule names a template in `workspaces/<agent>/templates/`. Clawndom renders it with the webhook payload plus any `{{doc:...}}` / `{{shared:...}}` / `{{system-doc:...}}` / `{{system-shared:...}}` injections it pulls from `workspaces/<agent>/docs/` and `workspaces/shared/docs/`. The `system-*` tier opts content into Anthropic's prompt cache by routing it through `claude --system-prompt`; the legacy tier inlines content into the per-event user prompt. See `workspaces/shared/docs/template-tags.md` for the decision rule.
-4. Rendered prompt goes to a `claude` subprocess with the full context assembled at render time.
+- **GitHub `check_suite.completed` failures** on his own PRs — out-of-band CI red catch-all.
+- **Slack alerts** in the three `#alerts-platform-failure-*` channels — diagnose, search for an existing ticket, comment or create one, post a threaded reply.
+- **Internal `address-pr-feedback` task** — dispatched by Scarlett after a `changes_requested` review.
 
-The agent sees **only** what the template includes. Nothing at the agent's workspace root is read unless the template injects it. This repo's structure is a tool for humans and Clawndom — the agent never navigates it directly.
+**Scarlett** is the reviewer. She does not write fix code and does not merge PRs. Triggered by internal task dispatch from Patch:
 
-**Sync timer.** A systemd timer on the EC2 host (`clawndom-sync-agents.timer`, 5-minute interval) runs `git pull` on `/home/clawndom/.clawndom/agents/SC0RED__the-agency/`. Edits pushed to `main` reach the agent within 5 minutes without a Clawndom restart.
+- **plan-review** — read Patch's plan against the five-axis rubric (Correctness / Design / Consistency / Edge cases / Test coverage); approve or request changes.
+- **code-review** — read the diff against the plan; post line-level GitHub comments + a verdict in Jira; dispatch `address-pr-feedback` back to Patch on `changes_requested`.
 
----
+Plus scheduled:
 
-## Repository layout
+- **daily-handoff** — Mon–Fri 7:45 AM ET, posts a digest of yesterday's PRs + open tickets needing eyes to `#general-engineering`.
 
-```
-the-agency/
-  README.md                            (you are here)
-  .gitignore
-  workspaces/
-    shared/                            (agent-neutral assets)
-      docs/                            (injected via {{shared:docs/<file>}} or {{system-shared:docs/<file>}})
-        sc0red-engineering-pipeline.md
-        anti-patterns.md
-        estimation.md
-        jira-ids-reference.md          (regenerated by tools/dump-jira-workflow.py)
-        jira-write-auth.md             (Bearer + gateway auth pattern, agent-neutral)
-        writing-great-{issues-base,bug-issues,feature-issues,task-issues}.md
-        github-access.md
-        ux-quality-gate.md
-        USER.md
-        TOOLS.md
-        hook-session-protocol.md
-        template-tags.md               (system-vs-body decision rule for prompt caching)
-        coderabbit-feedback.md         (manual review trigger + comment triage protocol)
-      tools/                           (operator scripts — invoked from templates or by humans)
-        dump-jira-workflow.py
-        generate-github-app-token.sh
-        generate-jira-patches-token.sh
-        generate-jira-scarlett-token.sh
-        generate-slack-patch-token.sh
-        generate-slack-scarlett-token.sh
-    patch/
-      clawndom.yaml                    (Clawndom routing rules for this agent)
-      avatars/                         (identity imagery)
-      templates/                       (Nunjucks templates — one per routing destination)
-      docs/
-        IDENTITY.md                    (agent-specific only)
-        SOUL.md                        (agent-specific only)
-        jira-as-patches.md             (Patches service-account identity)
-    scarlett/
-      (same layout as patch/, with docs/jira-as-scarlett.md)
-```
+Full agent identities in `workspaces/<agent>/identity/IDENTITY.md`; reviewing principles + voice in `workspaces/<agent>/identity/SOUL.md`.
 
-Each agent directory carries only its agent-specific docs (`IDENTITY.md`, `SOUL.md`) and imports everything else from `workspaces/shared/docs/` via `{{shared:docs/<file>}}` injections.
+## What's in this repo
 
----
-
-## Agent workspace anatomy (`workspaces/<agent>/`)
-
-Note: there is no `CLAUDE.md` per agent. The Claude CLI auto-loads any `CLAUDE.md` in the cwd into the system prompt, which would inject content Clawndom didn't explicitly choose on every hook session. The template — which Clawndom controls byte-for-byte — is the prompt.
-
-### `clawndom.yaml`
-
-The routing config Clawndom reads to decide which template handles which event. Match rules are written against the webhook payload (Jira's `issue.fields.status.name` and `issue.fields.issuetype.name` are the common ones). Each matched rule names a template in `templates/`, optionally a model override, and optionally a memory configuration (`memory.retrieve`).
-
-### `templates/`
-
-Nunjucks templates rendered once per webhook. Each template carries the steps and transition IDs it needs; everything else comes in via four doc-injection prefixes — two **body** tiers (legacy, per-event content in the user prompt) and two **system** tiers (cacheable, stable content in the `--system-prompt` slot):
-
-- `{{doc:docs/<file>.md}}` / `{{system-doc:docs/<file>.md}}` — resolve **inside this agent's workspace** (e.g. `IDENTITY.md`, `SOUL.md`, `jira-as-<agent>.md`).
-- `{{shared:docs/<file>.md}}` / `{{system-shared:docs/<file>.md}}` — resolve to `workspaces/shared/docs/<file>.md` (the agent-neutral library).
-
-The `system-*` tier routes content through `claude --system-prompt`, where Anthropic's prompt cache engages (1-hour TTL by default). Stable docs (IDENTITY, SOUL, anti-patterns, estimation, the engineering pipeline, the writing-great-* guides, jira-ids-reference, jira-write-auth, jira-as-<agent>, github-access, TOOLS, hook-session-protocol) belong in `system-*`; per-event variable content stays in `doc:` / `shared:`. Full decision rule, anti-patterns, and migration checklist in `workspaces/shared/docs/template-tags.md`.
-
-**Important:** because templates are Nunjucks, any literal `{{` sequence inside an injected doc will be parsed as a template tag — including inside `system-*` content (the engine renders Nunjucks against system content too). Don't put literal template syntax in injected docs; describe the syntax in prose instead.
-
-### `docs/` (per-agent)
-
-Only truly agent-specific material:
-
-| File | Purpose |
+| Path | Contents |
 |---|---|
-| `IDENTITY.md` | The agent's name, species, visual tag |
-| `SOUL.md` | Engineering principles, What I Do / Don't Do, voice, expectations |
-| `jira-as-<name>.md` | Service-account identity (account, 1P credential ref, token-fetch) — pairs with the shared `jira-write-auth.md` pattern |
+| `workspaces/patch/` | Patch's agent workspace — `clawndom.yaml`, `identity/`, `templates/`, `avatars/` |
+| `workspaces/scarlett/` | Scarlett's agent workspace — same shape |
+| `workspaces/shared/` | Cross-agent docs both agents inject: engineering pipeline, anti-patterns, issue-writing guides, Jira IDs reference, jira-write-auth pattern, TOOLS inventory, hook-session protocol, USER metadata, etc. |
+| `workspaces/scripts/` | Operator scripts the templates shell out to at runtime: GitHub App token generator, per-agent Jira/Slack token generators, Jira-workflow ID dumper |
 
-### `workspaces/shared/docs/` (agent-neutral)
+Per-agent layout:
 
-Injected via `{{shared:docs/...}}` (per-event body) or `{{system-shared:docs/...}}` (cacheable system slot). Single source of truth for anything every agent needs.
-
-| File | Purpose |
-|---|---|
-| `sc0red-engineering-pipeline.md` | The full ticket lifecycle narrative (statuses, gates, promotion flow) |
-| `jira-ids-reference.md` | Lookup card for transition IDs, custom-field keys, field-option IDs — **regenerated by `workspaces/shared/tools/dump-jira-workflow.py`** |
-| `estimation.md` | Risk × Intensity story-point framework, human+agent shared ruler |
-| `anti-patterns.md` | AI anti-patterns to avoid in plans and code |
-| `writing-great-issues-base.md` | Universal rules for issue quality (6 questions, architectural review, checklists) |
-| `writing-great-bug-issues.md` | Bug-type specialization + good/bad examples |
-| `writing-great-feature-issues.md` | Story-type specialization |
-| `writing-great-task-issues.md` | Task-type specialization |
-| `github-access.md` | GitHub App auth flow for cloning private repos and opening PRs |
-| `ux-quality-gate.md` | Frontend UX checklist |
-| `USER.md` | Operator metadata (name, timezone, role) |
-| `TOOLS.md` | Host tool inventory — AWS CLI, 1Password, runtime versions, MCP tools, scratch space |
-| `hook-session-protocol.md` | Non-negotiable rules for webhook-triggered runs (isolation, tool loading, failure protocol) |
-| `jira-write-auth.md` | Bearer + `api.atlassian.com` gateway pattern; do-not-MCP-for-writes rule; reads vs writes; common curl recipes. Pairs with each agent's `docs/jira-as-<name>.md`. |
-| `template-tags.md` | System-vs-body decision rule for prompt caching — when to use `{{system-*:...}}` vs the legacy `{{doc:...}}` / `{{shared:...}}` |
-| `coderabbit-feedback.md` | Manual CodeRabbit review trigger (the bot auto-skips PRs authored by `sc0red-patch[bot]`) and the protocol for triaging the resulting comments |
-
-Every numeric Jira ID lives in **one place**: `workspaces/shared/docs/jira-ids-reference.md`. Templates copy specific literal values from it; no other doc carries transition IDs.
-
----
-
-## Making changes
-
-1. Clone this repo locally.
-2. Edit the relevant file in `workspaces/<agent>/` or `workspaces/shared/`.
-3. Commit and push to `main`.
-4. Sync timer pulls within 5 minutes; next webhook run uses the new content.
-
-No PR flow on this repo (currently). Direct-push to main is the pattern. If Clawndom's routing config changes, the next event picks up the new rule without a restart.
-
----
-
-## Tools
-
-Operator scripts live at `workspaces/shared/tools/`. They run on the EC2 host and are invoked either by templates (during webhook runs) or by humans editing this repo.
-
-### `tools/dump-jira-workflow.py`
-
-Queries live Jira via the Atlassian REST API and rewrites `workspaces/shared/docs/jira-ids-reference.md` in place.
-
-**Run when the Jira workflow changes** (new status, renamed transition, new custom field, or when a `transitionJiraIssue` call lands a ticket in an unexpected status).
-
-Needs an Atlassian API token + the account email + the SPE cloud ID. On the EC2 these come from 1Password:
-
-```bash
-JIRA_USER_EMAIL=$(op item get "Service Account Auth Token: Jira" \
-  --vault Engineering --fields username)
-JIRA_API_TOKEN=$(op item get "Service Account Auth Token: Jira" \
-  --vault Engineering --fields credential --reveal)
-JIRA_CLOUD_ID=10449a34-7d09-4681-85d9-038414693fbd \
-  python3 workspaces/shared/tools/dump-jira-workflow.py
+```
+workspaces/<agent>/
+  clawndom.yaml          ← routing rules + per-rule tools + memory namespaces
+  identity/              ← agent identity tier
+    IDENTITY.md          ← name, role, who they work with
+    SOUL.md              ← principles, voice, do/don't
+    jira-as-<name>.md    ← service-account identity (Patches / Scarlett)
+  templates/             ← Nunjucks templates (one per route)
+  avatars/               ← portrait images
 ```
 
-Then `git diff workspaces/shared/docs/jira-ids-reference.md` — review what changed, commit, push. Review is important: templates that hardcode transition IDs may need follow-up edits when IDs change.
+Both agents follow the canonical workspace layout — see [`clawndom/docs/guides/AGENT_WORKSPACE_LAYOUT.md`](https://github.com/SC0RED/clawndom/blob/main/docs/guides/AGENT_WORKSPACE_LAYOUT.md). The runtime, the routing engine, the doc-injection mechanism, and the tool-use protocol all live in [`SC0RED/clawndom`](https://github.com/SC0RED/clawndom).
 
-### `tools/generate-github-app-token.sh`
+## Identity / auth pattern
 
-Emits a 1-hour GitHub App installation token for `sc0red-patch`. Called by ready-for-dev templates when an agent needs to clone a private `SC0RED/*` repo. See `workspaces/shared/docs/github-access.md` for the full flow.
+Every Jira comment, transition, and field edit authors as the agent's dedicated Atlassian service account, not as Chris. Templates fetch a bearer token via the matching script in `workspaces/scripts/` and use it on `curl` calls against `api.atlassian.com`. MCP-routed Jira writes (`mcp__atlassian__addCommentToJiraIssue`, etc.) author as Chris's OAuth and are forbidden — full rules in `workspaces/shared/jira-write-auth.md`.
 
-### `tools/generate-{jira,slack}-{patches,scarlett}-token.sh`
+Same shape for Slack: each agent has its own bot token; replies post as the matching identity.
 
-Emit short-lived bearer tokens for the per-agent Jira / Slack service accounts. Called from templates that need to author Jira comments or Slack messages as the agent identity.
+## Operator scripts
 
----
+`workspaces/scripts/` holds the shell helpers templates call at runtime:
 
-## Template doc-injection: `{{doc:...}}`, `{{shared:...}}`, `{{system-doc:...}}`, `{{system-shared:...}}` conventions
-
-Templates use Nunjucks. Four Clawndom-side extensions inline files at render time — two **body** tiers and two **system** tiers:
-
-- `{{doc:path/to/file.md}}` — relative to the agent workspace root (so `{{doc:docs/SOUL.md}}` pulls `workspaces/patch/docs/SOUL.md`). Body tier: rendered into the user prompt.
-- `{{shared:path/to/file.md}}` — relative to `workspaces/shared/` (so `{{shared:docs/USER.md}}` pulls `workspaces/shared/docs/USER.md`). Body tier.
-- `{{system-doc:path/to/file.md}}` — same path resolution as `doc:`. **System tier**: extracted from the rendered body and routed through `claude --system-prompt`, where Anthropic's prompt cache engages (1-hour TTL).
-- `{{system-shared:path/to/file.md}}` — same path resolution as `shared:`. System tier.
-
-The decision rule (which doc goes in which tier) is the only thing that determines whether you pay full input-token rates or ~10% cached rates on a given doc per webhook firing. Stable across runs of the same template → `system-*`; per-event or memory-recall → `doc:` / `shared:`. Full guidance, anti-patterns, and migration checklist in `workspaces/shared/docs/template-tags.md`.
-
-**Safety rule:** nothing injected can contain a literal `{{` — Nunjucks will try to parse it as a template tag. The engine renders Nunjucks against `system-*` content too, so the rule applies in both tiers. When a doc needs to reference the doc-injection syntax in prose (e.g. `TOOLS.md` explaining how it all works, or `template-tags.md` explaining the system-vs-body split), describe it in words rather than showing a literal example. Hitting this footgun blocks every template render.
-
----
+- `generate-github-app-token.sh` — short-lived GitHub App token for `sc0red-patch` (cloning private repos, opening PRs).
+- `generate-jira-{patches,scarlett}-token.sh` — bearer tokens for the per-agent Jira service accounts.
+- `generate-slack-{patch,scarlett}-token.sh` — bearer tokens for the per-agent Slack apps.
+- `dump-jira-workflow.py` — regenerates `workspaces/shared/jira-ids-reference.md` against the live Jira workflow. Run when the workflow changes.
 
 ## Adding a new agent
 
-To stand up a new agent:
+1. `mkdir -p workspaces/<name>/{identity,templates,avatars}`
+2. Author `clawndom.yaml`, `identity/IDENTITY.md`, `identity/SOUL.md`, and the templates for whichever webhook surfaces the agent owns.
+3. Push to `main`. The Clawndom sync timer on the EC2 picks it up within 5 minutes.
 
-1. Create `workspaces/<name>/` with the subdirectory skeleton: `templates/`, `docs/`, `avatars/`.
-2. Author:
-   - `clawndom.yaml` — routing rules for whichever webhooks this agent consumes
-   - `docs/IDENTITY.md`, `docs/SOUL.md` — only the truly agent-specific docs (everything else is inherited from `workspaces/shared/docs/`)
-   - Per-status templates under `templates/`
-   - **Do not add a `CLAUDE.md`** — the CLI would auto-load it into the system prompt on every hook session, polluting the template-controlled prompt.
-3. Push. Clawndom picks up the new agent on next sync.
+Don't add a `CLAUDE.md` — the Claude CLI auto-loads it into the system prompt on every hook session, polluting the template-controlled prompt. Clawndom owns the prompt byte-for-byte.
 
----
+## Auditing the workspaces
+
+```
+clawndom-audit workspaces/patch --shared-dir workspaces/shared
+clawndom-audit workspaces/scarlett --shared-dir workspaces/shared
+```
+
+Checks structural integrity — missing templates, unresolved injections, undeclared tools, legacy patterns. Zero findings is the bar.
 
 ## Related repositories
 
-- **[SC0RED/clawndom](https://github.com/SC0RED/clawndom)** — the webhook proxy / agent runner. Reads this repo at runtime.
-- **SC0RED/Platform-Frontend**, **SC0RED/Platform-Backend**, **SC0RED/assessment_engine** — the codebases Patch works on. Accessed via the `sc0red-patch` GitHub App (see `workspaces/shared/docs/github-access.md`).
-
-## Current runtime infrastructure
-
-- EC2 host: `c7i.large` in `sc0red-dev` (us-east-1), reachable at `clawndom.tail708f46.ts.net` via Tailscale Funnel.
-- Service: `clawndom.service` (systemd, auto-start enabled).
-- Sync timer: `clawndom-sync-agents.timer` pulls this repo every 5 minutes.
-- Toolchain on the host: Node 22 (system), Python 3.12, uv, ruff, pyright, vulture, mypy, pytest, mongosh, Google Chrome, sonar-scanner, AWS CLI v2, `op`, `gh`, `git`. Full inventory in `workspaces/shared/docs/TOOLS.md`.
+- [`SC0RED/clawndom`](https://github.com/SC0RED/clawndom) — the runtime. Hosts both agents; reads this repo at runtime; defines the canonical workspace layout.
+- [`SC0RED/agency-tools`](https://github.com/SC0RED/agency-tools) — the typed Python tool library used by SPE-2078-style agents. Patch and Scarlett don't depend on it today (they shell out to bash + curl + aws + sonar-scanner); migration to agency-tools is on the roadmap to retire the shell-out pattern.
+- [`ctcreel/winston-agency`](https://github.com/ctcreel/winston-agency) — Winston (the TALK office-manager agent). Same workspace shape, single-agent variant.

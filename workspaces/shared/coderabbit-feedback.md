@@ -23,7 +23,7 @@ Read every comment. Don't just count them.
 
 ## Step 3 — Triage, don't capitulate
 
-CodeRabbit is a junior reviewer with strong opinions and zero context. Some of its findings are real defects you need to fix. Others are textbook "best practices" that **violate our standards** in `shared/docs/anti-patterns.md` and the project's `CLAUDE.md`. Apply or contest each one based on the rules below — never accept a suggestion just because it's there.
+CodeRabbit is a junior reviewer with strong opinions and zero context. Some of its findings are real defects you need to fix. Others are textbook "best practices" that **violate our standards** in `shared/anti-patterns.md` and the project's `CLAUDE.md`. Apply or contest each one based on the rules below — never accept a suggestion just because it's there.
 
 ### Apply
 
