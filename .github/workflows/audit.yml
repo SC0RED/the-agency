@@ -1,5 +1,10 @@
 name: Audit
 
+# Runs clawndom-audit against this repo's workspaces. The audit CLI lives
+# in SC0RED/clawndom; we check it out alongside the agent repo at run time
+# rather than relying on a reusable workflow (cross-repo private workflow
+# resolution is finicky enough that inlining is more reliable).
+
 on:
   pull_request:
   push:
@@ -10,12 +15,52 @@ permissions:
 
 jobs:
   audit:
-    permissions:
-      contents: read
-    uses: SC0RED/clawndom/.github/workflows/audit-agent-workspace.yml@main
-    secrets: inherit
-    with:
-      workspaces: |
-        workspaces/patch
-        workspaces/scarlett
-      shared_dir: workspaces/shared
+    name: Audit workspaces
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out this repo
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          path: agent-repo
+
+      - name: Check out clawndom for the audit CLI
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          repository: SC0RED/clawndom
+          ref: main
+          path: clawndom
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 10
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: clawndom/pnpm-lock.yaml
+
+      - name: Install clawndom dependencies
+        working-directory: clawndom
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit Patch + Scarlett workspaces
+        working-directory: clawndom
+        run: |
+          set -e
+          failed=0
+          for workspace in workspaces/patch workspaces/scarlett; do
+            echo ""
+            echo "▶ clawndom-audit ${workspace}"
+            pnpm exec tsx src/audit/cli.ts \
+              "${GITHUB_WORKSPACE}/agent-repo/${workspace}" \
+              --shared-dir "${GITHUB_WORKSPACE}/agent-repo/workspaces/shared" \
+              || failed=1
+          done
+          if [ "${failed}" -ne 0 ]; then
+            echo "::error::One or more workspaces failed the audit."
+            exit 1
+          fi
