@@ -10,14 +10,6 @@
 
 ---
 
-{{system-doc:identity/IDENTITY.md}}
-
----
-
-{{system-doc:identity/SOUL.md}}
-
----
-
 # Current Trigger
 
 A **Task** transitioned into **Ready for Development** status — the approved plan is in the Jira comments, and a human moved it to this column meaning *go*.

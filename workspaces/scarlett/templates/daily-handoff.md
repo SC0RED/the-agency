@@ -6,14 +6,6 @@
 
 ---
 
-{{system-doc:identity/IDENTITY.md}}
-
----
-
-{{system-doc:identity/SOUL.md}}
-
----
-
 # Current Trigger
 
 You received an `agent.task.request` with `taskType: daily-handoff`. A scheduled timer fired this — every weekday at 7:45 AM ET — to produce the daily platform update for `#general-engineering`. Your audience is the engineering team starting their day.

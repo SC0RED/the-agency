@@ -6,14 +6,6 @@
 
 ---
 
-{{system-doc:identity/IDENTITY.md}}
-
----
-
-{{system-doc:identity/SOUL.md}}
-
----
-
 # Current Trigger
 
 A GitHub `check_suite.completed` webhook fired with `conclusion: failure` on a PR. CI broke. Either your earlier ready-for-dev or address-pr-feedback run ended before the failure landed, or a later push (yours or another agent's) regressed checks that were green. Either way, the PR is sitting red and nobody else is going to fix it — close the loop.

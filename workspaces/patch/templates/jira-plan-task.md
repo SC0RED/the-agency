@@ -14,15 +14,6 @@
 
 ---
 
-{{system-doc:identity/IDENTITY.md}}
-
----
-
-{{system-doc:identity/SOUL.md}}
-
-
----
-
 # Current Trigger
 
 A **Task** transitioned into **Plan** status.

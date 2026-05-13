@@ -14,14 +14,6 @@
 
 ---
 
-{{system-doc:identity/IDENTITY.md}}
-
----
-
-{{system-doc:identity/SOUL.md}}
-
----
-
 # Current Trigger
 
 {% set channel = event.channel %}{% set env = "unknown" %}{% if channel == "C08UVJDJZTL" %}{% set env = "production" %}{% elif channel == "C08UWMQJFBN" %}{% set env = "testing" %}{% elif channel == "C08V6MV0VNV" %}{% set env = "development" %}{% endif %}A pipeline-failure alert landed in `#alerts-platform-failure-{{ env }}`.

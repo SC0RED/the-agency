@@ -10,14 +10,6 @@
 
 ---
 
-{{system-doc:identity/IDENTITY.md}}
-
----
-
-{{system-doc:identity/SOUL.md}}
-
----
-
 # Current Trigger
 
 You received an `agent.task.request` with `taskType: code-review`. Patch has opened one or more PRs implementing the approved plan and is asking you to review them before they advance out of `Code Review`.
