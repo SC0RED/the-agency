@@ -5,9 +5,15 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   audit:
+    permissions:
+      contents: read
     uses: SC0RED/clawndom/.github/workflows/audit-agent-workspace.yml@main
+    secrets: inherit
     with:
       workspaces: |
         workspaces/patch
