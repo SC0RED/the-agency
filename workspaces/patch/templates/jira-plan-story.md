@@ -152,7 +152,7 @@ Risk × Intensity matrix → Story Points. **If SP > 5, propose a breakdown** be
 
 ## Step 6 — Post the plan, transition, request review
 
-All writes in this step use curl + Bearer `${PATCH_JIRA_TOKEN}` (see *jira-as-patches* fragment). Do NOT use `mcp__claude_ai_Atlassian__addCommentToJiraIssue`, `editJiraIssue`, or `transitionJiraIssue` — those author as Chris.
+All writes in this step use curl + Bearer `${PATCH_JIRA_TOKEN}` (see *jira-as-patches* fragment). Do NOT use `mcp__atlassian__addCommentToJiraIssue`, `editJiraIssue`, or `transitionJiraIssue` — those author as Chris.
 
 1. Post the plan as a Jira comment (curl POST to `${JIRA_BASE}/issue/{{ issue.key }}/comment`). Use the canonical Story section structure from `writing-great-feature-issues.md`, in this order: **Estimation** (Risk / Intensity / SP / Velocity Impact, top of the body) · **Job to be Done** (*When [context], the user wants to [motivation], so they can [outcome]*) · **Scope** (in / out) · **Current State** · **Approach** (with *Alternatives Considered* from Step 4) · **Acceptance Criteria** (Given/When/Then) · **Definition of Done** · **Production Signal** (telemetry / metric / observation that confirms it works post-deploy). Add **Rollback** *only* if the change is irreversible (schema migration, data shape change, infra mutation) — for ordinary code changes, omit it. **Capture the response body's `id` field** — Scarlett's review needs it: `PLAN_COMMENT_ID=$(curl ... | jq -r .id)`.
 2. Update the custom fields: Risk, Intensity, Velocity Impact (curl PUT to `${JIRA_BASE}/issue/{{ issue.key }}`). Business Value is set by humans; Story Points is calculated by Jira. Use the field keys and option IDs from the *Jira IDs* table above.

@@ -52,6 +52,7 @@ the-agency/
         TOOLS.md
         hook-session-protocol.md
         template-tags.md               (system-vs-body decision rule for prompt caching)
+        coderabbit-feedback.md         (manual review trigger + comment triage protocol)
       tools/                           (operator scripts — invoked from templates or by humans)
         dump-jira-workflow.py
         generate-github-app-token.sh
@@ -125,6 +126,7 @@ Injected via `{{shared:docs/...}}` (per-event body) or `{{system-shared:docs/...
 | `hook-session-protocol.md` | Non-negotiable rules for webhook-triggered runs (isolation, tool loading, failure protocol) |
 | `jira-write-auth.md` | Bearer + `api.atlassian.com` gateway pattern; do-not-MCP-for-writes rule; reads vs writes; common curl recipes. Pairs with each agent's `docs/jira-as-<name>.md`. |
 | `template-tags.md` | System-vs-body decision rule for prompt caching — when to use `{{system-*:...}}` vs the legacy `{{doc:...}}` / `{{shared:...}}` |
+| `coderabbit-feedback.md` | Manual CodeRabbit review trigger (the bot auto-skips PRs authored by `sc0red-patch[bot]`) and the protocol for triaging the resulting comments |
 
 Every numeric Jira ID lives in **one place**: `workspaces/shared/docs/jira-ids-reference.md`. Templates copy specific literal values from it; no other doc carries transition IDs.
 
@@ -213,4 +215,4 @@ To stand up a new agent:
 - EC2 host: `c7i.large` in `sc0red-dev` (us-east-1), reachable at `clawndom.tail708f46.ts.net` via Tailscale Funnel.
 - Service: `clawndom.service` (systemd, auto-start enabled).
 - Sync timer: `clawndom-sync-agents.timer` pulls this repo every 5 minutes.
-- Toolchain on the host: Node 18 (via nvm) + 22 (system), Python 3.12, uv, ruff, pyright, vulture, mypy, pytest, mongosh, Google Chrome, sonar-scanner, AWS CLI v2, `op`, `gh`, `git`. Full inventory in `workspaces/shared/docs/TOOLS.md`.
+- Toolchain on the host: Node 22 (system), Python 3.12, uv, ruff, pyright, vulture, mypy, pytest, mongosh, Google Chrome, sonar-scanner, AWS CLI v2, `op`, `gh`, `git`. Full inventory in `workspaces/shared/docs/TOOLS.md`.
