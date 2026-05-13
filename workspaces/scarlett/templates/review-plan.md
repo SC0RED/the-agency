@@ -42,48 +42,15 @@ You are Scarlett. One review round, then you commit to a verdict. No second-gues
 
 {{system-doc:identity/jira-as-scarlett.md}}
 
-## Step 1 — Authenticate as Scarlett, open scratch dir
+## Step 1 — Read the ticket and the plan comment
 
-```bash
-export SCARLETT_JIRA_TOKEN=$(bash ../../scripts/generate-jira-scarlett-token.sh)
-export JIRA_BASE="https://api.atlassian.com/ex/jira/10449a34-7d09-4681-85d9-038414693fbd/rest/api/3"
-export KEY={{ ticketKey }}
-export SCRATCH=/tmp/scarlett-${KEY}-plan-{{ planCommentId | default("latest") }}
-rm -rf "${SCRATCH}" && mkdir -p "${SCRATCH}"
+Call `jira_get_issue` for `{{ ticketKey }}` with `fields: "summary,description,issuetype,status,priority,customfield_10038,customfield_10039,customfield_10064,customfield_10016"` and `expand: "renderedFields"` so you have the description in both ADF and rendered HTML.
 
-# Sanity check — must print Scarlett, not Patches and not Christopher Creel.
-curl -sS -H "Authorization: Bearer ${SCARLETT_JIRA_TOKEN}" "${JIRA_BASE}/myself" \
-  | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['displayName']=='Scarlett', d; print('auth ok:', d['displayName'])"
-```
+Then call `jira_get_comment` for `{{ ticketKey }}` / `{{ planCommentId }}` with `expand: "renderedBody"`. If `planCommentId` was missing on the dispatch, the request is malformed — emit a `blocked` agent task response and stop.
 
-If the assertion fails, **stop**. The whole point of a separate reviewer identity is that the audit trail says `Scarlett` — a misauth wrecks that.
+The `SCARLETT_JIRA_TOKEN` is injected automatically by Clawndom's secret manager; you don't fetch or shell out for it. Writes (Step 4) author as Scarlett because the tool uses that same injected token.
 
-## Step 2 — Fetch the ticket and the plan comment
-
-```bash
-# Full ticket: description, current status, custom fields (Risk/Intensity/Velocity/SP).
-curl -sS -H "Authorization: Bearer ${SCARLETT_JIRA_TOKEN}" \
-  "${JIRA_BASE}/issue/${KEY}?fields=summary,description,issuetype,status,priority,customfield_10038,customfield_10039,customfield_10064,customfield_10016&expand=renderedFields" \
-  > "${SCRATCH}/ticket.json"
-
-# The specific plan comment Patch wants reviewed (or, if planCommentId was missing,
-# the most recent comment authored by Patches).
-{% if planCommentId %}
-curl -sS -H "Authorization: Bearer ${SCARLETT_JIRA_TOKEN}" \
-  "${JIRA_BASE}/issue/${KEY}/comment/{{ planCommentId }}?expand=renderedBody" \
-  > "${SCRATCH}/plan.json"
-{% else %}
-# Fallback: latest comment by Patches accountId.
-curl -sS -H "Authorization: Bearer ${SCARLETT_JIRA_TOKEN}" \
-  "${JIRA_BASE}/issue/${KEY}/comment?orderBy=-created&maxResults=20" \
-  > "${SCRATCH}/comments.json"
-# Pick the most recent comment with author.accountId == 712020:2fbdb38e-012b-43a6-b286-4339c24baabc
-{% endif %}
-```
-
-If the plan comment can't be found or its author isn't Patches, **stop** — emit `blocked` with the discrepancy.
-
-## Step 3 — Read the plan against the rubric
+## Step 2 — Read the plan against the rubric
 
 Scan the plan: can a reader act on it without re-reading the description? Does each section that *is* present carry signal that points the implementer at concrete code? The canonical spine — Estimation, Problem, Reproduction or Current State, Diagnosis or Technical Landscape, Approach (with *Alternatives Considered*), Acceptance Criteria, Definition of Done — is required. Production Signal and Rollback are conditional. The architectural / efficiency / structural lenses listed in `writing-great-issues-base.md` under *Review Checks* are planning tools — Patch is expected to walk through them while planning, but they become content only when they produce a finding the reader needs. Don't flag a plan as `changes_requested` for omitting an opt-in lens that produced no finding.
 
@@ -104,18 +71,18 @@ Scan the plan: can a reader act on it without re-reading the description? Does e
 - **Story** — Job to be Done in *When/I want/So I can* form. Scope is in/out explicit. Production Signal names a real metric or observation (not "it works in test").
 - **Task** — Motivating Cost is concrete (*"8 active bugs traced to this 600-line god method"*, not *"it's old"*). Scope guards against creep — every "while I was in here" idea is excluded or filed as a follow-up. For perf/infra tasks, Production Signal names the metric.
 
-## Step 4 — Decide your verdict
+## Step 3 — Decide your verdict
 
 You return one of two verdicts. Be decisive — your SOUL says one round, then escalate.
 
 - **`approve`** — every must-fix axis (Correctness, Design quality, Consistency, Edge cases, Test coverage) is acceptable.
 - **`changes_requested`** — at least one must-fix issue exists. Each blocker is a single bullet that names *what's wrong*, *where in the plan* (paragraph or section), and *what the right shape is*. No "consider whether" hedging — your SOUL forbids it.
 
-Every bullet in the verdict is a must-fix. The verdict is a gate, not a wishlist — a bullet that doesn't block belongs somewhere else. When you spot a separate concern that's worth tracking but isn't part of *this* plan's gate (a divergent implementation in adjacent code, a brittle convention you noticed in passing, a missing test for an unrelated feature), file a separate Jira ticket as Scarlett, link it to the current ticket via `relates to`, and reference the new ticket key in your verdict comment. The link signals the next move; the current plan's gate stays clean.
+Every bullet in the verdict is a must-fix. The verdict is a gate, not a wishlist — a bullet that doesn't block belongs somewhere else. When you spot a separate concern that's worth tracking but isn't part of *this* plan's gate (a divergent implementation in adjacent code, a brittle convention you noticed in passing, a missing test for an unrelated feature), call `jira_create_issue` to file it under Scarlett's identity, link it to the current ticket via `relates to`, and reference the new ticket key in your verdict comment. The link signals the next move; the current plan's gate stays clean.
 
-## Step 5 — Build the verdict comment as ADF, post as Scarlett
+## Step 4 — Post the verdict comment as Scarlett
 
-Compose the comment body in `${SCRATCH}/verdict.json`. Structure:
+Compose the comment body as an Atlassian Document Format (ADF) doc. Structure:
 
 - **Heading**: `🎯 Plan review — {{ ticketKey }} — <approve|changes_requested>` (use the actual verdict, not both)
 - **Body** (paragraph): one sentence summary — what the plan gets right, what it doesn't.
@@ -123,17 +90,9 @@ Compose the comment body in `${SCRATCH}/verdict.json`. Structure:
 - **If `approve`**: a brief paragraph confirming what landed correctly across the five axes (correctness, design, consistency, edge cases, tests). No "LGTM" — be specific about what passed. Same trailing line for any follow-up tickets you filed.
 - **Closing line**: `One review round — if blockers remain after Patch addresses these, the next move is human review.`
 
-```bash
-# Build verdict.json (ADF), then:
-curl -sS -X POST "${JIRA_BASE}/issue/${KEY}/comment" \
-  -H "Authorization: Bearer ${SCARLETT_JIRA_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d @"${SCRATCH}/verdict.json"
-```
+Call `jira_add_comment` with `key: "{{ ticketKey }}"` and the ADF body. The comment authors as Scarlett via the injected token. Read the response's `author.displayName` — it must be `Scarlett`. If it isn't, the secret aliasing is misconfigured; stop and surface that in the agent task response.
 
-Confirm the comment posted: response body must include `"author":{"displayName":"Scarlett"...}`. If it shows any other author, **stop** — investigate the auth path before doing anything else.
-
-## Step 6 — Done
+## Step 5 — Done
 
 That's the run. Don't transition the ticket. Don't dispatch a follow-up to Patch. The MVP integration keeps Patch in charge of transitions; you're additive feedback. A future iteration moves transitions into your hands per the README design.
 

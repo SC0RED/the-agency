@@ -44,181 +44,68 @@ No code changes. No "while I'm here" cleanup. If something is broken upstream (P
 
 ## Step 1 — Idempotency guard
 
-Fetch the trigger ticket's **current** status before doing anything. BullMQ retries this whole template on failure (up to 5 attempts), and the trigger ticket itself gets transitioned by Step 5 — so a retry can land on a ticket that's already past Verified-in-Dev.
+BullMQ retries this whole template on failure (up to 5 attempts), and the trigger ticket itself gets transitioned by Step 5 — so a retry can land on a ticket that's already past Verified-in-Dev.
 
-```bash
-export PATCH_JIRA_TOKEN=$(bash ../../scripts/generate-jira-patches-token.sh)
-export JIRA_BASE="https://api.atlassian.com/ex/jira/10449a34-7d09-4681-85d9-038414693fbd/rest/api/3"
-export GH_TOKEN=$(bash ../../scripts/generate-github-app-token.sh)
-export KEY={{ issue.key }}
-export SCRATCH=/tmp/patch-${KEY}
-rm -rf "${SCRATCH}" && mkdir -p "${SCRATCH}"
-
-curl -sS -H "Authorization: Bearer ${PATCH_JIRA_TOKEN}" "${JIRA_BASE}/myself" \
-  | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['displayName']=='Patches', d; print('jira auth ok:', d['displayName'])"
-
-CURRENT=$(curl -sS -H "Authorization: Bearer ${PATCH_JIRA_TOKEN}" \
-  "${JIRA_BASE}/issue/${KEY}?fields=status" \
-  | python3 -c "import json,sys; print(json.load(sys.stdin)['fields']['status']['name'])")
-echo "${KEY} current status: ${CURRENT}"
-```
+Call `jira_get_issue` for `{{ issue.key }}` with `fields: "status"`.
 
 - If status is **Verified in Development** → normal start; continue.
-- If status is **Deployed to Testing** or anything past it → a prior attempt completed Step 5. **Stop.** Post a Jira comment as Patches saying "retry observed ticket already past Verified in Development — assuming previous run completed" and end the run.
+- If status is **Deployed to Testing** or anything past it → a prior attempt completed Step 5. Call `jira_add_comment` saying "retry observed ticket already past Verified in Development — assuming previous run completed", **stop**.
 - If status is **Blocked** → a prior attempt escalated. **Stop.**
-- Anything else → unexpected. Post a comment naming the current status; transition to **Blocked** (transition 4); stop.
+- Anything else → unexpected. Call `jira_add_comment` naming the current status; `jira_transition_issue` with `transition_id: "4"` (Blocked); stop.
 
 ## Step 2 — Quiet-pipeline guard
 
 The pulse only fires when the upstream dev pipeline is empty. If anything is sitting in **Deploy to development** or **Deployed to Development**, those tickets are unverified work whose commits are already on `development` — promoting now would carry them into `testing`, which is exactly what this guard exists to prevent.
 
-```bash
-PENDING=$(curl -sS -X POST "${JIRA_BASE}/search/jql" \
-  -H "Authorization: Bearer ${PATCH_JIRA_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d '{"jql": "project = SPE AND status in (\"Deploy to development\", \"Deployed to Development\")", "fields": ["key","summary","status"]}' \
-  | python3 -c "
-import json, sys
-d = json.load(sys.stdin)
-issues = d.get('issues', [])
-for i in issues:
-    print(f'{i[\"key\"]}\t{i[\"fields\"][\"status\"][\"name\"]}\t{i[\"fields\"][\"summary\"]}')
-")
+Call `jira_search` with `jql: 'project = SPE AND status in ("Deploy to development", "Deployed to Development")'` and `fields: "summary,status"`.
 
-if [ -n "${PENDING}" ]; then
-  echo "BLOCKED — pipeline not quiet:"
-  echo "${PENDING}"
-fi
-```
+If the response's `total` is non-zero: **stop**. Call `jira_add_comment` on `{{ issue.key }}` listing the pending tickets and noting "promotion deferred until those are verified." Do NOT transition the trigger ticket — it stays in Verified-in-Development so the next pulse picks it up. End the run cleanly.
 
-If `${PENDING}` is non-empty: **stop**. Post a Jira comment on `${KEY}` listing the pending tickets and noting "promotion deferred until those are verified." Do NOT transition the trigger ticket — it stays in Verified-in-Development so the next pulse picks it up. End the run cleanly.
-
-If `${PENDING}` is empty: continue.
+If zero: continue.
 
 ## Step 3 — Gather every Verified-in-Development ticket
 
-These all ride the same pulse:
+Call `jira_search` with `jql: 'project = SPE AND status = "Verified in Development" ORDER BY updated ASC'` and `fields: "summary,issuetype"`. Capture the list of keys — these all ride the same pulse.
 
-```bash
-curl -sS -X POST "${JIRA_BASE}/search/jql" \
-  -H "Authorization: Bearer ${PATCH_JIRA_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d '{"jql": "project = SPE AND status = \"Verified in Development\" ORDER BY updated ASC", "fields": ["key","summary","issuetype"]}' \
-  > "${SCRATCH}/verified.json"
-
-python3 -c "
-import json
-d = json.load(open('${SCRATCH}/verified.json'))
-keys = [i['key'] for i in d.get('issues', [])]
-print('\n'.join(keys))
-" > "${SCRATCH}/verified-keys.txt"
-
-cat "${SCRATCH}/verified-keys.txt"
-```
-
-If the trigger ticket isn't in this list, something's gone sideways (race? stale read?) — escalate to Blocked.
+If `{{ issue.key }}` isn't in the response (race? stale read?) — escalate to Blocked via `jira_transition_issue` + `jira_add_comment`.
 
 ## Step 4 — Open + merge `development → testing` PRs
 
 Per repo: only act when `development` is actually ahead of `testing`. An empty diff means a prior pulse already promoted; skip the repo cleanly.
 
-```bash
-PROMOTED_REPOS=()
+For each `<repo>` in `[SC0RED/Platform-Frontend, SC0RED/Platform-Backend, SC0RED/assessment_engine]`:
 
-for REPO in SC0RED/Platform-Frontend SC0RED/Platform-Backend SC0RED/assessment_engine; do
-  echo "=== ${REPO} ==="
-  AHEAD=$(gh api "repos/${REPO}/compare/testing...development" --jq '.ahead_by' 2>/dev/null)
-  if [ -z "${AHEAD}" ] || [ "${AHEAD}" -eq 0 ]; then
-    echo "  development not ahead of testing; skipping"
-    continue
-  fi
-  echo "  development ahead by ${AHEAD} commits"
+1. **Check if development is ahead of testing.** Use shell: `gh api "repos/<repo>/compare/testing...development" --jq '.ahead_by'` (compare endpoint isn't wrapped as a tool yet). If `0`, skip this repo cleanly.
 
-  EXISTING=$(gh pr list --repo "${REPO}" --base testing --head development --state open --json number,url --jq '.[0]')
-  if [ -n "${EXISTING}" ]; then
-    PR_NUMBER=$(echo "${EXISTING}" | python3 -c 'import json,sys; print(json.load(sys.stdin)["number"])')
-    PR_URL=$(echo "${EXISTING}"   | python3 -c 'import json,sys; print(json.load(sys.stdin)["url"])')
-    echo "  reusing existing PR #${PR_NUMBER}"
-  else
-    PR_BODY="Promote development → testing.\n\nVerified-in-Development tickets in this pulse:\n$(awk '{print "- " $0}' ${SCRATCH}/verified-keys.txt)\n\nTriggered by: ${KEY}"
-    PR_URL=$(gh pr create --repo "${REPO}" --base testing --head development \
-      --title "Promote development → testing (pulse: ${KEY})" \
-      --body "${PR_BODY}")
-    PR_NUMBER=$(echo "${PR_URL}" | grep -oE '[0-9]+$')
-    echo "  opened PR #${PR_NUMBER}: ${PR_URL}"
-  fi
+2. **Find or create the promotion PR.** Call `github_pr_list` with `state: "open"`, `base: "testing"`, `head: "<owner>:development"`. If response is non-empty, reuse the existing PR. Otherwise call `github_pr_create`:
+   - `repo`: this repo
+   - `head`: `development`
+   - `base`: `testing`
+   - `title`: `Promote development → testing (pulse: {{ issue.key }})`
+   - `body`: A summary listing the verified-in-dev tickets from Step 3 and the trigger ticket {{ issue.key }}.
 
-  # Wait for CI green before merging — never push a red PR through to testing.
-  gh pr checks "${PR_NUMBER}" --repo "${REPO}" --watch --fail-fast
+3. **Wait for CI green.** Call `github_pr_check_runs` every ~60s. If any check's `conclusion` is anything but `success`/`skipped`/`neutral`, **stop**: `jira_transition_issue` (Blocked) on `{{ issue.key }}` + `jira_add_comment` naming the failing repo + PR + check. The other Verified-in-Dev tickets stay in their state; the next pulse retries once the failure is resolved.
 
-  # Merge with a real merge commit (not squash) — testing's history needs to
-  # mirror development's commit-by-commit so future cherry-picks and
-  # `git log development..testing` diff comparisons stay readable.
-  gh pr merge "${PR_NUMBER}" --repo "${REPO}" --merge --delete-branch=false
-  PROMOTED_REPOS+=("${REPO}#${PR_NUMBER}")
-  echo "  merged"
-done
+4. **Merge.** Call `github_pr_merge` with `merge_method: "merge"` (not squash — `testing`'s history needs to mirror `development`'s commit-by-commit). Idempotent.
 
-echo "promoted: ${PROMOTED_REPOS[*]:-(nothing)}"
-```
+5. Track each promoted PR as `<repo>#<number>` so Step 6 can report what shipped.
 
-If any `gh pr checks --watch --fail-fast` fails: do NOT continue to Step 5. Transition `${KEY}` to **Blocked** (transition 4) with a comment naming the failing repo + PR + check. The other Verified-in-Dev tickets stay in their state; the next pulse will retry once the failure is resolved.
-
-If `PROMOTED_REPOS` is empty (every repo was already in sync): that means a prior pulse already promoted, and Step 5 still needs to run to drag the now-deployed tickets into the right state.
+If every repo was already in sync: `PROMOTED_REPOS` ends up empty, and Step 5 still needs to run to drag the now-deployed tickets into the right state.
 
 ## Step 5 — Transition every gathered ticket to "Deployed to Testing"
 
-Transition ID for `Verified in Development → Deployed to Testing` per the spe-board workflow: **23**.
+For each ticket key from Step 3, call `jira_transition_issue` with `transition_id: "23"` (`Verified in Development → Deployed to Testing` per the spe-board workflow).
 
-```bash
-while read -r TICKET; do
-  [ -z "${TICKET}" ] && continue
-  echo "transitioning ${TICKET} → Deployed to Testing"
-  STATUS=$(curl -sS -o /dev/null -w "%{http_code}" -X POST \
-    "${JIRA_BASE}/issue/${TICKET}/transitions" \
-    -H "Authorization: Bearer ${PATCH_JIRA_TOKEN}" \
-    -H "Content-Type: application/json" \
-    -d '{"transition": {"id": "23"}}')
-  echo "  ${STATUS}"
-done < "${SCRATCH}/verified-keys.txt"
-```
-
-A `204` is success. A `400` on a specific ticket usually means the transition isn't valid from the ticket's *current* state — likely a race where someone moved the ticket out of Verified-in-Dev between Step 3 and Step 5. Log it and continue; do NOT abort the loop on a single 400.
+A `JiraAPIError(400)` on a specific ticket usually means the transition isn't valid from the ticket's current state — likely a race where someone moved the ticket out of Verified-in-Dev between Step 3 and Step 5. Log it and continue; do NOT abort the loop on a single 400.
 
 ## Step 6 — Post a confirmation comment on each promoted ticket
 
-```bash
-PROMOTED_LIST=$(printf '%s\n' "${PROMOTED_REPOS[@]:-(no repos needed promotion)}" | awk '{print "- " $0}')
+For each ticket key, call `jira_add_comment` with an ADF body:
 
-while read -r TICKET; do
-  [ -z "${TICKET}" ] && continue
-  python3 - "${TICKET}" "${PROMOTED_LIST}" <<'PYEOF' > "${SCRATCH}/comment.json"
-import json, sys
-ticket = sys.argv[1]
-promoted = sys.argv[2]
-body = {
-  "type": "doc", "version": 1,
-  "content": [
-    {"type": "paragraph", "content": [
-      {"type": "text", "text": f"Promoted to testing in pulse triggered by {ticket}.", "marks": [{"type": "strong"}]}
-    ]},
-    {"type": "paragraph", "content": [
-      {"type": "text", "text": "Repos promoted in this pulse:"}
-    ]},
-    {"type": "codeBlock", "content": [{"type": "text", "text": promoted}]},
-    {"type": "paragraph", "content": [
-      {"type": "text", "text": "Verify in the test environment when convenient. Move the ticket to Verified in Test once you've confirmed it works."}
-    ]},
-  ],
-}
-print(json.dumps({"body": body}))
-PYEOF
-  curl -sS -X POST "${JIRA_BASE}/issue/${TICKET}/comment" \
-    -H "Authorization: Bearer ${PATCH_JIRA_TOKEN}" \
-    -H "Content-Type: application/json" \
-    -d @"${SCRATCH}/comment.json" > /dev/null
-done < "${SCRATCH}/verified-keys.txt"
-```
+- Bold paragraph: `Promoted to testing in pulse triggered by {{ issue.key }}.`
+- Paragraph: `Repos promoted in this pulse:`
+- Code block listing `<repo>#<number>` for each repo from Step 4 (or "(no repos needed promotion)" if Step 4 was a no-op).
+- Closing paragraph: `Verify in the test environment when convenient. Move the ticket to Verified in Test once you've confirmed it works.`
 
 ## Step 7 — Stop
 
@@ -226,9 +113,9 @@ Do not verify in the test environment. Do not run smoke tests. Do not transition
 
 ## Anti-patterns
 
-- **Cherry-picking to "just promote my ticket".** The three repos share a single testing branch; you can't promote a subset of dev's commits without rewriting history. The pulse-promote pattern is the design — a partial promote breaks dev/testing parity.
+- **Cherry-picking to "just promote my ticket".** The three repos share a single testing branch; you can't promote a subset of dev's commits without rewriting history. The pulse-promote pattern is the design.
 - **Bypassing the quiet-pipeline guard.** "It's probably fine" is exactly the failure mode this guard exists to catch. If something is in Deploy-to-Dev or Deployed-to-Dev, those commits are sitting on dev unverified — promoting picks them up. Block, comment, wait.
-- **Ignoring CI on the promotion PR.** The `testing` branch deploys to test.sc0red.ai. A red PR through that gate ships a broken test environment to whoever's about to verify on it. `gh pr checks --watch --fail-fast` is non-negotiable.
+- **Ignoring CI on the promotion PR.** The `testing` branch deploys to test.sc0red.ai. A red PR through that gate ships a broken test environment.
 - **"While I'm here" cleanup.** This template is mechanical. No template tweaks, no script edits, no force-pushes. Anything else is a separate ticket.
 
 {{system-shared:TOOLS.md}}

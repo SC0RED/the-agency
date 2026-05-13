@@ -42,128 +42,61 @@ No code changes at this stage. No test rewrites. No "while I'm here" cleanup. If
 
 ## Step 1 — Idempotency guard
 
-Fetch the ticket's **current** status before doing anything. BullMQ retries this whole template on failure (up to 5 attempts), so Step 1 can run more than once on the same ticket.
+BullMQ retries this whole template on failure (up to 5 attempts). Call `jira_get_issue` for `{{ issue.key }}` with `fields: "status"`.
 
-- If status is **Deploy to development** → normal start, continue to Step 2.
-- If status is **Deployed to Development** → a prior attempt completed. **Stop.** Post a Jira comment as Patches saying "retry observed this ticket already past Deploy to development — assuming previous run completed" and end the run.
+- If status is **Deploy to development** → normal start, continue.
+- If status is **Deployed to Development** → a prior attempt completed. Call `jira_add_comment` saying "retry observed this ticket already past Deploy to development — assuming previous run completed", **stop**.
 - If status is **Blocked** → a prior attempt escalated. **Stop.** Do not re-run.
-- Anything else → unexpected (something moved the ticket mid-retry). Post a Jira comment naming the current status and what you expected; transition to **Blocked** (transition 4); stop.
+- Anything else → unexpected. Call `jira_add_comment` naming the current status; `jira_transition_issue` with `transition_id: "4"` (Blocked); stop.
 
-## Step 2 — Authenticate as Patches and open a per-ticket scratch dir
+## Step 2 — Find the PRs for this ticket
 
-Tokens first:
+Search each of the three repos for open PRs whose title contains `{{ issue.key }}`. Call `github_pr_list` once per repo (`SC0RED/assessment_engine`, `SC0RED/Platform-Backend`, `SC0RED/Platform-Frontend`) with `state: "open"`, `base: "development"`. Filter the response to PRs whose title contains `{{ issue.key }}`.
 
-```bash
-export PATCH_JIRA_TOKEN=$(bash ../../scripts/generate-jira-patches-token.sh)
-export JIRA_BASE="https://api.atlassian.com/ex/jira/10449a34-7d09-4681-85d9-038414693fbd/rest/api/3"
-export GH_TOKEN=$(bash ../../scripts/generate-github-app-token.sh)
+Expected: one PR per repo that was changed by this fix, all targeting `development`. If zero PRs match across all three repos, **stop** — `jira_transition_issue` (Blocked, `transition_id: "4"`) + `jira_add_comment` saying "no open PRs found matching {{ issue.key }}; can't deploy what doesn't exist."
 
-# Sanity check — this must print Patches, not Christopher Creel.
-curl -sS -H "Authorization: Bearer ${PATCH_JIRA_TOKEN}" "${JIRA_BASE}/myself" \
-  | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['displayName']=='Patches', d; print('auth ok:', d['displayName'])"
-```
+## Step 3 — Confirm CI is green on every PR
 
-If that assertion fails, stop — your writes would land as the wrong account.
+For each `(repo, pr_number)` from Step 2, call `github_pr_check_runs` and poll every ~60s until every check has a non-null `conclusion`. Cap polling at 25 minutes total.
 
-Then open a **per-ticket scratch directory**. `/tmp` is `PrivateTmp=true` on the clawndom systemd unit — wiped only on service restart, not between hook-triggered subprocesses. Unqualified paths like `/tmp/pr-list.json` collide across tickets and have already caused one ticket (SPE-1719) to short-circuit after reading a prior ticket's staged ADF comment. Fresh scratch each run:
+If any check's `conclusion` is not `success`, `skipped`, or `neutral`, **stop**:
 
-```bash
-export KEY={{ issue.key }}
-export SCRATCH=/tmp/patch-${KEY}
-rm -rf "${SCRATCH}" && mkdir -p "${SCRATCH}"
-```
+- `jira_transition_issue` (Blocked, `transition_id: "4"`)
+- `jira_add_comment` naming which PR failed which check, with the failing check's `details_url`.
 
-All downstream files (`pr-list.json`, `deploy-comment.json`, and anything else you stage) live under `${SCRATCH}/`. Never write to `/tmp/*.json` directly.
+Don't attempt to fix the failure at this stage — a human approved the code in Code Review, so any CI failure here is either flaky infra or a regression that surfaced after review. Either way it's a human decision.
 
-## Step 3 — Find the PRs for this ticket
+## Step 4 — Local validation (belt-and-braces)
 
-Search each of the three repos for open PRs whose title contains this ticket key. The convention is `fix(SPE-XXXX): …`, so the key is always in the title.
+CI is already green from Step 3, but the engineering pipeline requires a local validation pass before merge.
 
-```bash
-for REPO in assessment_engine Platform-Backend Platform-Frontend; do
-  echo "=== ${REPO} ==="
-  gh pr list --repo SC0RED/${REPO} \
-    --search "${KEY} in:title" \
-    --state open --base development \
-    --json number,title,url,headRefName,mergeStateStatus,statusCheckRollup
-done
-```
+Refresh each repo (see *GitHub access* above), check out the PR branch via `git`, run `make check-all`. Set `SONAR_TOKEN` (1Password → `Engineering` → `Sonar Token`) for Frontend and Engine. A mismatch between CI-green and local-red is a signal the PR is depending on CI-only state — **stop** and escalate to Blocked.
 
-Expected: one PR per repo that was changed by this fix, all targeting `development`. If zero PRs match across all three repos, **stop** — transition to **Blocked** with a comment saying "no open PRs found matching ${KEY}; can't deploy what doesn't exist."
-
-Write the found PR list to `${SCRATCH}/pr-list.json` for downstream steps. Keep repo name, PR number, and URL.
-
-## Step 4 — Confirm CI is green on every PR
-
-```bash
-for row in $(cat "${SCRATCH}/pr-list.json"); do
-  REPO=<repo from row>
-  NUM=<pr number from row>
-  gh pr checks "${NUM}" --repo SC0RED/${REPO} --watch --interval 30
-done
-```
-
-`--watch` blocks until all checks finish. If any check fails, **stop**:
-
-- Transition the ticket to **Blocked** (transition 4).
-- Post a Jira comment naming which PR failed which check, with a link to the failing run.
-- Do not attempt to fix the failure at this stage — a human approved the code in Code Review, so any CI failure here is either flaky infra or a regression that surfaced after review. Either way it's a human decision.
-
-## Step 5 — Local validation (belt-and-braces)
-
-CI is already green from Step 4, but the engineering pipeline requires a local validation pass before merge:
-
-Run `make check-all` in each repo's root. All three repos expose this uniform target — the underlying commands are repo-appropriate but the entry point is the same. On Frontend and Engine, export `SONAR_TOKEN` (1Password → `Engineering` → `Sonar Token`) first so the SonarCloud target can run.
-
-Refresh each repo (see *GitHub access* above), check out the PR branch, run `make check-all`. A mismatch between CI-green and local-red is a signal the PR is depending on CI-only state — **stop** and escalate to Blocked.
-
-## Step 6 — Merge the PRs
+## Step 5 — Merge the PRs
 
 Merge order matters: engine-first so Frontend/Backend PRs can reference the new engine behavior if they integration-test against a deployed dev engine.
 
-```bash
-# For each PR in ${SCRATCH}/pr-list.json, in repo order [assessment_engine, Platform-Backend, Platform-Frontend]:
-gh pr merge "${NUM}" --repo SC0RED/${REPO} --squash --delete-branch
-```
+For each PR in order `[assessment_engine, Platform-Backend, Platform-Frontend]`, call `github_pr_merge` with `merge_method: "squash"`. The tool is idempotent — re-running on an already-merged PR returns `merged: true` with the original SHA, and the run continues.
 
-`gh pr merge` is idempotent — if a PR was already merged in a prior retry, it returns "pull request already merged" and the script continues.
+If a merge fails for a non-idempotent reason (branch out of date, conflict appeared): **stop**. `jira_transition_issue` (Blocked) + `jira_add_comment` naming the PR and the merge error.
 
-If a merge fails for a *non-idempotent* reason (branch out of date, conflict appeared), **stop**: transition to Blocked + Jira comment naming the PR and the merge error.
+## Step 6 — Post consolidated Jira comment as Patches
 
-## Step 7 — Post consolidated Jira comment as Patches
-
-Compose one comment summarising what shipped. Include each merged PR's URL and the merge commit SHA.
-
-```bash
-# Build ADF body in ${SCRATCH}/deploy-comment.json (one paragraph with heading + bullet list of PRs).
-# Then:
-curl -sS -X POST "${JIRA_BASE}/issue/${KEY}/comment" \
-  -H "Authorization: Bearer ${PATCH_JIRA_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d @"${SCRATCH}/deploy-comment.json"
-```
+Compose one ADF body summarising what shipped. Include each merged PR's URL and the merge commit SHA (from the `github_pr_merge` response).
 
 Heading: `🩹 Deployed to development — {{ issue.key }}`. Body: the list of merged PRs + a note that the development environment auto-deploys on push.
 
-## Step 8 — Transition to Deployed to Development
+Call `jira_add_comment` with `key: "{{ issue.key }}"` and the ADF body.
 
-Use transition id **10** ("Deploy") — the workflow-correct arrow from the current state. Do NOT use transition 32 ("Manual") unless transition 10 returns `400 Transition is not valid`, in which case the workflow changed and this needs a human.
+## Step 7 — Transition to Deployed to Development
 
-```bash
-curl -sS -o /dev/null -w "HTTP %{http_code}\n" \
-  -X POST "${JIRA_BASE}/issue/${KEY}/transitions" \
-  -H "Authorization: Bearer ${PATCH_JIRA_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d '{"transition":{"id":"10"}}'
-```
-
-Expected: `HTTP 204`. Any other code → stop + comment + Blocked.
+Call `jira_transition_issue` with `transition_id: "10"` ("Deploy" — the workflow-correct arrow from the current state). Do NOT use transition 32 ("Manual") unless transition 10 raises `JiraAPIError(400)` with "Transition is not valid", in which case the workflow changed and this needs a human.
 
 ## CI / merge failure handling
 
-- CI red in Step 4 → Blocked + comment.
-- Local validation red in Step 5 → Blocked + comment.
-- Merge conflict in Step 6 → Blocked + comment.
+- CI red in Step 3 → Blocked + comment.
+- Local validation red in Step 4 → Blocked + comment.
+- Merge conflict in Step 5 → Blocked + comment.
 - Max 2 retry cycles across the whole template. After the 2nd failure, Blocked is final — a human owns the next move.
 
 ## Anti-patterns to actively avoid

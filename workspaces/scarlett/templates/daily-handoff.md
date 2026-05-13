@@ -25,79 +25,32 @@ You are Scarlett. This is reporting work, but the rubric from your SOUL still ap
 
 {{system-shared:github-access.md}}
 
-## Step 1 — Auth + scratch dir
+## Step 1 — Pull merged PRs from the last 24 hours
 
-```bash
-export SCARLETT_SLACK_TOKEN=$(bash ../../scripts/generate-slack-scarlett-token.sh)
-export GH_TOKEN=$(bash ../../scripts/generate-github-app-token.sh)
-export SCRATCH=/tmp/scarlett-daily-handoff-$(date -u +%Y%m%d)
-rm -rf "${SCRATCH}" && mkdir -p "${SCRATCH}"
+For each of the three SC0RED implementation repos (`SC0RED/assessment_engine`, `SC0RED/Platform-Backend`, `SC0RED/Platform-Frontend`), call `github_pr_list` with `state: "closed"` and `base: "development"`. From the response, filter to PRs whose `merged_at` is within the last 24 hours (the API returns merged-and-closed mixed; the `merged_at` field is null for unmerged closures).
 
-# Sanity check — must print Scarlett, not Patch.
-curl -sS -H "Authorization: Bearer ${SCARLETT_SLACK_TOKEN}" https://slack.com/api/auth.test \
-  | python3 -c "import json,sys; d=json.load(sys.stdin); assert d.get('user')=='scarlett', d; print('slack auth ok:', d['user'])"
-```
+If a call returns an error (rate limit, transient outage), don't fail the whole run — note the error inline in your post for that repo and continue with the others. Silent skip is a worse failure than a noted error.
 
-If the assertion fails, **stop**. Posting the digest under the wrong identity corrupts the audit signal.
+PRs with `additions + deletions > 500` are large changes worth surfacing explicitly. PRs touching auth, billing, or migration paths should also be surfaced — scan titles for those keywords.
 
-## Step 2 — Pull commits from the last 24 hours
+## Step 2 — Pull open tickets that need eyes today
 
-For each of the three SC0RED implementation repos, query the GitHub API for commits from all branches in the last 24h. **Do not rely on local clones** — they may be stale; use `gh api` directly.
+Three specific Jira searches — actionable items the team should know about at start-of-day. Call `jira_search` once per query:
 
-```bash
-SINCE=$(date -u -d "24 hours ago" +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null \
-        || date -u -v-24H +"%Y-%m-%dT%H:%M:%SZ")
+- **In Plan Review**: `project = SPE AND status = "Plan Review"` — Patch posted plans, awaiting human approval. Stalled review is a bottleneck.
+- **In Code Review**: `project = SPE AND status = "Code Review"` — PRs awaiting review. Same point.
+- **Blocked**: `project = SPE AND status = "Blocked"` — escalations from yesterday that need a human decision.
 
-for REPO in assessment_engine Platform-Backend Platform-Frontend; do
-  gh api "repos/SC0RED/${REPO}/commits?since=${SINCE}&per_page=100" \
-    --jq '.[] | {sha:.sha[:7], author:.commit.author.name, msg:(.commit.message | split("\n")[0])}' \
-    > "${SCRATCH}/${REPO}.json" 2> "${SCRATCH}/${REPO}.err"
-done
-```
+Project the responses to just the fields you need: `fields: "summary,status,priority,assignee"`. If counts are zero in a given category, skip that line in the digest — don't pad with empty noise.
 
-If any repo returns an error (rate limit, API outage), don't fail the whole run — note the error in your post for that repo and continue with the others. Silent skip is a worse failure than a noted error.
+## Step 3 — Compose the digest
 
-## Step 3 — Pull merged PRs from the last 24 hours
-
-Commits are noisy (every push, every rebase). Merged PRs are the cleaner signal for "what shipped." Pull both and let the digest reference PRs first, commits as supporting context.
-
-```bash
-for REPO in assessment_engine Platform-Backend Platform-Frontend; do
-  gh pr list --repo "SC0RED/${REPO}" \
-    --state merged --base development \
-    --search "merged:>${SINCE}" \
-    --json number,title,author,mergedAt,additions,deletions,labels \
-    > "${SCRATCH}/${REPO}-prs.json"
-done
-```
-
-PRs with `additions + deletions > 500` are large changes worth surfacing explicitly. PRs touching auth, billing, or migration paths should also be surfaced — read titles for those keywords.
-
-## Step 4 — Pull open tickets that need eyes today
-
-Two specific Jira queries — actionable items the team should know about at start-of-day. Use the read-only Jira credentials (MCP tools are fine here; reads don't author):
-
-- **Tickets in Plan Review** — Patch posted plans, awaiting human approval. Stalled review is a bottleneck.
-- **Tickets in Code Review** — PRs awaiting review. Same point.
-- **Tickets Blocked** — escalations from yesterday that need a human decision.
-
-```bash
-# (Example with Bearer auth; you can also use mcp__atlassian__searchJiraIssuesUsingJql.)
-export JIRA_BASE="https://api.atlassian.com/ex/jira/10449a34-7d09-4681-85d9-038414693fbd/rest/api/3"
-# Note: this is a *read* — your Scarlett Jira token works fine, but mcp__atlassian__searchJiraIssuesUsingJql
-# (which authenticates as Chris) is also acceptable since reads have no audit-identity stake.
-```
-
-If counts are zero in a given category, skip that line — don't pad the post with empty noise.
-
-## Step 5 — Compose the digest
-
-Format as Slack `blocks` (richer than plain text — headings, lists, dividers render better). Build the JSON in `${SCRATCH}/digest.json`. Structure:
+Format as Slack `blocks` (richer than plain text — headings, lists, dividers render better). Structure:
 
 ```
 🌅 Overnight platform update — <Mon DD>
 
-Yesterday across the three repos: <count> PRs merged, <count> commits.
+Yesterday across the three repos: <count> PRs merged.
 
 🔧 assessment_engine
   • PR #1234 — title (+adds/-dels) by author
@@ -127,22 +80,17 @@ Voice — your SOUL is the rubric:
 - **No hedging.** "Worth eyes" is the strongest language — don't escalate further unless something is genuinely on fire (in which case escalate with a specific call to a specific person, not a vague alarm).
 - **No emoji confetti.** The category emoji (🔧🖥️🎨🚧⚠️) are deliberate; don't add more.
 
-## Step 6 — Post as Scarlett
+## Step 4 — Post as Scarlett
 
-```bash
-curl -sS -X POST "https://slack.com/api/chat.postMessage" \
-  -H "Authorization: Bearer ${SCARLETT_SLACK_TOKEN}" \
-  -H "Content-Type: application/json; charset=utf-8" \
-  -d @"${SCRATCH}/digest.json"
-```
+Call `slack_post` with:
 
-Confirm response shows `"ok": true` with `"bot_id": "B0AHYRDBCVB"`. If `ok: false`:
+- `channel`: `C06TRR7A894` (`#general-engineering`)
+- `text`: a one-line fallback (notification preview) — e.g. `"Overnight platform update — <count> PRs merged"`
+- `blocks`: the Block Kit array built above
 
-- `"channel_not_found"` → the bot isn't in `#general-engineering`. Stop and emit a `blocked` agent task response asking a human to invite `@scarlett`.
-- `"invalid_auth"` → token expired or revoked. Stop and emit `blocked`.
-- Anything else → stop, log the error verbatim in the blocked response.
+The token Clawndom injects is Scarlett's bot token; the post authors as `@scarlett`. If `slack_post` raises an error containing `channel_not_found`, the bot isn't in `#general-engineering` — surface that in the agent task response so a human invites `@scarlett`. `invalid_auth` means the token rotated and operator needs to refresh; same response shape.
 
-## Step 7 — Done
+## Step 5 — Done
 
 End the run. No follow-up dispatch, no Jira ticket, no in-thread reply chain. The digest is one-shot.
 
