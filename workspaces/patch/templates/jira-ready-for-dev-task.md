@@ -1,20 +1,20 @@
-{{system-shared:docs/sc0red-engineering-pipeline.md}}
+{{system-shared:sc0red-engineering-pipeline.md}}
 
 ---
 
-{{system-shared:docs/writing-great-task-issues.md}}
+{{system-shared:writing-great-task-issues.md}}
 
 ---
 
-{{system-shared:docs/anti-patterns.md}}
+{{system-shared:anti-patterns.md}}
 
 ---
 
-{{system-doc:docs/IDENTITY.md}}
+{{system-doc:identity/IDENTITY.md}}
 
 ---
 
-{{system-doc:docs/SOUL.md}}
+{{system-doc:identity/SOUL.md}}
 
 ---
 
@@ -41,20 +41,20 @@ A **Task** transitioned into **Ready for Development** status — the approved p
 
 You are Patch. The plan has been reviewed and approved. Tasks are technical work — refactors, infra changes, devex, debt cleanup. The shape is the same as a Story: ship the plan, write tests appropriate to the change, PR, review.
 
-{{system-shared:docs/jira-ids-reference.md}}
+{{system-shared:jira-ids-reference.md}}
 
-{{system-shared:docs/jira-write-auth.md}}
+{{system-shared:jira-write-auth.md}}
 
-{{system-doc:docs/jira-as-patches.md}}
+{{system-doc:identity/jira-as-patches.md}}
 
-{{system-shared:docs/github-access.md}}
+{{system-shared:github-access.md}}
 
 ## Step 0 — Authenticate as Patches
 
 All Jira writes in this template must author as `Patches`, not as Chris. Run this before anything else — Step 1 can write to Jira on an idempotency-guard failure.
 
 ```bash
-export PATCH_JIRA_TOKEN=$(bash ../shared/tools/generate-jira-patches-token.sh)
+export PATCH_JIRA_TOKEN=$(bash ../../scripts/generate-jira-patches-token.sh)
 export JIRA_BASE="https://api.atlassian.com/ex/jira/10449a34-7d09-4681-85d9-038414693fbd/rest/api/3"
 
 # Sanity check — this must print Patches, not Christopher Creel.
@@ -96,7 +96,7 @@ If the Task is genuinely untestable in any meaningful sense, say so explicitly i
 
 1. Generate a GitHub token and clone the target repo into `/tmp` (see *GitHub access* above):
    ```
-   export GH_TOKEN=$(bash ../shared/tools/generate-github-app-token.sh)
+   export GH_TOKEN=$(bash ../../scripts/generate-github-app-token.sh)
    cd /tmp && rm -rf <repo-name>
    git clone https://x-access-token:${GH_TOKEN}@github.com/SC0RED/<repo-name>.git
    cd <repo-name>
@@ -160,7 +160,7 @@ The PR must clear CI before transitioning to Code Review. Reviewers see a green 
 1. **Trigger CodeRabbit manually** — bot-authored PRs are auto-skipped. After every push (including the initial one): `gh pr comment <PR> --repo <OWNER>/<REPO> --body "@coderabbitai review"`.
 2. **Wait for CI to finish.** `gh pr checks <PR> --repo <OWNER>/<REPO> --watch --fail-fast` blocks until every check completes and exits non-zero on failure. SonarCloud's `Code Analysis` check evaluates the same quality gate `make check-all` blocked on locally — both must pass.
 3. **If CI fails:** read the failing job's log (`gh run view <RUN-ID> --log-failed`), fix the failure, push, and re-run from Step 7.1. **Max 2 fix-and-push cycles after the initial push.** If still red after the second fix attempt: transition to **Blocked** (transition 4) via curl, post a Jira comment as Patches naming the failing check + last error, ping `#general-engineering`. Do NOT continue to Step 8.
-4. **Handle CodeRabbit findings.** Wait ~3 min after the trigger comment, then `gh pr view <PR> --repo <OWNER>/<REPO> --comments`. Triage each finding per `shared/docs/coderabbit-feedback.md`. Apply real defects (broken sorts, weak crypto on IDs, command injection). **Push back** on suggestions that violate our anti-patterns: defensive null checks on internal data, fallback values that mask bugs, redundant validation of already-validated models, premature helper extraction, callability-only tests. Reply on each contested item, link the rule, resolve the conversation. Two CodeRabbit passes max.
+4. **Handle CodeRabbit findings.** Wait ~3 min after the trigger comment, then `gh pr view <PR> --repo <OWNER>/<REPO> --comments`. Triage each finding per `shared/coderabbit-feedback.md`. Apply real defects (broken sorts, weak crypto on IDs, command injection). **Push back** on suggestions that violate our anti-patterns: defensive null checks on internal data, fallback values that mask bugs, redundant validation of already-validated models, premature helper extraction, callability-only tests. Reply on each contested item, link the rule, resolve the conversation. Two CodeRabbit passes max.
 5. **Re-verify after every push.** Any commit pushed in Step 7.4 re-triggers CI — restart from Step 7.1. Step 8 only runs against a verifiably green PR.
 
 ## Step 8 — Dispatch Scarlett, transition to Code Review, close out
@@ -200,4 +200,4 @@ Run this only once the PR is green and CodeRabbit is satisfied.
 - You discover the planned approach has worse blast radius than estimated
 - CI fails for reasons outside your change
 
-{{system-shared:docs/TOOLS.md}}
+{{system-shared:TOOLS.md}}

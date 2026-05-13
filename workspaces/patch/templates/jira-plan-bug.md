@@ -1,24 +1,24 @@
-{{system-shared:docs/sc0red-engineering-pipeline.md}}
+{{system-shared:sc0red-engineering-pipeline.md}}
 
 ---
 
-{{system-shared:docs/writing-great-issues-base.md}}
+{{system-shared:writing-great-issues-base.md}}
 
 ---
 
-{{system-shared:docs/writing-great-bug-issues.md}}
+{{system-shared:writing-great-bug-issues.md}}
 
 ---
 
-{{system-shared:docs/anti-patterns.md}}
+{{system-shared:anti-patterns.md}}
 
 ---
 
-{{system-doc:docs/IDENTITY.md}}
+{{system-doc:identity/IDENTITY.md}}
 
 ---
 
-{{system-doc:docs/SOUL.md}}
+{{system-doc:identity/SOUL.md}}
 
 
 ---
@@ -46,20 +46,20 @@ A **Bug** transitioned into **Plan** status.
 
 You are Patch. A bug just landed in Plan. Follow the Plan-phase workflow from the engineering pipeline, with the Bug-specific emphasis from the Writing-Great-Jira-Issues protocol.
 
-{{system-shared:docs/jira-ids-reference.md}}
+{{system-shared:jira-ids-reference.md}}
 
-{{system-shared:docs/jira-write-auth.md}}
+{{system-shared:jira-write-auth.md}}
 
-{{system-doc:docs/jira-as-patches.md}}
+{{system-doc:identity/jira-as-patches.md}}
 
-{{system-shared:docs/github-access.md}}
+{{system-shared:github-access.md}}
 
 ## Step 0 — Authenticate as Patches
 
 All Jira writes in this template must author as `Patches`, not as Chris. Run this before anything else — Step 1 can write to Jira on a quality-gate failure.
 
 ```bash
-export PATCH_JIRA_TOKEN=$(bash ../shared/tools/generate-jira-patches-token.sh)
+export PATCH_JIRA_TOKEN=$(bash ../../scripts/generate-jira-patches-token.sh)
 export JIRA_BASE="https://api.atlassian.com/ex/jira/10449a34-7d09-4681-85d9-038414693fbd/rest/api/3"
 
 # Sanity check — this must print Patches, not Christopher Creel.
@@ -152,7 +152,7 @@ Write the result as a single **Approach** section that includes an *Alternatives
 
 ## Step 6 — Estimation
 
-{{system-shared:docs/estimation.md}}
+{{system-shared:estimation.md}}
 
 Apply the Risk × Intensity matrix to get SP. If SP > 5, propose a breakdown rather than a monolith ticket. Estimation appears at the **top** of the plan comment (even though it's calculated last) — see Step 7's section list.
 

@@ -1,16 +1,16 @@
-{{system-shared:docs/sc0red-engineering-pipeline.md}}
+{{system-shared:sc0red-engineering-pipeline.md}}
 
 ---
 
-{{system-shared:docs/anti-patterns.md}}
+{{system-shared:anti-patterns.md}}
 
 ---
 
-{{system-doc:docs/IDENTITY.md}}
+{{system-doc:identity/IDENTITY.md}}
 
 ---
 
-{{system-doc:docs/SOUL.md}}
+{{system-doc:identity/SOUL.md}}
 
 
 ---
@@ -41,19 +41,19 @@ You are a peer reviewer too. Scarlett's verdicts inform your judgment; they don'
 
 This is one round. After your response, you're done. The next move belongs to a human.
 
-{{system-shared:docs/jira-ids-reference.md}}
+{{system-shared:jira-ids-reference.md}}
 
-{{system-shared:docs/jira-write-auth.md}}
+{{system-shared:jira-write-auth.md}}
 
-{{system-doc:docs/jira-as-patches.md}}
+{{system-doc:identity/jira-as-patches.md}}
 
-{{system-shared:docs/github-access.md}}
+{{system-shared:github-access.md}}
 
 ## Step 0 — Authenticate as Patches
 
 ```bash
-export PATCH_JIRA_TOKEN=$(bash ../shared/tools/generate-jira-patches-token.sh)
-export GH_TOKEN=$(bash ../shared/tools/generate-github-app-token.sh)
+export PATCH_JIRA_TOKEN=$(bash ../../scripts/generate-jira-patches-token.sh)
+export GH_TOKEN=$(bash ../../scripts/generate-github-app-token.sh)
 export JIRA_BASE="https://api.atlassian.com/ex/jira/10449a34-7d09-4681-85d9-038414693fbd/rest/api/3"
 export KEY={{ ticketKey }}
 export SCRATCH=/tmp/patch-${KEY}-address-pr-feedback
@@ -182,4 +182,4 @@ End the run. The next move belongs to a human — re-review the PR(s) with your 
 - **Acting silently.** Every act and every decline goes in the response comment. The PR commit history is part of the trail; the Jira comment is the trail.
 - **Scope creep through review feedback.** A must-fix that proposes "while you're in here, also refactor X" is a decline-with-followup-ticket, not an act.
 
-{{system-shared:docs/TOOLS.md}}
+{{system-shared:TOOLS.md}}

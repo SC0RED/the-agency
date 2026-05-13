@@ -46,7 +46,7 @@ For prod investigation, override per-command: `aws --profile sc0red-prod logs ta
 
 ## Git + GitHub
 
-`git` and `gh` are installed. The SSH deploy key at `~/.ssh/id_ed25519` is read-only, scoped to `SC0RED/the-agency` only. For cloning or pushing to the three `SC0RED` private repos (`Platform-Frontend`, `Platform-Backend`, `assessment_engine`), see **`shared/docs/github-access.md`** — that's the authoritative auth flow (GitHub App token via `workspaces/shared/tools/generate-github-app-token.sh`).
+`git` and `gh` are installed. The SSH deploy key at `~/.ssh/id_ed25519` is read-only, scoped to `SC0RED/the-agency` only. For cloning or pushing to the three `SC0RED` private repos (`Platform-Frontend`, `Platform-Backend`, `assessment_engine`), see **`shared/github-access.md`** — that's the authoritative auth flow (GitHub App token via `workspaces/scripts/generate-github-app-token.sh`).
 
 ## Language runtimes
 
@@ -77,7 +77,7 @@ For Frontend and Engine PRs, run a local Sonar scan before push. `sonar-scanner`
 
 ## Jira
 
-**Reads use MCP. Writes use curl + Bearer.** This split is non-negotiable — see `shared/docs/jira-write-auth.md` for the full pattern, including the reason MCP for writes is forbidden (it authors as Chris, corrupting the audit trail).
+**Reads use MCP. Writes use curl + Bearer.** This split is non-negotiable — see `shared/jira-write-auth.md` for the full pattern, including the reason MCP for writes is forbidden (it authors as Chris, corrupting the audit trail).
 
 The MCP tools are *deferred* — they aren't in the default toolset. The CLI exposes them by name only, and calling one directly fails with `InputValidationError`. Load read-tool schemas with `ToolSearch` before any Jira task:
 
@@ -93,11 +93,11 @@ Reads (MCP — fine):
 - `mcp__atlassian__searchJiraIssuesUsingJql` — search by JQL
 - `mcp__atlassian__getTransitionsForJiraIssue` — list transition IDs
 
-Writes (curl + Bearer — see `shared/docs/jira-write-auth.md`):
+Writes (curl + Bearer — see `shared/jira-write-auth.md`):
 
 - post a comment, transition, or edit fields → curl POST/PUT against `${JIRA_BASE}` with `Authorization: Bearer ${YOUR_AGENT_JIRA_TOKEN}`. Never `mcp__atlassian__addCommentToJiraIssue`, `transitionJiraIssue`, or `editJiraIssue` — those author as Chris.
 
-For the actual IDs (cloud ID, transitions, custom fields, option IDs), see `shared/docs/jira-ids-reference.md`.
+For the actual IDs (cloud ID, transitions, custom fields, option IDs), see `shared/jira-ids-reference.md`.
 
 ## Slack
 

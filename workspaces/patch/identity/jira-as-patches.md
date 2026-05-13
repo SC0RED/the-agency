@@ -1,6 +1,6 @@
 # Patches — Jira service account
 
-Identity-only. The auth pattern (Bearer + gateway, `mcp__atlassian__*` writes are forbidden, common recipes) lives in `../../shared/docs/jira-write-auth.md` and is injected alongside this file in every Patch template.
+Identity-only. The auth pattern (Bearer + gateway, `mcp__atlassian__*` writes are forbidden, common recipes) lives in `../../shared/jira-write-auth.md` and is injected alongside this file in every Patch template.
 
 ## Service account
 
@@ -18,7 +18,7 @@ The credential is a long-lived API token stored in 1Password Engineering vault a
 From Patch's workspace directory:
 
 ```bash
-export PATCH_JIRA_TOKEN=$(bash ../shared/tools/generate-jira-patches-token.sh)
+export PATCH_JIRA_TOKEN=$(bash ../../scripts/generate-jira-patches-token.sh)
 export JIRA_BASE="https://api.atlassian.com/ex/jira/10449a34-7d09-4681-85d9-038414693fbd/rest/api/3"
 ```
 
