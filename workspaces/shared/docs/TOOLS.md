@@ -50,7 +50,7 @@ For prod investigation, override per-command: `aws --profile sc0red-prod logs ta
 
 ## Language runtimes
 
-- **Node.js** — system Node 22 on PATH. `nvm` is installed at `~/.nvm` with Node 18 (default) for Angular 15 projects. Switch with `nvm use 18` or `nvm use 22` as needed.
+- **Node.js** — Node v22 on PATH. Angular 15's Platform-Frontend builds fine on 22; no nvm setup needed.
 - **Python** — 3.12 (`python3`). `pip3`, `venv`, and `build-essential` are installed.
 - **uv** (`/usr/local/bin/uv`) — modern Python package manager and runtime.
 
@@ -82,20 +82,20 @@ For Frontend and Engine PRs, run a local Sonar scan before push. `sonar-scanner`
 The MCP tools are *deferred* — they aren't in the default toolset. The CLI exposes them by name only, and calling one directly fails with `InputValidationError`. Load read-tool schemas with `ToolSearch` before any Jira task:
 
 ```
-ToolSearch({query: "select:mcp__claude_ai_Atlassian__getJiraIssue,mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql,mcp__claude_ai_Atlassian__getTransitionsForJiraIssue"})
+ToolSearch({query: "select:mcp__atlassian__getJiraIssue,mcp__atlassian__searchJiraIssuesUsingJql,mcp__atlassian__getTransitionsForJiraIssue"})
 ```
 
 Use `select:<name>[,<name>...]` — don't rely on keyword search like `"jira"`, which can miss the `Atlassian`-prefixed names. Once a tool's schema comes back in the `<functions>` block, it's callable for the rest of the run.
 
 Reads (MCP — fine):
 
-- `mcp__claude_ai_Atlassian__getJiraIssue` — fetch issue
-- `mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql` — search by JQL
-- `mcp__claude_ai_Atlassian__getTransitionsForJiraIssue` — list transition IDs
+- `mcp__atlassian__getJiraIssue` — fetch issue
+- `mcp__atlassian__searchJiraIssuesUsingJql` — search by JQL
+- `mcp__atlassian__getTransitionsForJiraIssue` — list transition IDs
 
 Writes (curl + Bearer — see `shared/docs/jira-write-auth.md`):
 
-- post a comment, transition, or edit fields → curl POST/PUT against `${JIRA_BASE}` with `Authorization: Bearer ${YOUR_AGENT_JIRA_TOKEN}`. Never `mcp__claude_ai_Atlassian__addCommentToJiraIssue`, `transitionJiraIssue`, or `editJiraIssue` — those author as Chris.
+- post a comment, transition, or edit fields → curl POST/PUT against `${JIRA_BASE}` with `Authorization: Bearer ${YOUR_AGENT_JIRA_TOKEN}`. Never `mcp__atlassian__addCommentToJiraIssue`, `transitionJiraIssue`, or `editJiraIssue` — those author as Chris.
 
 For the actual IDs (cloud ID, transitions, custom fields, option IDs), see `shared/docs/jira-ids-reference.md`.
 

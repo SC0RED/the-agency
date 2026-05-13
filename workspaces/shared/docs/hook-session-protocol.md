@@ -20,7 +20,7 @@ Webhook-triggered Claude CLI runs have a session key that starts with `hook-` (e
 
 If you hit a blocker you cannot resolve — a missing tool, a missing credential, scope you can't reach, a template instruction that doesn't match reality — **leave a trail before you stop**. The exact channel depends on your trigger source:
 
-- **Jira-triggered run** — post a Jira comment on the originating ticket (use `mcp__claude_ai_Atlassian__addCommentToJiraIssue`; the cloudId is in `jira-ids-reference.md` which your template injects — don't hardcode it here).
+- **Jira-triggered run** — post a Jira comment on the originating ticket using your agent's curl + Bearer pattern (see `jira-write-auth.md`), so the failure note authors as your agent identity. The exception: if Bearer auth itself is what failed (token fetch broke, `op` is unreachable), fall back to `mcp__atlassian__addCommentToJiraIssue` so the blocker still surfaces — a Chris-authored "blocked on Y" comment beats silent failure. Use the standard MCP escape hatch only when the canonical path is provably unavailable.
 - **Slack-triggered run** — reply in the alert thread (same Slack thread root the trigger came from).
 - **Agent-task run (dispatched from another agent via `/api/tasks`)** — emit an `agent.task.response` with `verdict: blocked` and a body explaining the blocker, so the sender can route the problem.
 

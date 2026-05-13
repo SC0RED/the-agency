@@ -158,7 +158,7 @@ Apply the Risk × Intensity matrix to get SP. If SP > 5, propose a breakdown rat
 
 ## Step 7 — Post the plan, transition, request review
 
-All writes in this step use curl + Bearer `${PATCH_JIRA_TOKEN}` (see *jira-as-patches* fragment). Do NOT use `mcp__claude_ai_Atlassian__addCommentToJiraIssue`, `editJiraIssue`, or `transitionJiraIssue` — those author as Chris.
+All writes in this step use curl + Bearer `${PATCH_JIRA_TOKEN}` (see *jira-as-patches* fragment). Do NOT use `mcp__atlassian__addCommentToJiraIssue`, `editJiraIssue`, or `transitionJiraIssue` — those author as Chris.
 
 1. Post the plan as a Jira comment (curl POST to `${JIRA_BASE}/issue/{{ issue.key }}/comment`). Use the canonical Bug section structure from `writing-great-bug-issues.md`, in this order: **Estimation** (Risk / Intensity / SP / Velocity Impact, top of the body) · **Symptom** · **Reproduction** · **Diagnosis** (with file:line refs and root-cause depth from Step 4) · **Approach** (with *Alternatives Considered* from Step 5) · **Acceptance Criteria** (Given/When/Then) · **Definition of Done** (including the regression test). Add **Rollback** *only* if the change is irreversible (DB migration, schema change, deleted data, infra mutation) — for ordinary code changes, omit it. **Capture the response body's `id` field** — Scarlett's review needs it: `PLAN_COMMENT_ID=$(curl ... | jq -r .id)`.
 2. Update the custom fields: Risk, Intensity, Velocity Impact (curl PUT to `${JIRA_BASE}/issue/{{ issue.key }}`). Business Value is set by humans; Story Points is calculated by Jira. Use the field keys and option IDs from the *Jira IDs* table above.
@@ -189,7 +189,7 @@ The "AI Anti-Patterns" section of the protocol exists because every one of these
 
 - `aws` CLI v2 with profiles `sc0red-dev` (default), `sc0red-test`, `sc0red-prod`. Default region `us-east-2`.
 - `op` CLI with `OP_SERVICE_ACCOUNT_TOKEN` already in env. Only the `Engineering` 1Password vault is in scope.
-- `mcp__claude_ai_Atlassian__*` MCP tools for Jira **reads** only (`getJiraIssue`, `searchJiraIssuesUsingJql`, `getTransitionsForJiraIssue`). All Jira **writes** (comments, transitions, field edits) use curl + Bearer `${PATCH_JIRA_TOKEN}` — see the *jira-as-patches* fragment.
+- `mcp__atlassian__*` MCP tools for Jira **reads** only (`getJiraIssue`, `searchJiraIssuesUsingJql`, `getTransitionsForJiraIssue`). All Jira **writes** (comments, transitions, field edits) use curl + Bearer `${PATCH_JIRA_TOKEN}` — see the *jira-as-patches* fragment.
 - Standard Linux toolchain: `git`, `gh`, `jq`, `curl`, `python3`, `node`, `pnpm`.
 
 You are *not* on macOS. There is no Keychain. There is no `security` command. Don't waste turns rediscovering this.
