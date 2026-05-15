@@ -40,9 +40,17 @@ Authority boundary from your SOUL: you do NOT write fix code. You do NOT merge P
 
 ## Step 1 — Resolve the PR list
 
-If `prUrls` was dispatched, parse each URL into `(repo, number)` (URL shape: `https://github.com/<owner/repo>/pull/<num>`).
+The implementation-repo allowlist for review is exactly:
 
-Otherwise, call `github_pr_list` once per implementation repo (`SC0RED/assessment_engine`, `SC0RED/Platform-Backend`, `SC0RED/Platform-Frontend`) with `state: "open"` and `base: "development"`. Filter the response to PRs whose title contains `{{ ticketKey }}`. If the resulting set is empty, **stop** — emit `blocked` with "no PRs found for {{ ticketKey }}".
+- `SC0RED/assessment_engine`
+- `SC0RED/Platform-Backend`
+- `SC0RED/Platform-Frontend`
+
+These are the only repos you ever pull a PR diff from. Any URL or repo identifier outside this set is ignored — Patch dispatches `prUrls` from the same allowlist, but a manual / replayed dispatch could carry an arbitrary URL and that's not in scope for your review authority.
+
+If `prUrls` was dispatched, parse each URL into `(repo, number)` (URL shape: `https://github.com/<owner/repo>/pull/<num>`), then drop any whose `owner/repo` isn't in the allowlist above. If the filtered set is empty, **stop** — emit `blocked` with "prUrls payload referenced no allowed repos."
+
+If `prUrls` was omitted (or filtered to empty), call `github_pr_list` once per allowlisted repo with `state: "open"` and `base: "development"`. Filter the response to PRs whose title contains `{{ ticketKey }}`. If the resulting set is empty, **stop** — emit `blocked` with "no PRs found for {{ ticketKey }}".
 
 ## Step 2 — Read the approved plan
 
