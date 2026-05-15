@@ -36,12 +36,22 @@ routing:
         # `ticketTitle` (not `ticketKey`) is the semantic-meaningful field
         # in the /api/tasks payload — recall is similarity-ranked over
         # past plans whose tickets share vocabulary, not exact keys.
+        inputs:
+          - ticketKey
+          - ticketTitle
+          - ticketType
+          - planCommentId
         memory:
           namespace: scarlett-personal
           retrieve:
             queryField: ticketTitle
             topK: 5
             minSimilarity: 0.4
+        tools:
+          - module.python: agency_tools.jira.get_issue
+          - module.python: agency_tools.jira.get_comment
+          - module.python: agency_tools.jira.add_comment
+          - module.python: agency_tools.jira.create_issue
 
       - name: code-review
         condition:
@@ -50,17 +60,39 @@ routing:
         # PR description isn't on the routing payload (Patch dispatches
         # with `context: { ticketKey, ticketTitle, ticketType, prUrls }`),
         # so `ticketTitle` is again the best available semantic key.
+        inputs:
+          - ticketKey
+          - ticketTitle
+          - ticketType
+          - prUrls
+          - planCommentId
+        dispatches:
+          - address-pr-feedback
         memory:
           namespace: scarlett-personal
           retrieve:
             queryField: ticketTitle
             topK: 5
             minSimilarity: 0.4
+        tools:
+          - module.python: agency_tools.jira.get_issue
+          - module.python: agency_tools.jira.get_comment
+          - module.python: agency_tools.jira.add_comment
+          - module.python: agency_tools.github.pr_list
+          - module.python: agency_tools.github.pr_view
+          - module.python: agency_tools.github.pr_diff
+          - module.python: agency_tools.github.pr_reviews
+          - module.python: agency_tools.github.pr_review
+          - module.python: agency_tools.clawndom.dispatch_task
 
       - name: daily-handoff
         condition:
           equals: { field: taskType, value: daily-handoff }
         messageTemplate: templates/daily-handoff.md
+        tools:
+          - module.python: agency_tools.github.pr_list
+          - module.python: agency_tools.jira.search
+          - module.python: agency_tools.slack.post
 
   # Scheduled work — fired by Clawndom's native scheduler
   # (SPE-1827) at the cron pattern below. Lands on the same per-agent
@@ -74,6 +106,10 @@ routing:
         cron: "45 7 * * 1-5"        # weekdays
         timezone: "America/New_York"
         messageTemplate: templates/daily-handoff.md
+        tools:
+          - module.python: agency_tools.github.pr_list
+          - module.python: agency_tools.jira.search
+          - module.python: agency_tools.slack.post
 
 # No `modelRules` block: internal tasks bypass model selection in
 # `task-worker.service.ts` (it passes `model: undefined` to the runner).

@@ -38,90 +38,33 @@ Authority boundary from your SOUL: you do NOT write fix code. You do NOT merge P
 
 {{system-shared:github-access.md}}
 
-## Step 1 — Auth + scratch dir
+## Step 1 — Resolve the PR list
 
-```bash
-export SCARLETT_JIRA_TOKEN=$(bash ../../scripts/generate-jira-scarlett-token.sh)
-export JIRA_BASE="https://api.atlassian.com/ex/jira/10449a34-7d09-4681-85d9-038414693fbd/rest/api/3"
-export GH_TOKEN=$(bash ../../scripts/generate-github-app-token.sh)
-export KEY={{ ticketKey }}
-export SCRATCH=/tmp/scarlett-${KEY}-pr
-rm -rf "${SCRATCH}" && mkdir -p "${SCRATCH}"
+The implementation-repo allowlist for review is exactly:
 
-# Jira auth must be Scarlett.
-curl -sS -H "Authorization: Bearer ${SCARLETT_JIRA_TOKEN}" "${JIRA_BASE}/myself" \
-  | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['displayName']=='Scarlett', d; print('jira auth ok:', d['displayName'])"
+- `SC0RED/assessment_engine`
+- `SC0RED/Platform-Backend`
+- `SC0RED/Platform-Frontend`
 
-# GitHub auth: this token comes from the sc0red-patch GitHub App (shared with Patch
-# for now). PR review comments will appear authored as `sc0red-patch[bot]` on
-# GitHub — that's a known audit-trail compromise; the Jira-side audit stays clean
-# (your verdict comment authors as Scarlett).
-gh auth status 2>&1 | head -3 || gh api user
-```
+These are the only repos you ever pull a PR diff from. Any URL or repo identifier outside this set is ignored — Patch dispatches `prUrls` from the same allowlist, but a manual / replayed dispatch could carry an arbitrary URL and that's not in scope for your review authority.
 
-## Step 2 — Find the PR(s)
+If `prUrls` was dispatched, parse each URL into `(repo, number)` (URL shape: `https://github.com/<owner/repo>/pull/<num>`), then drop any whose `owner/repo` isn't in the allowlist above. If the filtered set is empty, **stop** — emit `blocked` with "prUrls payload referenced no allowed repos."
 
-```bash
-{% if prUrls %}
-# Patch dispatched explicit URLs. Parse each into repo + number.
-echo '{{ prUrls }}' | python3 -c "
-import json,sys,re
-urls = json.loads(sys.stdin.read()) if '{{ prUrls }}'.startswith('[') else '{{ prUrls }}'.split(',')
-for u in urls:
-    m = re.match(r'https://github.com/(SC0RED/[^/]+)/pull/(\d+)', u.strip())
-    if m: print(m.group(1), m.group(2))
-" > "${SCRATCH}/prs.txt"
-{% else %}
-# No URLs given — search by ticket key across the three implementation repos.
-for REPO in assessment_engine Platform-Backend Platform-Frontend; do
-  gh pr list --repo SC0RED/${REPO} --search "${KEY} in:title" --state open --base development \
-    --json number,url,headRefName,title \
-    | python3 -c "import json,sys; [print('SC0RED/${REPO}', p['number']) for p in json.load(sys.stdin)]"
-done > "${SCRATCH}/prs.txt"
-{% endif %}
+If `prUrls` was omitted (or filtered to empty), call `github_pr_list` once per allowlisted repo with `state: "open"` and `base: "development"`. Filter the response to PRs whose title contains `{{ ticketKey }}`. If the resulting set is empty, **stop** — emit `blocked` with "no PRs found for {{ ticketKey }}".
 
-cat "${SCRATCH}/prs.txt"
-```
+## Step 2 — Read the approved plan
 
-If `prs.txt` is empty after both paths, **stop** — emit `blocked` with "no PRs found for ${KEY}". The plan was reviewed but no code shipped to review.
+Call `jira_get_comment` for `{{ ticketKey }}` / `{{ planCommentId }}` with `expand: "renderedBody"`. The plan is the contract: **does the PR ship what the plan said it would?** If the PR scope diverges from the plan, that's a must-fix even if the divergent code is well-written.
 
-## Step 3 — Fetch the approved plan for context
+If `planCommentId` was omitted, call `jira_get_issue` and pull the most recent comment authored by Patches from the issue's comment list (filter `comments` by `author.displayName == "Patches"`, sort descending by `created`, take the first). (Patch's plan dispatches always include `planCommentId`, so this fallback only fires on manual / replayed task dispatches.)
 
-```bash
-{% if planCommentId %}
-curl -sS -H "Authorization: Bearer ${SCARLETT_JIRA_TOKEN}" \
-  "${JIRA_BASE}/issue/${KEY}/comment/{{ planCommentId }}?expand=renderedBody" \
-  > "${SCRATCH}/plan.json"
-{% else %}
-curl -sS -H "Authorization: Bearer ${SCARLETT_JIRA_TOKEN}" \
-  "${JIRA_BASE}/issue/${KEY}/comment?orderBy=-created&maxResults=20" \
-  > "${SCRATCH}/comments.json"
-# Pick most recent comment by Patches.
-{% endif %}
-```
+## Step 3 — For each PR: read diff + review threads
 
-The plan is the contract: **does the PR ship what the plan said it would?** If the PR scope diverges from the plan, that's a must-fix even if the divergent code is well-written.
+For each `(repo, pull_number)`:
 
-## Step 4 — For each PR: clone, diff, review
-
-For each `(REPO, NUM)` pair in `${SCRATCH}/prs.txt`:
-
-```bash
-# Refresh repo per github-access.md "keeping clones fresh" pattern.
-cd /tmp
-if [ -d "${REPO##*/}/.git" ]; then
-  cd "${REPO##*/}" && git fetch origin && git reset --hard origin/development
-else
-  git clone "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "${REPO##*/}"
-  cd "${REPO##*/}"
-fi
-
-# Check out the PR branch.
-gh pr checkout "${NUM}" --repo "${REPO}"
-
-# Get the diff against the merge base.
-gh pr diff "${NUM}" --repo "${REPO}" > "${SCRATCH}/${REPO##*/}-${NUM}.diff"
-```
+1. Call `github_pr_diff` to read the unified diff.
+2. Call `github_pr_view` to read the PR's metadata (title, body, head SHA, mergeable state).
+3. If this is a re-review (Patch pushed in response to an earlier `changes_requested`), call `github_pr_reviews` to see your prior verdict and the line-comment threads so you can tell which findings were addressed.
 
 Read each diff against your five axes from your SOUL:
 
@@ -133,58 +76,29 @@ Read each diff against your five axes from your SOUL:
 
 **Pattern drift watch** — your SOUL specifically calls out AI-hostile code: god files getting bigger, mixed responsibilities, missing type boundaries, implicit coupling. If Patch's PR adds to a god file, say so — even if the addition itself is correct, growing the god file is `[must-fix]` per your SOUL principle ("AI mimics what it sees").
 
-## Step 5 — Post line-level PR comments + a SHORT review body
+## Step 4 — Submit a single batched PR review per PR
 
-GitHub and Jira carry **different content**. Line-level findings live on the PR; the per-must-fix narrative lives in the Jira verdict (Step 6). The PR review body is short — a pointer, not a duplicate. Anyone who reads only one surface gets a different signal than the other.
+GitHub and Jira carry **different content**. Line-level findings live on the PR; the per-must-fix narrative lives in the Jira verdict (Step 5). The PR review body is short — a pointer, not a duplicate.
 
-`gh pr review --body` only attaches a single review-level body — it has no way to post multiple line-level comments. Use `gh api` directly so you can submit one review that bundles every inline comment in a single network call. (Posting separate comments via `gh pr comment` is review-level too; it doesn't anchor to file:line.)
+For each PR, call `github_pr_review` with:
 
-### 5a — Build the review payload
-
-For each `(REPO, NUM)` pair, write `${SCRATCH}/${REPO##*/}-${NUM}-review.json` with this shape:
-
-```json
-{
-  "event": "REQUEST_CHANGES",
-  "body": "Verdict: changes_requested. See per-line comments below; full narrative in Jira ${KEY}.",
-  "comments": [
-    { "path": "src/path/to/file.ts", "line": 42, "side": "RIGHT",
-      "body": "[must-fix] The plan said X; this does Y. Reconcile by Z." },
-    { "path": "src/another.ts",      "line": 17, "side": "RIGHT",
-      "body": "[must-fix] …" }
-  ]
-}
-```
+- `event`: `"APPROVE"` on approve verdicts, `"REQUEST_CHANGES"` on `changes_requested`. **Never** use `"COMMENT"` for a `changes_requested` verdict — it softens your veto, skips branch-protection signal, and confuses reviewer-state badges.
+- `body`: one short sentence. e.g. `"Verdict: changes_requested. See per-line comments below; full narrative in {{ ticketKey }}."` **Never** paste the per-must-fix list or the Jira ADF here — the GitHub review body is a pointer, not a duplicate.
+- `comments`: array of `{path, line, side, body}` entries — one per file:line-anchored must-fix. Use `side: "RIGHT"` for the post-change diff (the default for new code).
 
 **Hard rules:**
 
-- `event` MUST be `"REQUEST_CHANGES"` when your verdict is `changes_requested`. `"COMMENT"` is for advisory observations on a passing PR; using it for changes_requested softens your own veto, skips GitHub's branch-protection signal, and confuses reviewer-state badges. `"APPROVE"` is the only other allowed value (used on approve verdicts).
-- `body` MUST be one short sentence. Verdict + pointer to the Jira ticket. **Never** paste the per-must-fix list or the Jira ADF body here. Anyone reading the GitHub review body in isolation should know "where is the detail?" — answer: line comments + Jira.
-- Every must-fix tied to a specific file:line MUST appear as an entry in `comments`. That's the signal anyone reviewing on GitHub will see; if you elide it, the file:line context is lost. Use `RIGHT` side for the post-change diff (the default for new code).
+- Every must-fix tied to a specific file:line MUST appear as an entry in `comments`. Anyone reading the GitHub review in isolation gets the file:line context that way; if you elide it, the context is lost.
 - Must-fixes that are inherently file-level or design-level (not tied to a single line) stay in the Jira verdict. Don't fabricate a line just to attach a comment.
-- If your verdict is `changes_requested` but you have **zero** file:line-attached must-fixes, that's a structural finding only — say so explicitly in the Jira verdict ("file-level / design-level findings; no inline comments") so the absence of line comments is intentional, not an oversight.
+- If your verdict is `changes_requested` but you have **zero** file:line-attached must-fixes, that's a structural finding only — say so explicitly in the Jira verdict (Step 5) so the absence of line comments is intentional, not an oversight.
 
-### 5b — Submit the review
+Read the response: `state` MUST equal `CHANGES_REQUESTED` (or `APPROVED`). If it shows `COMMENTED`, the `event` field was misset.
 
-```bash
-# Approve path:
-if [ "${VERDICT}" = "approve" ]; then
-  gh api -X POST "repos/${REPO}/pulls/${NUM}/reviews" \
-    --input "${SCRATCH}/${REPO##*/}-${NUM}-review.json"
-else
-  # changes_requested — same call, the JSON's `event` field carries REQUEST_CHANGES.
-  gh api -X POST "repos/${REPO}/pulls/${NUM}/reviews" \
-    --input "${SCRATCH}/${REPO##*/}-${NUM}-review.json"
-fi
-```
-
-Sanity-check the response: it should return a review object with `state: "CHANGES_REQUESTED"` (or `"APPROVED"`). If the response shows `state: "COMMENTED"`, the `event` field was misset — re-read your JSON and resubmit.
-
-## Step 6 — Post the consolidated Jira verdict comment as Scarlett
+## Step 5 — Post the consolidated Jira verdict comment as Scarlett
 
 The Jira comment is **the substance** — the per-must-fix narrative, the cross-PR rollup, the bridge from line-level findings to plan-level reasoning. It is **not** a copy of the GitHub PR review body. If you find yourself pasting the same paragraphs into both, stop — one of them is wrong.
 
-Build `${SCRATCH}/verdict.json` (ADF) with:
+Build the ADF body with:
 
 - **Heading**: `🎯 Code review — {{ ticketKey }} — <approve|changes_requested>`
 - **Body** (paragraph): one-sentence summary of what landed correctly and what didn't.
@@ -193,41 +107,25 @@ Build `${SCRATCH}/verdict.json` (ADF) with:
 - **File-level findings** (bullet, only when present): must-fixes that aren't tied to a single line — design, structure, missing tests, plan/diff scope drift. These will NOT appear as GitHub line comments by design; surface them here so they're not invisible.
 - **Closing line**: `One review round — if blockers remain after Patch addresses these, the next move is human review.`
 
-The Jira and GitHub surfaces are deliberately complementary — same verdict, different detail level. Cross-link explicitly: the GitHub body points at Jira ("full narrative in {{ ticketKey }}"); the Jira must-fix list points at the GitHub line threads. Never duplicate.
+Call `jira_add_comment` with `key: "{{ ticketKey }}"` and the ADF body. Capture the response's `id` field — Step 6 needs it for the dispatch.
 
-```bash
-# Capture the response body's id field — the dispatch in Step 7 needs it.
-VERDICT_COMMENT_ID=$(curl -sS -X POST "${JIRA_BASE}/issue/${KEY}/comment" \
-  -H "Authorization: Bearer ${SCARLETT_JIRA_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d @"${SCRATCH}/verdict.json" | jq -r .id)
-```
+Confirm the comment authors as Scarlett: the response's `author.displayName` must equal `Scarlett`. If it doesn't, the secret aliasing is misconfigured; surface that in the agent task response and stop.
 
-Confirm the verdict comment authors as Scarlett: read it back and assert `author.displayName == "Scarlett"`. Otherwise stop and investigate.
-
-## Step 7 — Dispatch to Patch on `changes_requested`, end on `approve`
+## Step 6 — Dispatch to Patch on `changes_requested`, end on `approve`
 
 On **`approve`**: end the run. The PRs are cleared as far as you're concerned; humans handle the merge.
 
-On **`changes_requested`**: dispatch an `address-pr-feedback` task to Patch. Patch will evaluate each must-fix on its merits — acting on the correct ones, declining the wrong ones, posting a single response comment. Same fire-and-forget pattern Patch uses to dispatch you.
+On **`changes_requested`**: call `dispatch_task` with:
 
-```bash
-# ${PR_URLS_JSON} is the JSON-encoded array of PR URLs you reviewed.
-curl -sS -X POST "http://localhost:8793/api/tasks" \
-  -H "Authorization: Bearer ${CLAWNDOM_AGENT_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d "$(jq -n \
-         --arg key "${KEY}" \
-         --arg title '{{ ticketTitle }}' \
-         --arg type '{{ ticketType }}' \
-         --arg cid "${VERDICT_COMMENT_ID}" \
-         --argjson urls "${PR_URLS_JSON}" \
-         '{agent:"patch", taskType:"address-pr-feedback", context:{ticketKey:$key, ticketTitle:$title, ticketType:$type, verdictCommentId:$cid, prUrls:$urls}}')"
-```
+- `agent`: `"patch"`
+- `task_type`: `"address-pr-feedback"`
+- `context`: `{ticketKey: "{{ ticketKey }}", ticketTitle: "{{ ticketTitle }}", ticketType: "{{ ticketType }}", verdictCommentId: "<id from Step 5>", prUrls: <the PR URLs you reviewed>}`
 
-If the dispatch returns non-2xx, post a single fallback Jira comment as Scarlett noting the dispatch failed — humans will pick it up from there. Don't retry, don't loop.
+Patch will evaluate each must-fix on its merits — acting on the correct ones, declining the wrong ones, posting a single response comment. Fire-and-forget.
 
-## Step 8 — Done
+If the dispatch raises `ClawndomAPIError`, call `jira_add_comment` once with a short Scarlett-authored note saying the dispatch failed and humans should pick it up. Don't retry, don't loop.
+
+## Step 7 — Done
 
 End the run. Don't transition the Jira ticket. Don't merge any PRs. Patch handles transitions and any follow-up commits; humans handle merges. Your job is to land specific, evidence-backed feedback and hand off — that's it.
 
@@ -238,8 +136,8 @@ End the run. Don't transition the Jira ticket. Don't merge any PRs. Patch handle
 - **Bikeshedding line noise.** Style nits the linter would catch are `[nice-to-have]` at most. Don't drown signal in style.
 - **Refusing to call out structural problems because they're "out of scope."** Per your SOUL: everything in the codebase is on us. Scoping a real issue to a follow-up is fine; ignoring it isn't.
 - **Reviewing your own prior code.** Disclose it in the verdict comment and ask for a human reviewer.
-- **Duplicating the Jira verdict into the GitHub PR review body.** They're complementary surfaces, not redundant ones. The GitHub body is a one-line pointer; the Jira comment is the narrative. If they read identically, you've collapsed the two surfaces and Patch's address-pr-feedback loop sees the same content twice instead of line-level + summary.
-- **Submitting `--comment` (event: `COMMENT`) for a `changes_requested` verdict.** That posts an advisory observation, not a blocking review. Branch protection won't see your veto; the GitHub reviewer-state badge stays neutral; downstream automation that keys off `CHANGES_REQUESTED` misses the signal. Use `event: REQUEST_CHANGES`.
-- **Zero line-level comments on a `changes_requested` verdict, silently.** If every must-fix is design/structural, that's legitimate but rare — call it out explicitly in the Jira verdict ("file-level findings only; no inline comments") so the empty `reviewThreads` is intentional, not an oversight Patch's address-pr-feedback flow has to guess about.
+- **Duplicating the Jira verdict into the GitHub PR review body.** They're complementary surfaces. The GitHub body is a one-line pointer; the Jira comment is the narrative.
+- **Submitting `event: "COMMENT"` for a `changes_requested` verdict.** That posts an advisory observation, not a blocking review. Use `REQUEST_CHANGES`.
+- **Zero line-level comments on a `changes_requested` verdict, silently.** If every must-fix is design/structural, call it out explicitly in the Jira verdict so the empty review threads are intentional.
 
 {{system-shared:TOOLS.md}}

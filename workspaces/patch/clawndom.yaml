@@ -38,12 +38,27 @@ routing:
         condition:
           equals: { field: taskType, value: address-pr-feedback }
         messageTemplate: templates/address-pr-feedback.md
+        inputs:
+          - ticketKey
+          - ticketTitle
+          - ticketType
+          - verdictCommentId
+          - prUrls
         memory:
           namespace: patch-personal
           retrieve:
             queryField: ticketTitle
             topK: 5
             minSimilarity: 0.4
+        tools:
+          - module.python: agency_tools.jira.get_comment
+          - module.python: agency_tools.jira.add_comment
+          - module.python: agency_tools.jira.transition_issue
+          - module.python: agency_tools.jira.create_issue
+          - module.python: agency_tools.github.pr_list
+          - module.python: agency_tools.github.pr_reviews
+          - module.python: agency_tools.github.pr_check_runs
+          - module.python: agency_tools.github.pr_comment
 
   jira:
     rules:
@@ -61,12 +76,20 @@ routing:
                     - equals: { field: field, value: status }
                     - equals: { field: toString, value: Plan }
         messageTemplate: templates/jira-plan-bug.md
+        dispatches:
+          - plan-review
         memory:
           namespace: patch-personal
           retrieve:
             queryField: issue.fields.summary
             topK: 5
             minSimilarity: 0.4
+        tools:
+          - module.python: agency_tools.jira.get_issue
+          - module.python: agency_tools.jira.add_comment
+          - module.python: agency_tools.jira.transition_issue
+          - module.python: agency_tools.jira.update_issue
+          - module.python: agency_tools.clawndom.dispatch_task
 
       - name: plan-story
         condition:
@@ -80,12 +103,20 @@ routing:
                     - equals: { field: field, value: status }
                     - equals: { field: toString, value: Plan }
         messageTemplate: templates/jira-plan-story.md
+        dispatches:
+          - plan-review
         memory:
           namespace: patch-personal
           retrieve:
             queryField: issue.fields.summary
             topK: 5
             minSimilarity: 0.4
+        tools:
+          - module.python: agency_tools.jira.get_issue
+          - module.python: agency_tools.jira.add_comment
+          - module.python: agency_tools.jira.transition_issue
+          - module.python: agency_tools.jira.update_issue
+          - module.python: agency_tools.clawndom.dispatch_task
 
       - name: plan-task
         condition:
@@ -99,12 +130,20 @@ routing:
                     - equals: { field: field, value: status }
                     - equals: { field: toString, value: Plan }
         messageTemplate: templates/jira-plan-task.md
+        dispatches:
+          - plan-review
         memory:
           namespace: patch-personal
           retrieve:
             queryField: issue.fields.summary
             topK: 5
             minSimilarity: 0.4
+        tools:
+          - module.python: agency_tools.jira.get_issue
+          - module.python: agency_tools.jira.add_comment
+          - module.python: agency_tools.jira.transition_issue
+          - module.python: agency_tools.jira.update_issue
+          - module.python: agency_tools.clawndom.dispatch_task
 
       # ── Ready for Development: per-type ──────────────────────────────
       # Ready-for-development rules carry maxTurns: 500 because the
@@ -128,12 +167,24 @@ routing:
                     - equals: { field: toString, value: Ready for Development }
         messageTemplate: templates/jira-ready-for-dev-bug.md
         maxTurns: 500
+        dispatches:
+          - code-review
         memory:
           namespace: patch-personal
           retrieve:
             queryField: issue.fields.summary
             topK: 5
             minSimilarity: 0.4
+        tools:
+          - module.python: agency_tools.jira.get_issue
+          - module.python: agency_tools.jira.add_comment
+          - module.python: agency_tools.jira.transition_issue
+          - module.python: agency_tools.github.pr_list
+          - module.python: agency_tools.github.pr_create
+          - module.python: agency_tools.github.pr_comment
+          - module.python: agency_tools.github.pr_check_runs
+          - module.python: agency_tools.github.pr_reviews
+          - module.python: agency_tools.clawndom.dispatch_task
 
       - name: ready-for-development-story
         condition:
@@ -148,12 +199,24 @@ routing:
                     - equals: { field: toString, value: Ready for Development }
         messageTemplate: templates/jira-ready-for-dev-story.md
         maxTurns: 500
+        dispatches:
+          - code-review
         memory:
           namespace: patch-personal
           retrieve:
             queryField: issue.fields.summary
             topK: 5
             minSimilarity: 0.4
+        tools:
+          - module.python: agency_tools.jira.get_issue
+          - module.python: agency_tools.jira.add_comment
+          - module.python: agency_tools.jira.transition_issue
+          - module.python: agency_tools.github.pr_list
+          - module.python: agency_tools.github.pr_create
+          - module.python: agency_tools.github.pr_comment
+          - module.python: agency_tools.github.pr_check_runs
+          - module.python: agency_tools.github.pr_reviews
+          - module.python: agency_tools.clawndom.dispatch_task
 
       - name: ready-for-development-task
         condition:
@@ -168,12 +231,24 @@ routing:
                     - equals: { field: toString, value: Ready for Development }
         messageTemplate: templates/jira-ready-for-dev-task.md
         maxTurns: 500
+        dispatches:
+          - code-review
         memory:
           namespace: patch-personal
           retrieve:
             queryField: issue.fields.summary
             topK: 5
             minSimilarity: 0.4
+        tools:
+          - module.python: agency_tools.jira.get_issue
+          - module.python: agency_tools.jira.add_comment
+          - module.python: agency_tools.jira.transition_issue
+          - module.python: agency_tools.github.pr_list
+          - module.python: agency_tools.github.pr_create
+          - module.python: agency_tools.github.pr_comment
+          - module.python: agency_tools.github.pr_check_runs
+          - module.python: agency_tools.github.pr_reviews
+          - module.python: agency_tools.clawndom.dispatch_task
 
       # ── Deploy to development: per-type ──────────────────────────────
       # Fires when a human transitions the ticket into "Deploy to
@@ -196,6 +271,13 @@ routing:
                     - equals: { field: field, value: status }
                     - equals: { field: toString, value: Deploy to development }
         messageTemplate: templates/jira-deploy-to-dev.md
+        tools:
+          - module.python: agency_tools.jira.get_issue
+          - module.python: agency_tools.jira.add_comment
+          - module.python: agency_tools.jira.transition_issue
+          - module.python: agency_tools.github.pr_list
+          - module.python: agency_tools.github.pr_check_runs
+          - module.python: agency_tools.github.pr_merge
 
       - name: deploy-to-dev-story
         condition:
@@ -209,6 +291,13 @@ routing:
                     - equals: { field: field, value: status }
                     - equals: { field: toString, value: Deploy to development }
         messageTemplate: templates/jira-deploy-to-dev.md
+        tools:
+          - module.python: agency_tools.jira.get_issue
+          - module.python: agency_tools.jira.add_comment
+          - module.python: agency_tools.jira.transition_issue
+          - module.python: agency_tools.github.pr_list
+          - module.python: agency_tools.github.pr_check_runs
+          - module.python: agency_tools.github.pr_merge
 
       - name: deploy-to-dev-task
         condition:
@@ -222,6 +311,13 @@ routing:
                     - equals: { field: field, value: status }
                     - equals: { field: toString, value: Deploy to development }
         messageTemplate: templates/jira-deploy-to-dev.md
+        tools:
+          - module.python: agency_tools.jira.get_issue
+          - module.python: agency_tools.jira.add_comment
+          - module.python: agency_tools.jira.transition_issue
+          - module.python: agency_tools.github.pr_list
+          - module.python: agency_tools.github.pr_check_runs
+          - module.python: agency_tools.github.pr_merge
 
       # ── Verified in Development: pulse-promote development → testing ─
       # Trigger fires per ticket but the action is batched. The three
@@ -245,6 +341,15 @@ routing:
                     - equals: { field: field, value: status }
                     - equals: { field: toString, value: Verified in Development }
         messageTemplate: templates/jira-verified-in-dev.md
+        tools:
+          - module.python: agency_tools.jira.get_issue
+          - module.python: agency_tools.jira.search
+          - module.python: agency_tools.jira.add_comment
+          - module.python: agency_tools.jira.transition_issue
+          - module.python: agency_tools.github.pr_list
+          - module.python: agency_tools.github.pr_create
+          - module.python: agency_tools.github.pr_check_runs
+          - module.python: agency_tools.github.pr_merge
 
       - name: verified-in-dev-story
         condition:
@@ -258,6 +363,15 @@ routing:
                     - equals: { field: field, value: status }
                     - equals: { field: toString, value: Verified in Development }
         messageTemplate: templates/jira-verified-in-dev.md
+        tools:
+          - module.python: agency_tools.jira.get_issue
+          - module.python: agency_tools.jira.search
+          - module.python: agency_tools.jira.add_comment
+          - module.python: agency_tools.jira.transition_issue
+          - module.python: agency_tools.github.pr_list
+          - module.python: agency_tools.github.pr_create
+          - module.python: agency_tools.github.pr_check_runs
+          - module.python: agency_tools.github.pr_merge
 
       - name: verified-in-dev-task
         condition:
@@ -271,6 +385,15 @@ routing:
                     - equals: { field: field, value: status }
                     - equals: { field: toString, value: Verified in Development }
         messageTemplate: templates/jira-verified-in-dev.md
+        tools:
+          - module.python: agency_tools.jira.get_issue
+          - module.python: agency_tools.jira.search
+          - module.python: agency_tools.jira.add_comment
+          - module.python: agency_tools.jira.transition_issue
+          - module.python: agency_tools.github.pr_list
+          - module.python: agency_tools.github.pr_create
+          - module.python: agency_tools.github.pr_check_runs
+          - module.python: agency_tools.github.pr_merge
 
   # GitHub rules: catch-all for PR check failures that arrive AFTER the
   # run that opened the PR has ended (typical case: ready-for-dev or
@@ -303,6 +426,15 @@ routing:
             queryField: check_suite.head_commit.message
             topK: 5
             minSimilarity: 0.4
+        tools:
+          - module.python: agency_tools.jira.add_comment
+          - module.python: agency_tools.jira.transition_issue
+          - module.python: agency_tools.jira.create_issue
+          - module.python: agency_tools.github.pr_view
+          - module.python: agency_tools.github.pr_diff
+          - module.python: agency_tools.github.pr_check_runs
+          - module.python: agency_tools.github.pr_reviews
+          - module.python: agency_tools.github.pr_comment
 
   # Slack rules: channel-id → environment mapping verified against the
   # Slack API on 2026-04-25. Previous version of this file had all three
@@ -338,6 +470,13 @@ routing:
             queryField: event.text
             topK: 5
             minSimilarity: 0.4
+        tools:
+          - module.python: agency_tools.aws.cloudwatch.filter_logs
+          - module.python: agency_tools.jira.search
+          - module.python: agency_tools.jira.create_issue
+          - module.python: agency_tools.jira.add_comment
+          - module.python: agency_tools.jira.transition_issue
+          - module.python: agency_tools.slack.post
 
       - name: alerts-testing
         condition:
@@ -355,6 +494,13 @@ routing:
             queryField: event.text
             topK: 5
             minSimilarity: 0.4
+        tools:
+          - module.python: agency_tools.aws.cloudwatch.filter_logs
+          - module.python: agency_tools.jira.search
+          - module.python: agency_tools.jira.create_issue
+          - module.python: agency_tools.jira.add_comment
+          - module.python: agency_tools.jira.transition_issue
+          - module.python: agency_tools.slack.post
 
       - name: alerts-development
         condition:
@@ -372,6 +518,13 @@ routing:
             queryField: event.text
             topK: 5
             minSimilarity: 0.4
+        tools:
+          - module.python: agency_tools.aws.cloudwatch.filter_logs
+          - module.python: agency_tools.jira.search
+          - module.python: agency_tools.jira.create_issue
+          - module.python: agency_tools.jira.add_comment
+          - module.python: agency_tools.jira.transition_issue
+          - module.python: agency_tools.slack.post
 
 modelRules:
   jira:
