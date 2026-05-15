@@ -56,7 +56,7 @@ If `prUrls` was omitted (or filtered to empty), call `github_pr_list` once per a
 
 Call `jira_get_comment` for `{{ ticketKey }}` / `{{ planCommentId }}` with `expand: "renderedBody"`. The plan is the contract: **does the PR ship what the plan said it would?** If the PR scope diverges from the plan, that's a must-fix even if the divergent code is well-written.
 
-If `planCommentId` was omitted, call `jira_get_issue` and pull the most recent comment authored by Patches from the issue's comment list. (Patch's plan dispatches always include `planCommentId`, so this fallback only fires on manual / replayed task dispatches.)
+If `planCommentId` was omitted, call `jira_get_issue` and pull the most recent comment authored by Patches from the issue's comment list (filter `comments` by `author.displayName == "Patches"`, sort descending by `created`, take the first). (Patch's plan dispatches always include `planCommentId`, so this fallback only fires on manual / replayed task dispatches.)
 
 ## Step 3 — For each PR: read diff + review threads
 
