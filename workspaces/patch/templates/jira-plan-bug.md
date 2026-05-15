@@ -132,7 +132,7 @@ All writes in this step author as Patches via the injected `PATCH_JIRA_TOKEN`. D
 4. **Dispatch a `plan-review` task to Scarlett.** Call `dispatch_task` with:
    - `agent`: `"scarlett"`
    - `task_type`: `"plan-review"`
-   - `context`: `{ticketKey: "{{ issue.key }}", ticketTitle: "{{ issue.fields.summary }}", ticketType: "{{ issue.fields.issuetype.name }}", planCommentId: "<id captured in step 1>"}`
+   - `context`: `{ticketKey: "{{ issue.key }}", ticketTitle: "{{ issue.fields.summary }}", ticketType: "{{ issue.fields.issuetype.name }}", planCommentId: "<id captured in step 7.1's jira_add_comment response>"}`
 
    Fire-and-forget. If `dispatch_task` raises `ClawndomAPIError`, post a single fallback `jira_add_comment` noting Scarlett dispatch failed — don't retry, don't block on it.
 
