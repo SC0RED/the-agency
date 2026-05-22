@@ -1,0 +1,12 @@
+{
+  "_comment": "Agent registry — the Agency-native replacement for clawndom's AGENTS_CONFIG. Maps a dispatching agentName to the repo Builder may modify, the path within it that scopes Builder's edits, the base ref, branch convention, the reviewer named for review-required PRs, and the verification command run before a PR is marked ready.",
+  "winston": {
+    "repo": "git@github.com:ctcreel/winston-agency.git",
+    "path": "workspaces/winston",
+    "baseRef": "main",
+    "branchNamingPattern": "builder/{summary}",
+    "reviewer": "Chris Creel",
+    "verifyCommand": "python3 -c \"import sys,yaml; yaml.safe_load(open('workspaces/winston/clawndom.yaml'))\"",
+    "testableMechanism": "pr_review"
+  }
+}
