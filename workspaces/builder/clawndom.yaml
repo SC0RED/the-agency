@@ -10,11 +10,12 @@
 
 providers:
   - name: builder-dispatch
-    route_path: /webhooks/system/builder
-    signature_strategy: bearer
-    hmac_secret_key: BUILDER_DISPATCH_TOKEN
-    # gh CLI + git push read GITHUB_TOKEN from the run env.
-    env_secrets: [GITHUB_TOKEN]
+    routePath: /webhooks/system/builder
+    signatureStrategy: bearer
+    hmacSecretKey: BUILDER_DISPATCH_TOKEN
+    # Builder authenticates to GitHub as an App: the app_token minter reads these
+    # from the run env and mints a short-lived, repo-scoped install token per run.
+    envSecrets: [GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY]
 
 routing:
   builder-dispatch:

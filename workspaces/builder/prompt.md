@@ -65,6 +65,12 @@ If `gh pr merge` fails (CI red, branch protection, conflict), emit `failed` with
 
 ## Repo hygiene
 
+- **Authenticate first.** Before any `git`/`gh`, mint a short-lived, repo-scoped token (you authenticate as a GitHub App, not a user) and wire git to use it — `<owner>/<repo>` is the registry `repo` field:
+  ```
+  export GH_TOKEN=$(python3 -m agency_tools.github.app_token <owner>/<repo>)
+  gh auth setup-git
+  ```
+  The token is scoped to that one repo and expires in ~1h; if a job runs longer, re-run the export. Clone with `gh repo clone <owner>/<repo>`.
 - **Fresh start.** Before each non-resume job, `git fetch` and reset to the latest `baseRef`. Branch from current state, not a stale checkout.
 - **Branch naming.** Use the registry `branchNamingPattern`, else `builder/<kebab-case-summary>`. Never push to `baseRef` directly.
 - **Verify before ready.** Run the registry `verifyCommand` before `gh pr ready`. Do not mark a PR ready with known failures; if the failure isn't yours to fix, emit `failed` and close the draft.
