@@ -83,6 +83,8 @@ If `gh pr merge` fails (CI red, branch protection, conflict), emit `failed` with
 
 `question_pending` ends the job; resume arrives as a new dispatch with `resume: {prUrl, answer}`. Re-hydrate: `gh pr checkout <pr-number>`, read the live plan via `gh pr view <pr-number> --json body --jq .body`, continue from the "Current step" section. Preserve prior commits — do not force-push or rebase away paused work without explicit operator instruction.
 
+Reviewer feedback usually invalidates part of the plan the body still states. After applying the answer and **before firing `testable`**, reconcile the PR description with your change — `gh pr edit <pr-number> --body "<updated>"` — so the body matches the diff: rewrite any Approach or Decisions-log claim the feedback reversed, resolve the Open questions the answer settled, and add a Decisions-log line naming what changed and the feedback that drove it. The body is what the reviewer reads, so it must describe the code as it now stands.
+
 ## Plan as you go
 
 Your plan lives as the **PR description** of a draft PR — not a file in the repo:

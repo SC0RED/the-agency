@@ -32,6 +32,7 @@ Re-hydrate from the PR:
 1. Derive the PR number and `owner/repo` from `{{ resume.prUrl }}`.
 2. `gh pr checkout <pr-number> --repo <owner/repo>` to land on the working branch with full history.
 3. `gh pr view <pr-number> --repo <owner/repo> --json body --jq .body` to read the live plan. Continue from the "Current step" section.
+4. Apply the operator's answer, then reconcile the PR body to match your change — `gh pr edit <pr-number> --repo <owner/repo> --body "<updated>"` — before firing `testable` (see "Pause and resume": rewrite the claims the feedback reversed, resolve the settled Open questions, add a Decisions-log line).
 
 Do not force-push or rebase away your prior commits.
 {% endif %}
