@@ -25,7 +25,7 @@ Agency agents are **declarative workspaces**, not application code. Place each c
 
 - **Prompt text / user-visible content** → a template under `templates/` (`*.md`), or the agent's identity files. This is where most requests land.
 - **Routing, providers, schedule, model selection** → `clawndom.yaml` (the agent's declarative config: inbound providers, per-rule `condition`/`messageTemplate`/`tools`, the `schedule` group, the `runner`).
-- **Executable behavior (a new capability)** → forge a tool in `SC0RED/agency-tools` (`agency_tools/<category>/<tool>/` with `tool.yaml` + `impl.py`), scaffolded from `agency-tool-template` so it matches the house shape. Open it as its own PR against agency-tools (use the `_toolRepo` registry entry for its `baseRef` and `verifyCommand`); a human reviews and merges it. A capability belongs in a tool — when both a tool and the wiring that uses it are needed, forge the tool and build the routes/templates that call it in the agent's repo in the same dispatch.
+- **Executable behavior (a new capability)** → forge a tool in `SC0RED/agency-tools` (`agency_tools/<category>/<tool>/` with `tool.yaml` + `impl.py`), scaffolded from `agency-tool-template` so it matches the house shape. Open it as its own PR against agency-tools under a token minted for that repo (see *Authenticate first* — the tool repo needs its own mint, separate from the agent's repo); use the `_toolRepo` registry entry for its `baseRef` and `verifyCommand`; a human reviews and merges it. A capability belongs in a tool — when both a tool and the wiring that uses it are needed, forge the tool and build the routes/templates that call it in the agent's repo in the same dispatch.
 - **Persistent state across runs** → the agent's entity store / memory configuration.
 
 If a request looks solvable with a one-line shell snippet embedded in a template, that's the signal you're about to violate this taxonomy. Reach for the proper place.
@@ -64,12 +64,12 @@ If `gh pr merge` fails (CI red, branch protection, conflict), emit `failed` with
 
 ## Repo hygiene
 
-- **Authenticate first.** Before any `git`/`gh`, mint a short-lived, repo-scoped token (you authenticate as a GitHub App, not a user) and wire git to use it — `<owner>/<repo>` is the registry `repo` field:
+- **Authenticate first — once per repo you touch.** Before any `git`/`gh` against a repo, mint a short-lived token scoped to *that* repo (you authenticate as a GitHub App, not a user) and wire git to use it. `<owner>/<repo>` is the repo you're about to work in — the registry `repo` for the agent's repo, the `_toolRepo` repo when forging a tool:
   ```
   export GH_TOKEN=$(python3 -m agency_tools.github.app_token <owner>/<repo>)
   gh auth setup-git
   ```
-  The token is scoped to that one repo and expires in ~1h; if a job runs longer, re-run the export. Clone with `gh repo clone <owner>/<repo>`.
+  Each token is scoped to one repo and expires in ~1h. Re-run the export whenever you switch repos — moving from the agent's repo to the tool repo means a fresh mint for the tool repo — or whenever a job runs past the hour. Clone with `gh repo clone <owner>/<repo>`.
 - **Fresh start.** Before each non-resume job, `git fetch` and reset to the latest `baseRef`. Branch from current state, not a stale checkout.
 - **Branch naming.** Use the registry `branchNamingPattern`, else `builder/<kebab-case-summary>`. Never push to `baseRef` directly.
 - **Verify before ready.** Run the registry `verifyCommand` before `gh pr ready`. Do not mark a PR ready with known failures; if the failure isn't yours to fix, emit `failed` and close the draft.
