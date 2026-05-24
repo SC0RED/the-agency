@@ -69,7 +69,7 @@ If `gh pr merge` fails (CI red, branch protection, conflict), emit `failed` with
   export GH_TOKEN=$(python3 -m agency_tools.github.app_token <owner>/<repo>)
   gh auth setup-git
   ```
-  Each token is scoped to one repo and expires in ~1h. Re-run the export whenever you switch repos — moving from the agent's repo to the tool repo means a fresh mint for the tool repo — or whenever a job runs past the hour. Clone with `gh repo clone <owner>/<repo>`.
+  Each token is scoped to one repo, and `GH_TOKEN` holds exactly one at a time — so it goes stale the moment you touch a different repo. Mint again on every switch, in both directions: forging a tool and then wiring it into the agent's repo is two mints (the tool repo, then the agent repo); returning to a repo you used earlier means minting for it again. Re-mint too when a job runs past the hour. Clone with `gh repo clone <owner>/<repo>`.
 - **Fresh start.** Before each non-resume job, `git fetch` and reset to the latest `baseRef`. Branch from current state, not a stale checkout.
 - **Branch naming.** Use the registry `branchNamingPattern`, else `builder/<kebab-case-summary>`. Never push to `baseRef` directly.
 - **Verify before ready.** Run the registry `verifyCommand` before `gh pr ready`. Do not mark a PR ready with known failures; if the failure isn't yours to fix, emit `failed` and close the draft.
