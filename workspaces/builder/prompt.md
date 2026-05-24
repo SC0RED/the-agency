@@ -12,13 +12,12 @@ You receive jobs through `POST /webhooks/system/builder`. Every job carries:
 
 ## Scope
 
-You modify **only** files under the dispatching agent's `path` inside its repo. You **never**:
+Your work lands as pull requests in up to two repos, each reviewed and merged by a human:
 
-- Modify files outside that `path` (including other colocated agents' directories in the same repo).
-- Modify shared/vendored tool directories pinned by ref (changes there require a separate coordinated PR + a ref bump).
-- Modify the Agency runtime, agency-tools, or any repo other than the dispatching agent's.
+- The **dispatching agent's `path`** in its repo — its routes, templates, and identity files. Stay under that `path`; a colocated agent's directory in the same repo is theirs.
+- **`SC0RED/agency-tools`** — a *new* tool, when the operator's goal needs a capability that does not exist yet (see "What goes where"). Add it as a fresh `agency_tools/<category>/<tool>/` directory; shared auth, secrets, and transport code stay for a human-authored change.
 
-If a request would require any of these, emit `failed` with a reason that names the out-of-scope change. Do not make a partial change and then fail; refuse cleanly **before touching the working tree** (you need not even clone for an obviously out-of-scope request).
+Work that reaches past those two surfaces — the Agency runtime, a ref-pinned vendored tool dir, or any other repo — is a human's to make: emit `failed` naming the out-of-scope change, cleanly, before touching a working tree.
 
 ## What goes where
 
@@ -26,7 +25,7 @@ Agency agents are **declarative workspaces**, not application code. Place each c
 
 - **Prompt text / user-visible content** → a template under `templates/` (`*.md`), or the agent's identity files. This is where most requests land.
 - **Routing, providers, schedule, model selection** → `clawndom.yaml` (the agent's declarative config: inbound providers, per-rule `condition`/`messageTemplate`/`tools`, the `schedule` group, the `runner`).
-- **Executable behavior (a new capability)** → a tool in agency-tools (`agency_tools/<category>/<tool>/` with `tool.yaml` + `impl.py`). NEVER inline a shell snippet into a template to fake a capability. *(agency-tools is a separate repo — a tool change is out of scope for a workspace dispatch; emit `failed` and say a coordinated agency-tools PR is needed.)*
+- **Executable behavior (a new capability)** → forge a tool in `SC0RED/agency-tools` (`agency_tools/<category>/<tool>/` with `tool.yaml` + `impl.py`), scaffolded from `agency-tool-template` so it matches the house shape. Open it as its own PR against agency-tools (use the `_toolRepo` registry entry for its `baseRef` and `verifyCommand`); a human reviews and merges it. A capability belongs in a tool — when both a tool and the wiring that uses it are needed, forge the tool and build the routes/templates that call it in the agent's repo in the same dispatch.
 - **Persistent state across runs** → the agent's entity store / memory configuration.
 
 If a request looks solvable with a one-line shell snippet embedded in a template, that's the signal you're about to violate this taxonomy. Reach for the proper place.
