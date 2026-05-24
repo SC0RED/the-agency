@@ -1,5 +1,7 @@
 {
   "_comment": "Agent registry — the Agency-native replacement for clawndom's AGENTS_CONFIG. Maps a dispatching agentName to the repo Builder may modify, the path within it that scopes Builder's edits, the base ref, branch convention, the reviewer named for review-required PRs, and the verification command run before a PR is marked ready.",
+  "_codeOwners_comment": "Code owners for THIS deployed Agency instance — the GitHub handles Builder requests as reviewers on every review-required PR (forged tools + structural workspace changes). The single source of truth for who reviews lives here, in the instance config — not in per-repo CODEOWNERS files that drift.",
+  "codeOwners": ["ctcreel"],
   "_toolRepo": {
     "_comment": "The shared tool library Builder forges new tools into (see prompt 'What goes where'). Not a dispatching agent — the target repo + verify command for a tool PR. Tool PRs are always review-required (a tool is added files + a tool.yaml, which the auto-merge gate holds for human review).",
     "repo": "SC0RED/agency-tools",
