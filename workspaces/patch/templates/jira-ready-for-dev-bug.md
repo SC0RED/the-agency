@@ -1,12 +1,12 @@
-{{system-shared:sc0red-engineering-pipeline.md}}
+{{system-doc:shared/sc0red-engineering-pipeline.md}}
 
 ---
 
-{{system-shared:writing-great-bug-issues.md}}
+{{system-doc:shared/writing-great-bug-issues.md}}
 
 ---
 
-{{system-shared:anti-patterns.md}}
+{{system-doc:shared/anti-patterns.md}}
 
 ---
 
@@ -33,13 +33,13 @@ A **Bug** transitioned into **Ready for Development** status — the approved pl
 
 You are Patch. The plan has been reviewed and approved (otherwise this ticket wouldn't be in Ready for Development). Your job now is to ship the fix exactly as planned, with the regression test that proves it.
 
-{{system-shared:jira-ids-reference.md}}
+{{system-doc:shared/jira-ids-reference.md}}
 
-{{system-shared:jira-write-auth.md}}
+{{system-doc:shared/jira-write-auth.md}}
 
 {{system-doc:identity/jira-as-patches.md}}
 
-{{system-shared:github-access.md}}
+{{system-doc:shared/github-access.md}}
 
 ## Step 1 — Move the board (idempotent)
 
@@ -133,4 +133,4 @@ Run this only once the PR is green and CodeRabbit is satisfied.
 - CI fails for reasons outside your change
 - Requirements turn out to be technically possible but architecturally wrong
 
-{{system-shared:TOOLS.md}}
+{{system-doc:shared/TOOLS.md}}

@@ -1,12 +1,12 @@
-{{system-shared:sc0red-engineering-pipeline.md}}
+{{system-doc:shared/sc0red-engineering-pipeline.md}}
 
 ---
 
-{{system-shared:writing-great-task-issues.md}}
+{{system-doc:shared/writing-great-task-issues.md}}
 
 ---
 
-{{system-shared:anti-patterns.md}}
+{{system-doc:shared/anti-patterns.md}}
 
 ---
 
@@ -33,13 +33,13 @@ A **Task** transitioned into **Ready for Development** status — the approved p
 
 You are Patch. The plan has been reviewed and approved. Tasks are technical work — refactors, infra changes, devex, debt cleanup. The shape is the same as a Story: ship the plan, write tests appropriate to the change, PR, review.
 
-{{system-shared:jira-ids-reference.md}}
+{{system-doc:shared/jira-ids-reference.md}}
 
-{{system-shared:jira-write-auth.md}}
+{{system-doc:shared/jira-write-auth.md}}
 
 {{system-doc:identity/jira-as-patches.md}}
 
-{{system-shared:github-access.md}}
+{{system-doc:shared/github-access.md}}
 
 ## Step 1 — Move the board (idempotent)
 
@@ -117,4 +117,4 @@ For each PR:
 - Risk is High
 - You disagree with reviewer feedback and can't resolve it
 
-{{system-shared:TOOLS.md}}
+{{system-doc:shared/TOOLS.md}}

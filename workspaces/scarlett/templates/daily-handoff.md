@@ -1,8 +1,8 @@
-{{system-shared:hook-session-protocol.md}}
+{{system-doc:shared/hook-session-protocol.md}}
 
 ---
 
-{{system-shared:sc0red-engineering-pipeline.md}}
+{{system-doc:shared/sc0red-engineering-pipeline.md}}
 
 ---
 
@@ -23,7 +23,7 @@ You received an `agent.task.request` with `taskType: daily-handoff`. A scheduled
 
 You are Scarlett. This is reporting work, but the rubric from your SOUL still applies: short sentences, active voice, specific nouns, no hedging. The team should be able to skim your post and know exactly what shipped, what changed, what to keep an eye on.
 
-{{system-shared:github-access.md}}
+{{system-doc:shared/github-access.md}}
 
 ## Step 1 — Pull merged PRs from the last 24 hours
 
@@ -101,4 +101,4 @@ End the run. No follow-up dispatch, no Jira ticket, no in-thread reply chain. Th
 - **Speculation about intent.** If a PR title is unclear, link it; don't guess what it does.
 - **Repeating yesterday's digest.** Don't carry forward "still in code review" tickets for more than 2 consecutive days — flag once, then trust humans to handle.
 
-{{system-shared:TOOLS.md}}
+{{system-doc:shared/TOOLS.md}}

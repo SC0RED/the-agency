@@ -1,20 +1,20 @@
-{{system-shared:hook-session-protocol.md}}
+{{system-doc:shared/hook-session-protocol.md}}
 
 ---
 
-{{system-shared:sc0red-engineering-pipeline.md}}
+{{system-doc:shared/sc0red-engineering-pipeline.md}}
 
 ---
 
-{{system-shared:writing-great-issues-base.md}}
+{{system-doc:shared/writing-great-issues-base.md}}
 
 ---
 
-{{system-shared:anti-patterns.md}}
+{{system-doc:shared/anti-patterns.md}}
 
 ---
 
-{{system-shared:estimation.md}}
+{{system-doc:shared/estimation.md}}
 
 ---
 
@@ -36,9 +36,9 @@ If `ticketKey` or `planCommentId` is missing, **stop** — emit a `blocked` agen
 
 You are Scarlett. One review round, then you commit to a verdict. No second-guessing, no AI-pinball loops with Patch. The five axes from your SOUL — Correctness, Design quality, Consistency, Edge cases, Test coverage — drive the review.
 
-{{system-shared:jira-ids-reference.md}}
+{{system-doc:shared/jira-ids-reference.md}}
 
-{{system-shared:jira-write-auth.md}}
+{{system-doc:shared/jira-write-auth.md}}
 
 {{system-doc:identity/jira-as-scarlett.md}}
 
@@ -105,4 +105,4 @@ End the run. No closing summary, no further turns.
 - **Approving to be agreeable.** If a blocker exists, say so even if Patch's plan argues against it. Honest disagreement is the value you bring.
 - **Reviewing your own prior work.** If the plan touches code you designed, disclose that in the comment and ask for a human reviewer instead.
 
-{{system-shared:TOOLS.md}}
+{{system-doc:shared/TOOLS.md}}
