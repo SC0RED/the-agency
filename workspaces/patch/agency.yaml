@@ -15,6 +15,41 @@
 # guidance). Other issue types and other columns fall through to no-match
 # and Patch does not run.
 
+# Inbound providers (transport + auth). Patch reacts to three external
+# surfaces; each provider's routing rules live under `routing:` below. Secret
+# VALUES live in 1Password (resolved on the box via op-bindings.json) — only
+# key references appear here. The `internal` routing group (Scarlett→Patch
+# task dispatch) is a synthetic namespace, not a provider, so it is NOT listed.
+#
+#   - jira   — Jira Cloud WebHook. Jira signs the body and sends
+#              `X-Hub-Signature: sha256=<hex>` (WebSub format) → signatureStrategy
+#              websub, verified against JIRA_HMAC_SECRET.
+#   - github — check_suite events for the github-pr-broken fallback. GitHub sends
+#              `X-Hub-Signature-256` → signatureStrategy github (GITHUB_WEBHOOK_SECRET).
+#   - slack  — alert-channel triage. Slack Socket Mode (a websocket Patch opens at
+#              startup), matching Winston — no inbound webhook, so no public ingress.
+providers:
+  - name: jira
+    routePath: /hooks/jira
+    signatureStrategy: websub
+    hmacSecretKey: JIRA_HMAC_SECRET
+  - name: github
+    routePath: /hooks/github
+    signatureStrategy: github
+    hmacSecretKey: GITHUB_WEBHOOK_SECRET
+  - name: slack
+    transport: slack-socket
+    appTokenSecret: SLACK_APP_TOKEN
+    botTokenSecret: SLACK_BOT_TOKEN
+
+# Patch is a coding agent: every run is implementation, planning, or review
+# work that wants the strongest model. The Rust runtime selects the model from
+# this workspace-level `runner.model` (it does not honor the old per-provider
+# `modelRules`), so Opus applies to all of Patch's routes uniformly.
+runner:
+  type: claude-cli
+  model: claude-opus-4-7
+
 # Memory namespace declaration — referenced by per-rule `memory.namespace`
 # below. One namespace shared across plan + ready-for-dev + slack-alert so
 # planning lessons flow into implementation runs and pattern-recognition
@@ -526,32 +561,7 @@ routing:
           - module.python: agency_tools.jira.transition_issue
           - module.python: agency_tools.slack.post
 
-modelRules:
-  jira:
-    - field: issue.fields.status.name
-      matches:
-        - Plan
-        - Ready for Development
-        - Deploy to development
-        - Verified in Development
-      model: claude-opus-4-7
-  github:
-    # PR-broken triage needs to read failing-job logs (often verbose),
-    # diff against base, and decide whether the fix is mechanical
-    # (rename, add test) or structural (rule misfire, base-branch
-    # rot). Misdiagnosis spends a turn budget on the wrong fix and
-    # potentially escalates to Blocked when the issue was tractable.
-    # Default Opus to match the cost/quality of the ready-for-dev path.
-    - field: check_suite.conclusion
-      matches:
-        - failure
-      model: claude-opus-4-7
-  slack:
-    # Production failures get the smartest model — those are the ones
-    # where misdiagnosis is most expensive. Dev/test stay on the runner
-    # default. (Pre-fix this matched C08UVJDJZTL but was labeled
-    # "testing" — the channel id was right, the label was wrong.)
-    - field: event.channel
-      matches:
-        - C08UVJDJZTL  # #alerts-platform-failure-production
-      model: claude-opus-4-7
+# Model selection is workspace-level (see `runner.model` above): Patch runs on
+# Opus across every route. The old per-provider `modelRules` block is dropped —
+# the Rust runtime doesn't parse it, and Opus-everywhere matches Patch's intent
+# (all of its work is implementation/planning/review).

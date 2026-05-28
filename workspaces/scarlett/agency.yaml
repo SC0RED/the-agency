@@ -111,7 +111,10 @@ routing:
           - module.python: agency_tools.jira.search
           - module.python: agency_tools.slack.post
 
-# No `modelRules` block: internal tasks bypass model selection in
-# `task-worker.service.ts` (it passes `model: undefined` to the runner).
-# Scarlett runs on whatever the runner's default model is until Clawndom
-# adds per-agent model config for internal tasks.
+# Model selection is workspace-level. The Rust runtime applies `runner.model`
+# to every route — including internal-task dispatches and the schedule — so
+# Scarlett reviews on Opus. (The old Clawndom passed `model: undefined` for
+# internal tasks, leaving them on the CLI default; the Rust runner does not.)
+runner:
+  type: claude-cli
+  model: claude-opus-4-7
