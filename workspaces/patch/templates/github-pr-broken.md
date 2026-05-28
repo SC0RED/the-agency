@@ -1,8 +1,8 @@
-{{system-shared:sc0red-engineering-pipeline.md}}
+{{system-doc:shared/sc0red-engineering-pipeline.md}}
 
 ---
 
-{{system-shared:anti-patterns.md}}
+{{system-doc:shared/anti-patterns.md}}
 
 ---
 
@@ -26,13 +26,13 @@ If `check_suite.pull_requests` is empty, **stop** — this is a check on a non-P
 
 You are Patch. A PR you (or your past self) opened has failed CI after the run that opened or last touched it ended. The "Step 7" or "Step 5" CI-watching loop in your other templates only runs while a single agent invocation is alive; this is the catch-all for failures that arrive after the fact.
 
-{{system-shared:jira-ids-reference.md}}
+{{system-doc:shared/jira-ids-reference.md}}
 
-{{system-shared:jira-write-auth.md}}
+{{system-doc:shared/jira-write-auth.md}}
 
 {{system-doc:identity/jira-as-patches.md}}
 
-{{system-shared:github-access.md}}
+{{system-doc:shared/github-access.md}}
 
 ## Step 1 — Resolve the PR and the Jira ticket
 
@@ -114,4 +114,4 @@ In all three cases, do not amend the PR diff with workarounds. The fix lives out
 - **Loop-reading the same failure.** If your second fix attempt is approaching the same diff as your first, you're guessing — stop, escalate to Blocked, leave a clear note. Two attempts max.
 - **Triggering this template from another template's CI loop.** The ready-for-dev / address-pr-feedback flows already wait for CI green inside their own runs. github-pr-broken is the *out-of-band* catch-all for failures that arrive after a run ended.
 
-{{system-shared:TOOLS.md}}
+{{system-doc:shared/TOOLS.md}}
