@@ -25,7 +25,13 @@
 #              `X-Hub-Signature: sha256=<hex>` (WebSub format) → signatureStrategy
 #              websub, verified against JIRA_HMAC_SECRET.
 #   - github — check_suite events for the github-pr-broken fallback. GitHub sends
-#              `X-Hub-Signature-256` → signatureStrategy github (GITHUB_WEBHOOK_SECRET).
+#              `X-Hub-Signature-256` → signatureStrategy github. The secret key is
+#              PATCH_GITHUB_WEBHOOK_SECRET, NOT the runtime's GITHUB_WEBHOOK_SECRET:
+#              the runtime auto-mounts the Builder PR-feedback loop at /hooks/github
+#              whenever GITHUB_WEBHOOK_SECRET is set, which would collide with this
+#              provider's route ("Overlapping method route" panic at boot). Patch is
+#              not Builder, so it must NOT set GITHUB_WEBHOOK_SECRET in its env; its
+#              own webhook secret lives under PATCH_GITHUB_WEBHOOK_SECRET.
 #   - slack  — alert-channel triage. Slack Socket Mode (a websocket Patch opens at
 #              startup), matching Winston — no inbound webhook, so no public ingress.
 providers:
@@ -36,7 +42,7 @@ providers:
   - name: github
     routePath: /hooks/github
     signatureStrategy: github
-    hmacSecretKey: GITHUB_WEBHOOK_SECRET
+    hmacSecretKey: PATCH_GITHUB_WEBHOOK_SECRET
   - name: slack
     transport: slack-socket
     appTokenSecret: SLACK_APP_TOKEN
