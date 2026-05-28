@@ -22,12 +22,12 @@ Each agent's identity, voice, and service-account auth live in `workspaces/<agen
 
 ## Where things live
 
-Standard Clawndom workspace shape — see [`clawndom/docs/guides/AGENT_WORKSPACE_LAYOUT.md`](https://github.com/SC0RED/clawndom/blob/main/docs/guides/AGENT_WORKSPACE_LAYOUT.md). Multi-agent variant: `workspaces/shared/` carries cross-agent prose (engineering pipeline, anti-patterns, issue-writing guides, jira-write-auth, etc.); `workspaces/scripts/` carries the operator scripts templates shell out to (token generators, workflow-id dumps).
+Standard Agency workspace shape: each agent has an `agency.yaml` (inbound `providers:` + `routing:` + per-route `tools:`) plus `templates/` and `identity/`, the same layout the [`winston-agency`](https://github.com/ctcreel/winston-agency) workspace uses. Multi-agent variant: `workspaces/shared/` carries cross-agent prose (engineering pipeline, anti-patterns, issue-writing guides, jira-write-auth, etc.); `workspaces/scripts/` carries the operator scripts templates shell out to (token generators, workflow-id dumps).
 
 Every Jira write authors as the agent's dedicated Atlassian service account, not as Chris — see `workspaces/shared/jira-write-auth.md`. Same shape for Slack: per-agent bot tokens.
 
 ## Related
 
-- [`SC0RED/clawndom`](https://github.com/SC0RED/clawndom) — the runtime.
-- [`SC0RED/agency-tools`](https://github.com/SC0RED/agency-tools) — typed Python tool library. Not yet a runtime dependency for Patch/Scarlett (they shell out today); SPE-2078 migration is on the roadmap.
+- [`SC0RED/Agency`](https://github.com/SC0RED/Agency) — the runtime (Rust). Each agent runs as its own `agency-<name>` systemd service.
+- [`SC0RED/agency-tools`](https://github.com/SC0RED/agency-tools) — typed Python tool library. Patch/Scarlett call these through the per-route `tools:` declarations; the Agency MCP bridge injects each tool's secrets per call.
 - [`ctcreel/winston-agency`](https://github.com/ctcreel/winston-agency) — Winston, the TALK office-manager agent. Same workspace shape, single-agent variant.
