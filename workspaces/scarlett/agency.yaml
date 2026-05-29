@@ -117,4 +117,4 @@ routing:
 # internal tasks, leaving them on the CLI default; the Rust runner does not.)
 runner:
   type: claude-cli
-  model: claude-opus-4-7
+  model: claude-opus-4-8
