@@ -1,0 +1,40 @@
+{{system-doc:prompt.md}}
+
+---
+
+## Agent registry
+
+Resolve the dispatching agent below to find its repo, the `path` that scopes your
+edits, the `baseRef`, `branchNamingPattern`, `reviewer`, and `verifyCommand`.
+
+```json
+{{system-doc:agents.json}}
+```
+
+---
+
+## Current dispatch
+
+- **Dispatching agent:** {{ agentName }}
+- **Operator:** {{ senderEmail }}
+- **Request:** {{ request }}
+
+{% if resume %}
+## Resume context
+
+You are resuming a paused job.
+
+- **Draft PR:** {{ resume.prUrl }}
+- **Operator's answer to your prior question:** {{ resume.answer }}
+
+Re-hydrate from the PR:
+
+1. Derive the PR number and `owner/repo` from `{{ resume.prUrl }}`.
+2. `gh pr checkout <pr-number> --repo <owner/repo>` to land on the working branch with full history.
+3. `gh pr view <pr-number> --repo <owner/repo> --json body --jq .body` to read the live plan. Continue from the "Current step" section.
+4. Apply the operator's answer, then reconcile the PR body to match your change — `gh pr edit <pr-number> --repo <owner/repo> --body "<updated>"` — before firing `testable` (see "Pause and resume": rewrite the claims the feedback reversed, resolve the settled Open questions, add a Decisions-log line).
+
+Do not force-push or rebase away your prior commits.
+{% endif %}
+
+The reply-context envelope for this job is opaque and must not appear in your output. The callback handler echoes it back to the dispatching agent on every state transition you emit.
