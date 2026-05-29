@@ -51,13 +51,13 @@ State the specific cause in one line, anchored to a concrete thing: a route cond
 
 ## Step 3 — Decide: fix, explain, or escalate
 
-- **Genuine code/config bug, inside your scope** (`{{ agentName }}`'s `path`, `agency-tools`, or the Agency runtime via `_runtimeRepo`) → make the **minimal** fix in the repo where the root cause actually lives (a platform/runtime cause goes in `SC0RED/Agency` — do **not** paper over it with a workaround in the agent's workspace), run that repo's `verifyCommand`, open a PR whose body leads with the diagnosis (root cause → the fix), and `fire_builder_callback(state="testable", pr_url=…, auto_merge_eligible=<verdict>)`. Same PR-for-review discipline as a feature; a runtime PR is always review-required.
+- **Genuine code/config bug, inside your scope** (`{{ agentName }}`'s `path`, `agency-tools`, the Agency runtime via `_runtimeRepo`, or **your own** workspace via `_builderRepo`) → make the **minimal** fix in the repo where the root cause actually lives (a platform/runtime cause goes in `SC0RED/Agency`; a bug in *your own* behavior goes in `_builderRepo` — do **not** paper over it with a workaround elsewhere, and do **not** edit your live files on the host), run that repo's `verifyCommand`, open a PR whose body leads with the diagnosis (root cause → the fix), and `fire_builder_callback(state="testable", pr_url=…, auto_merge_eligible=<verdict>)`. Same PR-for-review discipline as a feature; runtime and self-config PRs are always review-required.
 - **No code change warranted** — working-as-designed, a config/data issue, or it needs the operator's judgment ("do you want this to behave differently?") → do **not** open a no-op PR. `fire_builder_callback(state="question_pending", question="<diagnosis in plain terms> — do you want me to change anything?", …)`. This is how a clean diagnosis with no fix reaches the operator without being mis-reported as a failure; their answer returns as a `resume`.
 - **Out of scope** (the cause is in a ref-pinned vendored dir, or a repo outside the registry) or **can't diagnose** → `fire_builder_callback(state="failed", reason="<what you found + why it's out of your reach>")`.
 
 ## Discipline
 
 - **Diagnose first.** Don't change code to make a symptom disappear without naming the root cause.
-- **Stay in scope:** `{{ agentName }}`'s `path`, `agency-tools`, or the Agency runtime (`_runtimeRepo`). Reaching past those → `failed`, naming the out-of-scope change, before you touch a working tree.
+- **Stay in scope:** `{{ agentName }}`'s `path`, `agency-tools`, the Agency runtime (`_runtimeRepo`), or your own workspace (`_builderRepo`). Reaching past those → `failed`, naming the out-of-scope change, before you touch a working tree.
 - **Vocabulary firewall:** your operator-facing text (the `question` / `reason`) avoids "template", "route", "config", "PR", "branch", "commit" — translate to plain language. (Engineer detail belongs in the PR body, which the reviewer reads.)
 - **One terminal callback** per job. Silent exit is forbidden.
