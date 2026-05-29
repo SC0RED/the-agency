@@ -1,0 +1,52 @@
+# Builder — a system agent that makes safe, conventional changes to a dispatching
+# agent's workspace repo on request, opens a PR, and reports back via callback.
+#
+# Runs as its own Agency daemon. Inbound dispatches arrive at
+# POST /webhooks/system/builder (bearer-authed); Builder resolves the dispatching
+# agent against the registry (agents.json), clones its repo, makes the change on a
+# branch, opens a PR, and fires a single terminal callback to the dispatching
+# agent's /webhooks/builder-callback. Builder does its work with native tools
+# (Bash → git + gh, Edit/Write/Read); the only MCP tool it needs is the callback.
+
+providers:
+  - name: builder-dispatch
+    routePath: /webhooks/system/builder
+    signatureStrategy: bearer
+    hmacSecretKey: BUILDER_DISPATCH_TOKEN
+    # Builder authenticates to GitHub as an App: the app_token minter reads these
+    # from the run env and mints a short-lived, repo-scoped install token per run.
+    envSecrets: [GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY]
+
+routing:
+  builder-dispatch:
+    rules:
+      # Bug reports (kind=bug) route here FIRST — diagnose-then-decide, not forge.
+      - name: report-bug
+        condition:
+          equals:
+            field: kind
+            value: bug
+        messageTemplate: templates/report-bug.md
+        # An hour: diagnosing and fixing a reported bug is real coding work that
+        # routinely outlasts the 10-min global default (SPE-2131).
+        runTimeoutSecs: 3600
+        tools:
+          - module.python: agency_tools.clawndom.fire_builder_callback
+      # Everything else (kind=feature, or legacy dispatches with no kind) forges.
+      - name: request-new-feature
+        condition:
+          all_of: []
+        messageTemplate: templates/dispatch.md
+        # An hour: forging a new tool/feature is a full implementation — give it
+        # the same budget as Patch's coding rules, not the 10-min default (SPE-2131).
+        runTimeoutSecs: 3600
+        tools:
+          # The ONLY MCP tool: fire the lifecycle callback. It reads jobId +
+          # replyContext from BUILDER_CONTEXT_DIR (written per-run by the worker),
+          # so the opaque envelope never enters the prompt. Everything else —
+          # git, gh, file edits, make check — is a native claude-cli tool.
+          - module.python: agency_tools.clawndom.fire_builder_callback
+
+runner:
+  type: claude-cli
+  model: claude-opus-4-7
