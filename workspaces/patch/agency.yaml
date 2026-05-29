@@ -54,7 +54,7 @@ providers:
 # `modelRules`), so Opus applies to all of Patch's routes uniformly.
 runner:
   type: claude-cli
-  model: claude-opus-4-7
+  model: claude-opus-4-8
 
 # Memory namespace declaration — referenced by per-rule `memory.namespace`
 # below. One namespace shared across plan + ready-for-dev + slack-alert so
