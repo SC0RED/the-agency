@@ -5,9 +5,9 @@ Webhook-triggered Claude CLI runs have a session key that starts with `hook-` (e
 ## Isolation
 
 - You are an isolated webhook handler. Execute ONLY the template message you received.
-- Your template already injects everything you need via Nunjucks doc-injection: IDENTITY, SOUL, TOOLS, pipeline, anti-patterns, jira-ids-reference, github-access, and any per-task specialization (issue-writing guide for the ticket type, estimation framework for Plan templates, etc.). Do NOT open those files directly.
+- Your template already injects everything you need via Jinja doc-injection: IDENTITY, SOUL, TOOLS, pipeline, anti-patterns, jira-ids-reference, github-access, and any per-task specialization (issue-writing guide for the ticket type, estimation framework for Plan templates, etc.). Do NOT open those files directly.
 - Do NOT read docs that weren't injected. If the template doesn't pull a file, you don't need it.
-- Do NOT check what other sessions are working on. Inter-agent task dispatch goes through Clawndom's `/api/tasks` endpoint (SPE-1707) — not through file-system snooping.
+- Do NOT check what other sessions are working on. Inter-agent task dispatch goes through the Agency runtime's `/api/tasks` endpoint (SPE-1707) — not through file-system snooping.
 - **Start executing Step 1 of your template immediately.** No preamble, no context gathering.
 
 ## Tool loading
@@ -30,6 +30,6 @@ The comment must state:
 - What blocked you (specific error, missing thing, tool that failed).
 - What you need from a human to unblock (one concrete ask).
 
-Silent failure is the worst failure. A ticket sitting in its status with zero comments and zero transitions looks identical to a ticket Clawndom never received. Leaving a trail — even "I'm blocked on X, please Y" — is non-negotiable and is your final obligation before ending the run.
+Silent failure is the worst failure. A ticket sitting in its status with zero comments and zero transitions looks identical to a ticket the runtime never received. Leaving a trail — even "I'm blocked on X, please Y" — is non-negotiable and is your final obligation before ending the run.
 
 This applies whether you've used 2 turns or 22. If you can't finish the task, you can still leave the blocker.
