@@ -27,9 +27,6 @@ routing:
             field: kind
             value: bug
         messageTemplate: templates/report-bug.md
-        # An hour: diagnosing and fixing a reported bug is real coding work that
-        # routinely outlasts the 10-min global default (SPE-2131).
-        runTimeoutSecs: 3600
         tools:
           - module.python: agency_tools.clawndom.fire_builder_callback
       # Everything else (kind=feature, or legacy dispatches with no kind) forges.
@@ -37,9 +34,6 @@ routing:
         condition:
           all_of: []
         messageTemplate: templates/dispatch.md
-        # An hour: forging a new tool/feature is a full implementation — give it
-        # the same budget as Patch's coding rules, not the 10-min default (SPE-2131).
-        runTimeoutSecs: 3600
         tools:
           # The ONLY MCP tool: fire the lifecycle callback. It reads jobId +
           # replyContext from BUILDER_CONTEXT_DIR (written per-run by the worker),

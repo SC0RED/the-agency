@@ -79,9 +79,6 @@ routing:
         condition:
           equals: { field: taskType, value: address-pr-feedback }
         messageTemplate: templates/address-pr-feedback.md
-        # An hour: revising a PR per review can mean fresh edits, a re-push and
-        # another CI wait — coding work, not a quick comment (SPE-2131).
-        runTimeoutSecs: 3600
         inputs:
           - ticketKey
           - ticketTitle
@@ -211,10 +208,6 @@ routing:
                     - equals: { field: toString, value: Ready for Development }
         messageTemplate: templates/jira-ready-for-dev-bug.md
         maxTurns: 500
-        # An hour: implementation (read repo → edit → run tests → open PR)
-        # routinely needs far more than the 10-min global default; capping it
-        # there killed runs mid-work and stranded tickets with no PR (SPE-2131).
-        runTimeoutSecs: 3600
         dispatches:
           - code-review
         memory:
@@ -247,10 +240,6 @@ routing:
                     - equals: { field: toString, value: Ready for Development }
         messageTemplate: templates/jira-ready-for-dev-story.md
         maxTurns: 500
-        # An hour: implementation (read repo → edit → run tests → open PR)
-        # routinely needs far more than the 10-min global default; capping it
-        # there killed runs mid-work and stranded tickets with no PR (SPE-2131).
-        runTimeoutSecs: 3600
         dispatches:
           - code-review
         memory:
@@ -283,10 +272,6 @@ routing:
                     - equals: { field: toString, value: Ready for Development }
         messageTemplate: templates/jira-ready-for-dev-task.md
         maxTurns: 500
-        # An hour: implementation (read repo → edit → run tests → open PR)
-        # routinely needs far more than the 10-min global default; capping it
-        # there killed runs mid-work and stranded tickets with no PR (SPE-2131).
-        runTimeoutSecs: 3600
         dispatches:
           - code-review
         memory:
@@ -476,9 +461,6 @@ routing:
                   exists: { field: number }
         messageTemplate: templates/github-pr-broken.md
         maxTurns: 200
-        # An hour: diagnosing and fixing a failing CI run is real coding work
-        # that can outlast the 10-min global default (SPE-2131).
-        runTimeoutSecs: 3600
         memory:
           namespace: patch-personal
           retrieve:
