@@ -1,7 +1,7 @@
 > Version: 2.8 - 2026-04-30
 > Author: Scarlett, revised by Chris Creel
 > Status: Approved
-> Revision: Sync to Clawndom runtime; remove OpenClaw and `sessions_*` references (SPE-1762).
+> Revision: Hosted on the Agency runtime (Rust); supersedes the older OpenClaw and Clawndom Node runtimes.
 ---
 
 ## Overview
@@ -32,21 +32,21 @@ The SPE project lives at `sc0red.atlassian.net`. All Jira-side numbers — cloud
 
 ---
 
-## Event-Driven Architecture - Clawndom
+## Event-Driven Architecture — Agency Runtime
 
-All agent work is triggered by **Jira webhooks** via **Clawndom**, the runtime that hosts every agent on the EC2. Clawndom:
+All agent work is triggered by **Jira webhooks** through the **Agency runtime**, a Rust daemon (`agency-<agent>.service`) that hosts each agent on its EC2. For every agent service, the runtime:
 
-1. Receives Jira webhooks via Tailscale Funnel
-2. Validates HMAC signatures
-3. Queues events in Redis (BullMQ)
-4. Routes to the correct agent based on the issue's status name
-5. Delivers one event at a time (global serialization via `MAX_CONCURRENT_RUNS=1`)
-6. Waits for the agent session to complete before delivering the next event
-7. Retries on failure (max 2 attempts, back-of-queue retry)
+1. Receives webhooks through a configured provider (Jira, GitHub, Slack — see the `providers:` block in the agent's `agency.yaml`); inbound Jira/GitHub HTTP is exposed via Tailscale Funnel
+2. Validates the request signature per the provider's `signatureStrategy` (HMAC for Jira/GitHub, App-Token for Slack Socket Mode, …)
+3. Queues events in Redis (BullMQ-compatible keys: `bull:webhooks-tasks-<agent>:*`)
+4. Matches the event against the provider's `routing:` block — Condition AST entries (`equals`, `any_item`, `all_of`, …) inspect the payload to pick a rule
+5. Delivers one event at a time (single-concurrency gate, `MAX_CONCURRENT_RUNS=1`)
+6. Spawns a `claude -p` subprocess for the matched rule, with the rendered prompt on stdin, in a per-run ephemeral cwd
+7. Acks the job when the subprocess exits (no auto-retry on a finished run; a missed transition has to be re-fired by moving the ticket back through the trigger column)
 
-Each webhook spawns an **isolated Claude Code session** for the matched agent — the agent *is* that session, with its own workspace, identity, and Jira payload. Clawndom handles serialization, so agents do not need to implement their own work gates or priority selection. They process whatever Clawndom feeds them, in order.
+Each webhook spawns an **isolated Claude Code session** for the matched agent — the agent *is* that session, with its own workspace, identity, and Jira payload. The Agency runtime handles serialization, so agents do not need to implement their own work gates or priority selection. They process whatever the runtime feeds them, in order.
 
-**Routing rules** match on `issue.fields.status.name` and render a Nunjucks message template with the Jira payload before delivering to the agent. Template and runtime configuration live in each agent's workspace; concrete paths and tooling are documented in `TOOLS.md`.
+**Routing rules** match on the payload (typically `issue.fields.status.name` for Jira) and render the rule's message template — Jinja-style via `minijinja` — with the payload before spawning the session. Per-rule and per-workspace configuration live in each agent's `agency.yaml`; concrete paths and tooling are documented in `TOOLS.md`.
 
 ---
 
@@ -116,7 +116,7 @@ Transition IDs for every move between these columns live in `shared/jira-ids-ref
 
 ### 2. Plan
 - **Who transitions:** Business leadership
-- **Trigger:** Jira webhook → Clawndom → Patch
+- **Trigger:** Jira webhook → Agency runtime → Patch
 - **What happens:** Patch immediately picks up the ticket and begins:
   - **Quality gates first** - checks for insufficient info, conflicting info, unclear scope, multiple work items. If any gate fails → Blocked (transition ID: 4) with a comment explaining what's needed.
   - **Investigation** - check logs, database, CloudWatch. Form diagnosis from evidence.
@@ -148,8 +148,8 @@ Transition IDs for every move between these columns live in `shared/jira-ids-ref
 
 ### 4. Ready for Development
 - **Who transitions:** Engineering team
-- **Trigger:** Jira webhook → Clawndom → Patch
-- **What happens:** Clawndom serializes delivery - Patch processes one ticket at a time, in queue order. No priority selection or work gates needed; Clawndom handles sequencing.
+- **Trigger:** Jira webhook → Agency runtime → Patch
+- **What happens:** the Agency runtime serializes delivery - Patch processes one ticket at a time, in queue order. No priority selection or work gates needed; the Agency runtime handles sequencing.
 - **Patch's process:**
   1. **Immediately** transitions to **In Development** (ID: 19) - board reflects reality before any work starts
   2. Gets Jira OAuth token
@@ -180,7 +180,7 @@ Transition IDs for every move between these columns live in `shared/jira-ids-ref
 
 ### 7. Deploy to development
 - **Who transitions:** Engineer (after PR approval)
-- **Trigger:** Jira webhook → Clawndom → Patch
+- **Trigger:** Jira webhook → Agency runtime → Patch
 - **What happens:**
   1. Patch finds the PR
   2. Runs local validation (type check + tests per repo — see Build Validation table)
@@ -197,7 +197,7 @@ Transition IDs for every move between these columns live in `shared/jira-ids-ref
 
 ### 8. Verified in Development
 - **Who transitions:** Engineer (after verifying fix works in dev)
-- **Trigger:** Jira webhook → Clawndom → Patch
+- **Trigger:** Jira webhook → Agency runtime → Patch
 - **Gate logic:** Patch checks if ANY tickets remain in **Deployed to Development** OR **Deploy to development**
   - **If yes (either column has tickets):** Posts comment listing what's still awaiting verification or in flight. Stops.
   - **If no (both empty):** Proceeds to batch promote.
@@ -214,7 +214,7 @@ Transition IDs for every move between these columns live in `shared/jira-ids-ref
 
 ### 9. Verified in Testing
 - **Who transitions:** Reporter or engineer (after verifying fix works in testing)
-- **Trigger:** Jira webhook → Clawndom → Patch
+- **Trigger:** Jira webhook → Agency runtime → Patch
 - **Gate logic:** Patch checks if ANY tickets remain in **Deployed to Testing**
   - **If yes:** Posts comment listing what's still awaiting verification. Stops.
   - **If no (all verified):** Creates a **single** testing → production PR per repo. **Does NOT merge.** Posts to #general-engineering alerting that a production PR is ready for the Production Approver to review. Tickets stay in Verified in Testing.
@@ -233,7 +233,7 @@ For critical fixes that must reach production immediately. Hotfixes bypass the n
 
 ### Process
 1. Engineer moves ticket to **Hotfix** (ID: 13) from wherever it is (New, Plan, Blocked — doesn't matter)
-2. **Trigger:** Jira webhook → Clawndom → Patch
+2. **Trigger:** Jira webhook → Agency runtime → Patch
 3. **Patch's process:**
    a. Investigates the issue against **production** code and logs — not development. The fix must work in the codebase it's shipping to.
    b. Creates branch `hotfix/<jira-key>-<slug>` off **`production`** (not development)
@@ -268,7 +268,7 @@ The production merge itself. When the Production Approver moves the ticket to De
 - Any situation requiring human intervention
 
 **Who moves to Blocked:** Patch (any template) or any human
-**Who resolves:** The original reporter or an engineer. After resolving, they move the ticket back to the appropriate column (Plan, Ready for Development, etc.), which re-triggers the Clawndom webhook.
+**Who resolves:** The original reporter or an engineer. After resolving, they move the ticket back to the appropriate column (Plan, Ready for Development, etc.), which re-triggers the webhook.
 
 ---
 
@@ -293,7 +293,7 @@ Individual tickets merge to `development` via per-ticket PRs. Promotions between
 
 ### Development → Testing
 - **Trigger:** Ticket moves to "Verified in Development"
-- **Who executes:** Patch (automatic via Clawndom webhook)
+- **Who executes:** Patch (automatic via webhook)
 - **Gate:** Both "Deploy to development" AND "Deployed to Development" must be empty
 - **Process:**
   1. Patch checks both columns - if either has tickets, posts comment and stops
@@ -369,7 +369,7 @@ Patch escalates (moves to Blocked or flags in `#general-engineering`) when:
 
 ## Implementation Tooling - Claude Code
 
-Each Jira webhook spawns an isolated **Claude Code** session via Clawndom — the agent *is* that session. There is no separate "spawn Claude Code" step; the session loads the workspace, the issue payload, and the rendered template (which includes the approved plan, when applicable), performs the work end-to-end, then terminates.
+Each Jira webhook spawns an isolated **Claude Code** session via the Agency runtime — the agent *is* that session. There is no separate "spawn Claude Code" step; the session loads the workspace, the issue payload, and the rendered template (which includes the approved plan, when applicable), performs the work end-to-end, then terminates.
 
 ### Why Claude Code
 - Loads full repo into context - file trees, type definitions, imports, test suites
@@ -377,10 +377,10 @@ Each Jira webhook spawns an isolated **Claude Code** session via Clawndom — th
 - Runs in-process validation (type checking, linting)
 
 ### Session Lifecycle
-1. Clawndom receives a Jira webhook and matches it to an agent template
-2. Clawndom spawns a Claude Code session with the agent's workspace, identity, and rendered template
+1. the Agency runtime receives a Jira webhook and matches it to an agent template
+2. the Agency runtime spawns a Claude Code session with the agent's workspace, identity, and rendered template
 3. The agent performs investigation / implementation / promotion, running checks in-process
-4. Session terminates — RAM freed; Clawndom delivers the next queued event
+4. Session terminates — RAM freed; the Agency runtime delivers the next queued event
 
 ### Local Validation - MANDATORY Before Push
 
@@ -411,25 +411,25 @@ Run a local SonarCloud scan before pushing to catch quality gate violations (cod
 
 ### CI Failure Remediation - GitHub Webhook Safety Net
 
-Even with local validation, CI can fail for reasons local scans don't catch (environment differences, flaky tests, dependency issues). A GitHub webhook routes CI failures on Patch's PRs back through Clawndom as isolated fix sessions.
+Even with local validation, CI can fail for reasons local scans don't catch (environment differences, flaky tests, dependency issues). A GitHub webhook routes CI failures on Patch's PRs back through the Agency runtime as isolated fix sessions.
 
 **Flow:**
 1. GitHub fires a `check_run` webhook when CI completes
-2. Clawndom receives it, validates HMAC, filters to only failed checks on Patch's branches (`fix/SPE-*`)
+2. the Agency runtime receives it, validates HMAC, filters to only failed checks on Patch's branches (`fix/SPE-*`)
 3. Routes to Patch as an isolated session with failure details
 4. Patch reads CI logs, fixes the issue, pushes
 5. CI re-runs automatically
 
 **Guardrails:**
 - **Max 2 fix attempts per PR.** If the build still fails after 2 automated fix cycles, move the ticket to Blocked and notify #general-engineering.
-- **Deduplication:** Clawndom filters duplicate check events for the same commit SHA - only the first failure triggers a fix session.
+- **Deduplication:** the Agency runtime filters duplicate check events for the same commit SHA - only the first failure triggers a fix session.
 - **Scope:** Only fires for branches matching `fix/SPE-*` owned by Patch. Does not interfere with human PRs.
 
 ---
 
 ## Key Constraints
 
-- Clawndom serializes all agent work - one event at a time, completion-aware
+- the Agency runtime serializes all agent work - one event at a time, completion-aware
 - No implementation without an approved plan
 - No merge without CI passing
 - No production merge without the Production Approver's explicit approval (Patch creates PR only)

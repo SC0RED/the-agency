@@ -26,26 +26,19 @@ Swap `Platform-Frontend` for whichever of the three repos the task touches. Mult
 
 ## Keeping clones fresh
 
-`/tmp` is `PrivateTmp=true` on the clawndom systemd unit — scratched only when the service restarts, **not** between hook-triggered subprocesses. That means repos in `/tmp` can be days old from a previous run. Stale code leads to stale investigations: a bug already fixed in `development` can waste an entire Plan cycle.
+Each run gets a **per-run ephemeral working directory** at `<workspace>/.run-<pid>-<nanos>/` — the Agency runtime drops you into it on spawn and an RAII guard removes it on every exit path (success, error, timeout, panic). Clone target repos there so each new run starts with a fresh tree; don't clone under `/tmp` (it survives across runs and accumulates stale code). Stale code leads to stale investigations: a bug already fixed in `development` can waste an entire Plan cycle.
 
-**Before reading code in any task, refresh the target repo.** Idempotent pattern — clone if absent, hard-reset to `origin/development` if present:
+**Before reading code in any task, clone the target repo into your ephemeral cwd.** The ephemeral cwd is fresh per run, so a plain clone (no "is it already there?" dance) is the right move:
 
 ```bash
-export GH_TOKEN=$(bash ../../scripts/generate-github-app-token.sh)
+export GH_TOKEN=$(bash <path-to>/generate-github-app-token.sh)
 REPO=<repo-name>   # Platform-Frontend | Platform-Backend | assessment_engine
-cd /tmp
-if [ -d "$REPO/.git" ]; then
-  cd "$REPO"
-  git fetch origin
-  git reset --hard origin/development
-else
-  git clone https://x-access-token:${GH_TOKEN}@github.com/SC0RED/$REPO.git
-  cd "$REPO"
-  git checkout development
-fi
+git clone --depth 1 --branch development \
+  https://x-access-token:${GH_TOKEN}@github.com/SC0RED/$REPO.git
+cd "$REPO"
 ```
 
-`reset --hard` wipes any uncommitted state from a previous run. For Ready-for-Dev work that needs its own branch, branch off `development` *after* the refresh (`git checkout -b fix/...`).
+For Ready-for-Dev work that needs its own branch, branch off `development` after the clone (`git checkout -b fix/SPE-...`).
 
 ## Pushing a branch + opening a PR
 

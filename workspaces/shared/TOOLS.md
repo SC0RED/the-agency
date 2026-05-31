@@ -4,7 +4,7 @@ You run on a dedicated c7i.large EC2 in `sc0red-dev` (us-east-1), reachable as `
 
 ## 1Password
 
-`OP_SERVICE_ACCOUNT_TOKEN` is already in your environment (Clawndom injects it from `/etc/clawndom/clawndom.env`). Use `op` directly — no token-fetching dance needed.
+`OP_SERVICE_ACCOUNT_TOKEN` is already in your environment (your `agency-<agent>.service` systemd unit loads it from `/etc/agency-<agent>/agency.env`). Use `op` directly — no token-fetching dance needed.
 
 ```bash
 op vault list                                # only "Engineering" is in scope
@@ -15,7 +15,7 @@ op read "op://Engineering/Jira/hmac"
 
 **Vault scope:** the `Engineering` vault is the only one your service account can see. Items currently in it:
 
-- `Jira` (Secure Note) — `hmac` field is Clawndom's webhook signing secret
+- `Jira` (Secure Note) — `hmac` field is the Jira provider's webhook signing secret (referenced from your `agency.yaml` via `hmacSecretKey`)
 - `Service Account Auth Token: Jira` (API Credential) — Atlassian API token for the `dump-jira-workflow.py` script
 - `Service Account Auth Token: The Agency` (API Credential) — your own service-account token (don't read it; it's already in env)
 - `Sonar Token` (Secure Note) — SonarCloud scans
@@ -111,18 +111,17 @@ For the actual IDs (cloud ID, transitions, custom fields, option IDs), see `shar
 
 ## Scratch space
 
-`/tmp` is your scratch dir. `PrivateTmp=true` on the systemd unit — wiped on restart, isolated from other services. Clone target repos under `/tmp`, don't leave them anywhere else.
+Each run gets a **per-run ephemeral working directory** at `<workspace>/.run-<pid>-<nanos>/` — that's your cwd when the session starts. An RAII guard removes it on every exit path (success, error, timeout, panic, cancellation), so each new run starts with a fresh tree. Clone target repos and write any scratch artifacts there; don't write to `/tmp` (it survives across runs and accumulates).
 
 ## The Agency repo (your workspace)
 
-Your workspace lives at `/home/clawndom/.clawndom/agents/SC0RED__the-agency/workspaces/<agent>/` (substitute your own agent directory name). The repo is auto-pulled every 5 minutes by the `clawndom-sync-agents.timer` systemd timer. Edits to your identity / templates / docs propagate without a Clawndom restart.
+Your workspace lives at `/home/ubuntu/agency-workspaces/<agent>/` on the box (where `<agent>` is your agent directory name — `patch`, `scarlett`, …). It's a plain directory, not a git checkout. The canonical source is `SC0RED/the-agency` on GitHub at `workspaces/<agent>/`; the box's workspace is rsynced from `main` as part of an agent deploy.
 
-Shared material (engineering pipeline, anti-patterns, writing-great-*, this TOOLS file, etc.) lives at `workspaces/shared/` — one level up from your own docs. Templates inject shared content with the `shared:` doc-injection prefix; they inject agent-specific content with the `doc:` prefix. Both are Nunjucks tags of the form `open-mustache PREFIX:path close-mustache`, preprocessed before Nunjucks rendering. Don't write literal mustache tags inside any injected doc — they'll try to render recursively and fail.
+Shared material (engineering pipeline, anti-patterns, writing-great-*, this TOOLS file, etc.) lives at `workspaces/shared/` — one level up from your own docs. Templates inject shared content with the `shared:` doc-injection prefix; they inject agent-specific content with the `doc:` prefix. Both are Jinja tags of the form `open-mustache PREFIX:path close-mustache`, preprocessed before Jinja rendering. Don't write literal mustache tags inside any injected doc — they'll try to render recursively and fail.
 
-To edit any workspace: clone the repo locally, change a file, push to `main`. The sync timer picks it up. You don't have direct write access to the cloned copy on the host — and you shouldn't; sync overwrites.
+To edit any workspace: clone `SC0RED/the-agency` locally, change a file under `workspaces/<agent>/` or `workspaces/shared/`, open a PR against `main`, and merge. The change reaches the live box at the next agent deploy (the workspace is rsynced as part of shipping the runtime binary). You don't have write access to the deployed copy on the host — and you shouldn't; the next rsync overwrites it.
 
 ## Logging + observability
 
-- Your stdout/stderr land in `/var/log/clawndom/clawndom.log`. The current invocation's session key is logged at start.
-- The Clawndom dashboard at `https://clawndom.tail708f46.ts.net/api/events` streams typed events (webhook.* / job.* / runner.*) — Chris uses this to watch you work.
+- The runtime's logs (provider receipts, routing decisions, claude run start/end, structured errors) land in `/var/log/agency-<agent>/agency.log` as JSON; the per-route audit trail is `/var/log/agency-<agent>/audit.log`. Tail either with `sudo tail -f`.
 - For CloudWatch on the sc0red side: `aws logs tail` as documented above.
