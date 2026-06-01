@@ -59,12 +59,16 @@ Expected: one PR per repo that was changed by this fix, all targeting `developme
 
 For each `(repo, pr_number)` from Step 2, call `github_pr_check_runs` and poll every ~60s until every check has a non-null `conclusion`. Cap polling at 25 minutes total.
 
-If any check's `conclusion` is not `success`, `skipped`, or `neutral`, **stop**:
+If any check's `conclusion` is not `success`, `skipped`, or `neutral`, classify the failure before blocking.
+
+**Branch-mode SonarCloud false positive (waive).** If the *only* failing check matches the SonarCloud branch-mode pattern — name contains `SonarCloud`, `details_url` points at a `?branch=` (not `?pullRequest=`) dashboard, and the failure cites a project-wide aggregate metric like `new_coverage` / `new_duplicated_lines_density` over a rolling window — **and** the PR-scoped Sonar gate is OK on every condition (verify with `GET https://sonarcloud.io/api/qualitygates/project_status?projectKey=<key>&pullRequest=<number>` using `SONAR_TOKEN`), treat this check as `success` and continue. In Step 6 add a one-line note: *"CI `SonarCloud Code Analysis` failed as branch-mode artifact (new_coverage project-wide aggregate); PR-scoped Sonar gate green; merged on PR-scoped signal."* This is **not** a CI bypass — it's a check classification: the failing check measures the project's rolling window, not the diff this PR introduces.
+
+**Anything else (block).** A `build-and-test` failure, a `SonarCloud Code Analysis` failure where the PR-scoped API is *also* ERROR (real regression in the diff), or any other non-success check — **stop**:
 
 - `jira_transition_issue` (Blocked, `transition_id: "4"`)
-- `jira_add_comment` naming which PR failed which check, with the failing check's `details_url`.
+- `jira_add_comment` naming which PR failed which check, with the failing check's `details_url`. If the SonarCloud check failed but the PR-scoped API was also ERROR, name the offending condition (e.g., `new_coverage 66.7% < 80%`) so the human can see the gate is gating the diff, not a project-wide aggregate.
 
-Don't attempt to fix the failure at this stage — a human approved the code in Code Review, so any CI failure here is either flaky infra or a regression that surfaced after review. Either way it's a human decision.
+Don't attempt to fix the failure at this stage — a human approved the code in Code Review, so any *real* CI failure here is either flaky infra or a regression that surfaced after review. Either way it's a human decision.
 
 ## Step 4 — Local validation (belt-and-braces, with judgment)
 
@@ -118,6 +122,7 @@ Call `jira_transition_issue` with `transition_id: "10"` ("Deploy" — the workfl
 ## CI / merge failure handling
 
 - CI red in Step 3 → Blocked + comment. (PR-scoped CI is the real gate; do not waive it.)
+- CI red in Step 3 on the branch-mode `SonarCloud Code Analysis` check while PR-scoped Sonar API is OK → apply the Step 3 branch-mode waiver and continue.
 - Local validation red in Step 4 → apply the four-condition waiver test in Step 4. Block only when it does *not* pass.
 - Merge conflict in Step 5 → Blocked + comment.
 - Max 2 retry cycles across the whole template. After the 2nd failure, Blocked is final — a human owns the next move.
@@ -126,7 +131,7 @@ Call `jira_transition_issue` with `transition_id: "10"` ("Deploy" — the workfl
 
 - **"I'll just rewrite the implementation real quick"** — no. At Deploy to development, the code was human-approved. A late functional failure (CI test failing on a regression, a merge conflict revealing a logic change) is a human-decision event, not a fix-it-now event. The single-line cleanup carve-out in Step 4 is for *tooling false positives only*, not for fixing real failures.
 - **Re-running the whole plan/implement cycle** because a test went red — you are not the Code Review agent at this stage.
-- **Bypassing PR-scoped CI with `--admin`** — never. The PR-scoped CI is the gate the team agreed on; if it's red, escalate. (A *local* `make check-all` that is red because of a recognized tooling artifact — Sonar wrong-mode, pre-existing baseline, local env gap — is not the same as PR-scoped CI red; see Step 4.)
+- **Bypassing PR-scoped CI with `--admin`** — never. The PR-scoped CI is the gate the team agreed on; if it's red, escalate. (Two carve-outs are *not* PR-scoped CI red: a *local* `make check-all` failure caused by a recognized tooling artifact — see Step 4 — and a CI `SonarCloud Code Analysis` check that is reporting the branch-mode project-wide gate while the PR-scoped Sonar API is OK — see Step 3. Both are check-classification waivers, not gate bypasses.)
 - **Blocking on a tooling artifact you can already explain.** If you can articulate *why* the local-red signal is a false positive (specifically: which of the four classes in Step 4 it belongs to) and the four-condition test passes, the correct move is to merge — not to escalate. Self-blocking on a known-false signal wastes a human review cycle and stalls the deploy.
 
 ## Escalate to Chris (transition to Blocked, ping `#general-engineering`) when
