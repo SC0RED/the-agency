@@ -130,6 +130,7 @@ routing:
           - module.python: agency_tools.jira.add_comment
           - module.python: agency_tools.jira.transition_issue
           - module.python: agency_tools.jira.update_issue
+          - module.python: agency_tools.aws.cloudwatch.filter_logs
           - module.python: agency_tools.clawndom.dispatch_task
 
       - name: plan-story
@@ -157,6 +158,7 @@ routing:
           - module.python: agency_tools.jira.add_comment
           - module.python: agency_tools.jira.transition_issue
           - module.python: agency_tools.jira.update_issue
+          - module.python: agency_tools.aws.cloudwatch.filter_logs
           - module.python: agency_tools.clawndom.dispatch_task
 
       - name: plan-task
@@ -184,6 +186,7 @@ routing:
           - module.python: agency_tools.jira.add_comment
           - module.python: agency_tools.jira.transition_issue
           - module.python: agency_tools.jira.update_issue
+          - module.python: agency_tools.aws.cloudwatch.filter_logs
           - module.python: agency_tools.clawndom.dispatch_task
 
       # ── Ready for Development: per-type ──────────────────────────────
