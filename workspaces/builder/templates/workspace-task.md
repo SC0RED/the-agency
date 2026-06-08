@@ -176,9 +176,44 @@ Run the verify command, mark the PR ready, then:
 fire_builder_callback(
   state="testable",
   pr_url="<the PR URL>",
+  summary="<2-4 sentences, plain language — see contract below>",
   auto_merge_eligible=<verdict>
 )
 ```
+
+### The `summary` contract
+
+The relaying agent (Winston, the dashboard, etc.) uses your `summary`
+verbatim in the email or Slack message it sends to the operator. It
+does NOT fetch the PR body and does NOT re-paraphrase. This is your
+one chance to explain the change in language a non-engineer can act on.
+
+Rules:
+
+- **2–4 sentences.** First sentence states what the system will do
+  differently. Optional follow-ups give context: when it takes effect,
+  what won't change, anything the operator should watch.
+- **Vocabulary firewall.** Avoid "PR", "branch", "commit", "merge",
+  "repo", "template", "route", "config", filenames, identifier names.
+  Describe behaviour, not artifacts. The reviewer gets `pr_url`
+  separately and can read the diff for technical detail.
+- **Tie to the ask.** Lead with the change in terms the operator
+  already used — paraphrase from `replyContext.originalRequestText`
+  so it's self-contextual.
+- **Past or present, not future-conditional.** "The morning digest
+  now skips…" — not "this would make it possible to…".
+
+Good summary (workspace change):
+
+> "The morning digest now skips clients whose sessions were cancelled
+> overnight, so they don't appear in the day's list when they aren't
+> actually on the calendar. Cancellation status is read directly from
+> Google Calendar — no manual tagging needed."
+
+Bad summary (vocabulary leak, no behavioural anchor):
+
+> "Updated the morning-digest template to add a cancellation-status
+> filter in the foreach loop. Merged into development."
 
 If auto-merge eligible, also call `gh pr merge --squash --delete-branch`
 before firing the callback.

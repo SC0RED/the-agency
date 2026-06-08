@@ -166,9 +166,26 @@ Then `gh pr ready` and:
 fire_builder_callback(
   state="testable",
   pr_url="<the PR URL>",
+  summary="<2-4 sentences, plain language — see contract below>",
   auto_merge_eligible=false
 )
 ```
+
+The `summary` contract: 2–4 sentences, vocabulary-firewall safe
+(no "PR", "branch", "commit", "merge", "repo", filenames, identifier
+names) — Winston relays it VERBATIM to the operator. Runtime changes
+are often invisible to the operator (latency, reliability, infra),
+so anchor on the user-visible symptom your change resolves or
+prevents. Always `auto_merge_eligible=false` for runtime changes,
+so the summary always lands in a reviewer email alongside the PR link.
+
+Good summary (runtime fix):
+
+> "Patches were occasionally retrying themselves silently after a
+> Postgres blip, which left duplicate Jira comments on the same
+> issue. The retry path now treats the blip as a transient error
+> and waits for the next webhook instead of re-running. Existing
+> work-in-flight is not affected."
 
 ## Step 8 — Post-PR disk check
 

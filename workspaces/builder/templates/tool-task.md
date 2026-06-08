@@ -166,9 +166,24 @@ Run `make test` (or the registry's `verifyCommand`), then
 fire_builder_callback(
   state="testable",
   pr_url="<the PR URL>",
+  summary="<2-4 sentences, plain language — what new capability this gives the operator>",
   auto_merge_eligible=false
 )
 ```
+
+The `summary` contract: 2–4 sentences, vocabulary-firewall safe (no
+"PR", "branch", "commit", "merge", "repo", filenames, identifier
+names) — Winston relays it VERBATIM to the operator, so describe the
+new capability in terms a non-engineer can act on. Tool tasks always
+ship with `auto_merge_eligible=false`, so the summary lands in a
+reviewer email alongside the PR link.
+
+Good summary (tool addition):
+
+> "Winston can now look up which clinician owns a Google calendar
+> event without you having to tell him. He reads the event's host
+> directly from the calendar, so eval intakes coming off Bethany's
+> calendar get routed to Bethany automatically."
 
 ## Anti-patterns
 
