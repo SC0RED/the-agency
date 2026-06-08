@@ -123,7 +123,7 @@ Transition IDs for every move between these columns live in `shared/jira-ids-ref
   - Root cause analysis (bugs) or requirements analysis (features)
   - Risk assessment and severity estimation per the `shared/estimation.md`
   - Story point lookup from the Risk × Intensity matrix
-  - If SP > 5: must propose a breakdown before implementation
+  - If SP > 5: surface it and hand the break-it-down-or-proceed call to a human — agents don't split or bulldoze a >5 ticket on their own (see the Ceiling rule in `shared/estimation.md`)
   - Design proposal with affected files, line numbers, and approach
 
 - **Design quality requirements:**

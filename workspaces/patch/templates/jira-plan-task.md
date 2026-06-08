@@ -103,7 +103,7 @@ Write the result as a single **Approach** section that includes an *Alternatives
 
 {{system-doc:shared/estimation.md}}
 
-Risk × Intensity → Story Points. Tasks with broad blast radius (shared infrastructure, build pipeline, secrets, auth) are usually higher Risk than they look. If SP > 5, propose a phased breakdown.
+Apply the matrix. Tasks with broad blast radius (shared infrastructure, build pipeline, secrets, auth) are usually higher Risk than they look. If the estimate crosses the ceiling, follow the **Ceiling rule** above — surface it and hand the breakdown call to a human.
 
 ## Step 6 — Post the plan, transition, request review
 
