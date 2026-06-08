@@ -117,14 +117,30 @@ After all dispatches succeed, call:
 fire_builder_callback(
   state="testable",
   pr_url="{{ replyContext.issue_url }}",
+  summary="<2-4 sentences — what you decomposed the request into and what the operator should expect next>",
   auto_merge_eligible=false
 )
 ```
 
-The PR-URL field is reused to carry the issue URL here so the
-relay back to Winston (or the healthcheck dashboard) gets the
-operator-visible link. Auto-merge is always `false` for triage —
-the actual auto-merge gate runs in each specialized route's PR.
+The `pr_url` field is reused to carry the issue URL here so the relay
+back to Winston (or the healthcheck dashboard) gets the operator-visible
+link. Auto-merge is always `false` for triage — the actual auto-merge
+gate runs in each specialized route's PR.
+
+The `summary` describes the routing decision in plain operator terms:
+which surfaces you dispatched the request into and what the operator
+should expect to hear back about. 2–4 sentences, vocabulary-firewall
+safe (no "PR", "branch", "commit", "merge", "repo", "template",
+"route" — say "workspace change", "tool addition", "runtime fix"
+instead). Winston relays this VERBATIM, so it has to stand on its own.
+
+Good summary (multi-surface dispatch):
+
+> "I split this into two pieces — a workspace change so Heather's
+> morning digest filters cancelled clients, and a runtime fix so the
+> calendar lookup that feeds it doesn't retry indefinitely on Google
+> 429s. Each one is being worked on independently and you'll get a
+> separate reply when it's reviewable."
 
 If any dispatch fails (5xx, network), call
 `fire_builder_callback(state="failed", reason="dispatch to <surface>
