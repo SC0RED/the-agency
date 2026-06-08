@@ -1,12 +1,13 @@
-.PHONY: check-all no-symlinks deploy deploy-shared deploy-all
+.PHONY: check-all no-symlinks deploy deploy-shared deploy-all deploy-smoke
 
 # the-agency is a config / template / memory repo with no executable
 # test suite of its own; the clawndom + agency-tools repos each carry
 # their own check-all. This target exists so the clawndom-installed
 # pre-commit gate has something to invoke (matching the pattern in
-# winston-agency). We hang the workspace-symlink guard off it so the
-# pre-commit gate catches a planted symlink before it can be committed.
-check-all: no-symlinks
+# winston-agency). We hang the workspace-symlink guard + the deploy
+# smoke test off it so the pre-commit gate catches a planted symlink
+# or a Makefile regression before it can be committed.
+check-all: no-symlinks deploy-smoke
 	@echo "the-agency: no executable checks — config + templates only"
 
 # Shared docs are deployed as a REAL directory inside each agent's
@@ -105,3 +106,52 @@ deploy-shared:
 	fi
 	@echo "==> staging shared/ at $(SHARED_TARGET)$(if $(DRY_RUN), [DRY RUN])"
 	$(RSYNC) $(RSYNC_EXCLUDES) workspaces/shared/ $(SHARED_TARGET)/
+
+# Smoke-test the deploy machinery against a scratch directory and assert
+# the deployed layout matches the contract:
+#
+#   1. Every agent in $(AGENTS) lands at $(DEST)/<agent>/.
+#   2. NO inner shared/ inside any agent workspace (today's contract —
+#      shared lives once per box as a sibling).
+#   3. Sibling shared/ at $(DEST)/shared/ when at least one agent that
+#      opted in via $(AGENTS_USE_SHARED) deployed there.
+#   4. For every consumer (AGENTS_USE_SHARED ∩ deployed), every
+#      `{{system-doc:<file>}}` directive in that agent's templates
+#      resolves to a file that exists under the workspace dir OR the
+#      sibling shared/ — catches the regression where someone strips
+#      `shared/` from a directive but the actual file is not at the
+#      sibling root (or vice versa).
+#
+# Runs locally with a scratch DEST (no ssh, no live boxes) so it is
+# safe in CI and in pre-commit. The clawndom-installed gate that calls
+# `make check-all` is the primary consumer.
+deploy-smoke:
+	@SMOKE_DIR=$$(mktemp -d -t agency-deploy-smoke.XXXXXX); \
+	trap "rm -rf $$SMOKE_DIR" EXIT; \
+	echo "==> deploy-smoke: scratch dir $$SMOKE_DIR"; \
+	for agent in $(AGENTS); do \
+		$(MAKE) --no-print-directory deploy AGENT=$$agent HOST= DEST=$$SMOKE_DIR >/dev/null \
+			|| { echo "ERROR: deploy AGENT=$$agent failed"; exit 1; }; \
+	done; \
+	for agent in $(AGENTS); do \
+		test -d "$$SMOKE_DIR/$$agent" \
+			|| { echo "ERROR: $$agent workspace did not land at $$SMOKE_DIR/$$agent"; exit 1; }; \
+		test -e "$$SMOKE_DIR/$$agent/shared" \
+			&& { echo "ERROR: $$agent has an inner shared/ — sibling shape requires none"; exit 1; }; \
+	done; \
+	for agent in $(AGENTS_USE_SHARED); do \
+		test -d "$$SMOKE_DIR/shared" \
+			|| { echo "ERROR: sibling shared/ missing at $$SMOKE_DIR/shared (agent $$agent opted in)"; exit 1; }; \
+		grep -rohE '\{\{ *system-doc:[^}]+\}\}' workspaces/$$agent/templates/ 2>/dev/null \
+			| sed -E 's/.*system-doc: *([^ }]+).*/\1/' \
+			| sort -u \
+			| while read directive; do \
+				if [ -e "$$SMOKE_DIR/$$agent/$$directive" ] || [ -e "$$SMOKE_DIR/shared/$$directive" ]; then \
+					: ; \
+				else \
+					echo "ERROR: $$agent directive {{system-doc:$$directive}} does not resolve under workspace OR sibling shared/"; \
+					exit 1; \
+				fi; \
+			done || exit 1; \
+	done; \
+	echo "deploy-smoke: OK — $(words $(AGENTS)) workspaces deployed, layout matches contract"
