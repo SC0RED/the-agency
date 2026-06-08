@@ -117,7 +117,7 @@ Write the result as a single **Approach** section that includes an *Alternatives
 
 {{system-doc:shared/estimation.md}}
 
-Apply the Risk × Intensity matrix to get SP. If SP > 5, propose a breakdown rather than a monolith ticket. Estimation appears at the **top** of the plan comment (even though it's calculated last) — see Step 7.
+Apply the matrix to get SP; if it crosses the ceiling, follow the **Ceiling rule** above. Estimation appears at the **top** of the plan comment (even though it's calculated last) — see Step 7.
 
 ## Step 7 — Post the plan, transition, request review
 

@@ -111,7 +111,7 @@ Write the result as a single **Approach** section that includes an *Alternatives
 
 {{system-doc:shared/estimation.md}}
 
-Risk × Intensity matrix → Story Points. **If SP > 5, propose a breakdown** before submitting the plan. A monolith Story is usually two stories pretending to be one.
+Apply the matrix. A monolith Story is usually two stories pretending to be one — so if the estimate crosses the ceiling, follow the **Ceiling rule** above: surface it, propose a breakdown, and leave the call to a human.
 
 ## Step 6 — Post the plan, transition, request review
 

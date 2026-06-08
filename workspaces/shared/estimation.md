@@ -28,7 +28,9 @@ Score every issue on:
 
 Story Points are a unit of *weight* — a 21 weighs a lot, a 1 is feather-light.
 
-**Ceiling rule:** no issue moves to In Progress with SP > 5. If it weighs more than 5, break it down. The game is how to decompose the boulder into movable rocks, not how to push it harder.
+**Ceiling rule:** no issue moves to In Progress with SP > 5 — for humans and agents alike. The limit was built for humans, but it applies to agents the same way: weight is a property of the work, not the worker.
+
+Crossing the ceiling is a **signal to a human, not an instruction to an agent.** When an estimate lands above 5, an agent surfaces it, **proposes** how it would decompose the boulder into movable rocks, and hands the call — break it down, or proceed as-is — to a human. An agent never decides to split a >5 ticket (or to bulldoze through one) on its own. The game is how to decompose, not how to push harder — but a person makes that move. At or under the ceiling, an agent handles it on its own.
 
 ---
 
@@ -204,7 +206,7 @@ Examples: new API endpoint with a frontend consumer, a new filter applied across
 
 Examples: a character-limit feature spanning Engine schema + Backend validator + Frontend UI + tests at each level; introducing a new state machine to replace accidental procedural code; a schema migration with dual-write.
 
-**If a ticket scores High Intensity, it's probably over the 5-SP ceiling already. Break it down before starting.**
+**If a ticket scores High Intensity, it's probably over the 5-SP ceiling already.** Surface it and hand the break-it-down call to a human before starting — see the Ceiling rule above.
 
 ---
 
