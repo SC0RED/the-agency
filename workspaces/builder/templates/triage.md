@@ -111,36 +111,49 @@ PR.
 
 ## Step 4 — Report back
 
-After all dispatches succeed, call:
+Triage is a no-PR terminal: the work moves on to each specialized
+route's PR, which each fire their own `state="testable"` callback
+when their PR is ready. Triage's job is to tell the operator how
+their request was routed and where to follow it. Use the `failed`
+callback channel — that is the runtime's name for "this run halted
+without a PR; here is the reason in plain language" — with the
+routing decision as the `reason`:
 
 ```
 fire_builder_callback(
-  state="testable",
-  pr_url="{{ replyContext.issue_url }}",
-  summary="<2-4 sentences — what you decomposed the request into and what the operator should expect next>",
-  auto_merge_eligible=false
+  state="failed",
+  reason="<2-4 sentence plain-language routing summary — see contract below. When {{ replyContext.issue_url }} is present, end the reason with: 'Tracking issue: {{ replyContext.issue_url }}'>"
 )
 ```
 
-The `pr_url` field is reused to carry the issue URL here so the relay
-back to Winston (or the healthcheck dashboard) gets the operator-visible
-link. Auto-merge is always `false` for triage — the actual auto-merge
-gate runs in each specialized route's PR.
+The `reason` describes the routing decision in plain operator
+terms: which surfaces you dispatched the request into and what the
+operator should expect to hear back about. 2–4 sentences,
+vocabulary-firewall safe (say "workspace change", "tool addition",
+"runtime fix" instead of "PR", "branch", "commit", "merge", "repo",
+"template", "route"). Winston relays this VERBATIM, so it has to
+stand on its own. Surface the upstream link (when one exists)
+inside the reason text — that keeps the operator-visible link in
+the same field as the explanation.
 
-The `summary` describes the routing decision in plain operator terms:
-which surfaces you dispatched the request into and what the operator
-should expect to hear back about. 2–4 sentences, vocabulary-firewall
-safe (no "PR", "branch", "commit", "merge", "repo", "template",
-"route" — say "workspace change", "tool addition", "runtime fix"
-instead). Winston relays this VERBATIM, so it has to stand on its own.
-
-Good summary (multi-surface dispatch):
+Good reason (multi-surface dispatch):
 
 > "I split this into two pieces — a workspace change so Heather's
 > morning digest filters cancelled clients, and a runtime fix so the
 > calendar lookup that feeds it doesn't retry indefinitely on Google
 > 429s. Each one is being worked on independently and you'll get a
-> separate reply when it's reviewable."
+> separate reply when it's reviewable. Tracking issue:
+> https://github.com/.../issues/123"
+
+If `replyContext.issue_url` is empty (the upstream was a healthcheck
+detector with no GitHub issue), omit the tracking-issue sentence and
+let the routing summary stand on its own.
+
+If operator input is genuinely needed before any surface can be
+dispatched (the spec is ambiguous enough that asking is faster than
+guessing), use `fire_builder_callback(state="question_pending",
+question="<plain-language question>", branch="n/a — triage opens no
+branch", plan_path="n/a")` instead.
 
 If any dispatch fails (5xx, network), call
 `fire_builder_callback(state="failed", reason="dispatch to <surface>
@@ -161,3 +174,9 @@ route failed: <error>")` and end.
 - **Skipping the spec read.** The `request` field is a one-line
   pointer; the actual spec is in the issue body. Read the issue
   before classifying.
+- **Firing `state="testable"` from triage.** `testable` is reserved
+  for "I changed code, here is the PR". Triage opens no PR; the
+  routing decision belongs on the `failed` channel with a positive
+  reason. Overloading `pr_url` to carry the upstream issue URL also
+  breaks the callback validator when the upstream had no issue
+  (e.g. healthcheck detectors).
