@@ -52,6 +52,7 @@ routing:
           - module.python: agency_tools.jira.get_comment
           - module.python: agency_tools.jira.add_comment
           - module.python: agency_tools.jira.create_issue
+          - module.python: agency_tools.mongo.find
 
       - name: code-review
         condition:
