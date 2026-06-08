@@ -115,36 +115,43 @@ After all dispatches succeed, call:
 
 ```
 fire_builder_callback(
-  state="testable",
-  pr_url="{{ replyContext.issue_url }}",
-  summary="<2-4 sentences — what you decomposed the request into and what the operator should expect next>",
-  auto_merge_eligible=false
+  state="failed",
+  reason="<2-4 sentence routing explanation — which surfaces you dispatched into, what the operator should expect to hear back about, and the upstream issue URL where each specialized PR will accumulate as a reference>"
 )
 ```
 
-The `pr_url` field is reused to carry the issue URL here so the relay
-back to Winston (or the healthcheck dashboard) gets the operator-visible
-link. Auto-merge is always `false` for triage — the actual auto-merge
-gate runs in each specialized route's PR.
+Triage's terminal is `failed` because triage opens no PR of its own
+— `testable` is reserved for "I changed code, here is the PR" and
+each specialized dispatch from Step 3 will fire its own `testable`
+callback against its own PR. The operator sees one relay per
+surface, plus this one summarising the routing decision. Carry the
+upstream issue URL inside the `reason` text so the relay still
+links the operator back to the spec.
 
-The `summary` describes the routing decision in plain operator terms:
+The `reason` describes the routing decision in plain operator terms:
 which surfaces you dispatched the request into and what the operator
 should expect to hear back about. 2–4 sentences, vocabulary-firewall
-safe (no "PR", "branch", "commit", "merge", "repo", "template",
-"route" — say "workspace change", "tool addition", "runtime fix"
-instead). Winston relays this VERBATIM, so it has to stand on its own.
+safe — say "workspace change", "tool addition", "runtime fix"
+instead of "PR", "branch", "commit", "merge", "repo", "template",
+"route". Winston relays this VERBATIM, so it has to stand on its own.
 
-Good summary (multi-surface dispatch):
+Good reason (multi-surface dispatch):
 
 > "I split this into two pieces — a workspace change so Heather's
 > morning digest filters cancelled clients, and a runtime fix so the
 > calendar lookup that feeds it doesn't retry indefinitely on Google
 > 429s. Each one is being worked on independently and you'll get a
-> separate reply when it's reviewable."
+> separate reply when each is reviewable. Tracking issue:
+> https://github.com/ctcreel/winston-agency/issues/482."
 
 If any dispatch fails (5xx, network), call
 `fire_builder_callback(state="failed", reason="dispatch to <surface>
 route failed: <error>")` and end.
+
+If the upstream spec genuinely needs an operator decision before
+triage can classify (ambiguous surface, conflicting requirements),
+use `state="question_pending"` per the prompt contract instead of
+guessing.
 
 ## Anti-patterns
 
@@ -161,3 +168,10 @@ route failed: <error>")` and end.
 - **Skipping the spec read.** The `request` field is a one-line
   pointer; the actual spec is in the issue body. Read the issue
   before classifying.
+- **Firing `testable` without a PR.** Triage opens no PR; the
+  callback contract requires a real PR URL for `testable`. Use
+  `failed` with a positive routing reason (Step 4) and let each
+  specialized dispatch fire its own `testable` from its own PR.
+  Overloading `pr_url` with the upstream issue URL is rejected by
+  the validator the moment the upstream issue URL is empty (e.g. a
+  healthcheck-originated dispatch).
