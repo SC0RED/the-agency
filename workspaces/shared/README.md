@@ -2,7 +2,17 @@
 
 Cross-agent prose every engineering agent references — the engineering
 pipeline, anti-patterns, issue-writing guides, jira/github auth, TOOLS.md,
-etc. Templates pull these in with `{{system-doc:shared/<file>.md}}`.
+etc. Templates pull these in with `{{system-doc:<file>.md}}` (no
+`shared/` prefix — see below).
+
+## Directive shape: no `shared/` prefix
+
+Pull a file in with `{{system-doc:anti-patterns.md}}` — the relative
+path is resolved against the workspace directory first, then against
+each entry in `systemDocRoots`. The leading `shared/` segment that the
+previous deploy shape required is no longer needed (the sibling
+directory IS `shared/`; adding the segment again would search
+`../shared/shared/X.md`).
 
 ## Deployment shape: one copy per box
 

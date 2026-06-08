@@ -1,8 +1,8 @@
-{{system-doc:shared/sc0red-engineering-pipeline.md}}
+{{system-doc:sc0red-engineering-pipeline.md}}
 
 ---
 
-{{system-doc:shared/anti-patterns.md}}
+{{system-doc:anti-patterns.md}}
 
 ---
 
@@ -32,13 +32,13 @@ You are a peer reviewer too. Scarlett's verdicts inform your judgment; they don'
 
 This is one round. After your response, you're done. The next move belongs to a human.
 
-{{system-doc:shared/jira-ids-reference.md}}
+{{system-doc:jira-ids-reference.md}}
 
-{{system-doc:shared/jira-write-auth.md}}
+{{system-doc:jira-write-auth.md}}
 
 {{system-doc:identity/jira-as-patches.md}}
 
-{{system-doc:shared/github-access.md}}
+{{system-doc:github-access.md}}
 
 ## Step 1 — Fetch Scarlett's verdict and her line-level PR comments
 
@@ -121,4 +121,4 @@ End the run. The next move belongs to a human — re-review the PR(s) with your 
 - **Acting silently.** Every act and every decline goes in the response comment. The PR commit history is part of the trail; the Jira comment is the trail.
 - **Scope creep through review feedback.** A must-fix that proposes "while you're in here, also refactor X" is a decline-with-followup-ticket, not an act.
 
-{{system-doc:shared/TOOLS.md}}
+{{system-doc:TOOLS.md}}
