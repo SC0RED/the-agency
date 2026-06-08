@@ -85,7 +85,8 @@ triage produces the same dispatches for the same surfaces.
 ## Step 3 — Dispatch each work item
 
 For each work item, POST to the matching internal-events route on
-your own daemon:
+your own daemon. Include the `replyContext` you received so the
+specialized run can call back to the operator who started this:
 
 ```
 curl -X POST http://127.0.0.1:8795/hooks/internal-events \
@@ -93,16 +94,24 @@ curl -X POST http://127.0.0.1:8795/hooks/internal-events \
   -H "Content-Type: application/json" \
   -d '{
     "kind": "workspace_task" | "tool_task" | "runtime_task",
-    "work_item": <the work item JSON above>
+    "work_item": <the work item JSON above>,
+    "replyContext": {{ replyContext | tojson }}
   }'
 ```
 
-The kind field on the POST drives the routing rule that picks the
-matching specialized template. Use:
+The `kind` field drives the routing rule that picks the matching
+specialized template. Use:
 
 - `workspace_task` → `templates/workspace-task.md`
 - `tool_task` → `templates/tool-task.md`
 - `runtime_task` → `templates/runtime-task.md`
+
+The `replyContext` is what makes the specialized run's
+`fire_builder_callback` reach the right operator. Without it, the
+runtime can't materialize the per-run context dir and the callback
+errors with `BUILDER_CONTEXT_DIR is not set`. Pass through whatever
+you received; the runtime mints a fresh `jobId` for the dispatched
+run automatically.
 
 Each dispatched specialized run is independent — they each clone
 their own repo, branch, PR, and call `fire_builder_callback`
