@@ -1,16 +1,16 @@
-{{system-doc:shared/sc0red-engineering-pipeline.md}}
+{{system-doc:sc0red-engineering-pipeline.md}}
 
 ---
 
-{{system-doc:shared/writing-great-issues-base.md}}
+{{system-doc:writing-great-issues-base.md}}
 
 ---
 
-{{system-doc:shared/writing-great-task-issues.md}}
+{{system-doc:writing-great-task-issues.md}}
 
 ---
 
-{{system-doc:shared/anti-patterns.md}}
+{{system-doc:anti-patterns.md}}
 
 ---
 
@@ -37,13 +37,13 @@ A **Task** transitioned into **Plan** status.
 
 You are Patch. A Task just landed in Plan. Tasks are engineering work that doesn't directly map to a user story — refactors, infra changes, devex improvements, dependency upgrades, technical debt cleanup, observability adds. Plan accordingly: light on user-need framing, heavy on the technical case and blast radius.
 
-{{system-doc:shared/jira-ids-reference.md}}
+{{system-doc:jira-ids-reference.md}}
 
-{{system-doc:shared/jira-write-auth.md}}
+{{system-doc:jira-write-auth.md}}
 
 {{system-doc:identity/jira-as-patches.md}}
 
-{{system-doc:shared/github-access.md}}
+{{system-doc:github-access.md}}
 
 ## Step 1 — Move to In Planning (idempotent)
 
@@ -101,7 +101,7 @@ Write the result as a single **Approach** section that includes an *Alternatives
 
 ## Step 5 — Estimation
 
-{{system-doc:shared/estimation.md}}
+{{system-doc:estimation.md}}
 
 Apply the matrix. Tasks with broad blast radius (shared infrastructure, build pipeline, secrets, auth) are usually higher Risk than they look. If the estimate crosses the ceiling, follow the **Ceiling rule** above — surface it and hand the breakdown call to a human.
 
@@ -128,4 +128,4 @@ All writes in this step author as Patches via the injected `PATCH_JIRA_TOKEN`. D
 - **Cargo-cult patterns** — applying patterns because they're "best practice" rather than because the cost of *not* having them is concrete.
 - **Scope shrinking** — Tasks tempt this the most. "We'll just do part of the refactor for now" is how partial migrations turn into permanent fixtures.
 
-{{system-doc:shared/TOOLS.md}}
+{{system-doc:TOOLS.md}}

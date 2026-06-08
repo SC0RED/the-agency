@@ -1,16 +1,16 @@
-{{system-doc:shared/sc0red-engineering-pipeline.md}}
+{{system-doc:sc0red-engineering-pipeline.md}}
 
 ---
 
-{{system-doc:shared/writing-great-issues-base.md}}
+{{system-doc:writing-great-issues-base.md}}
 
 ---
 
-{{system-doc:shared/writing-great-bug-issues.md}}
+{{system-doc:writing-great-bug-issues.md}}
 
 ---
 
-{{system-doc:shared/anti-patterns.md}}
+{{system-doc:anti-patterns.md}}
 
 ---
 
@@ -37,13 +37,13 @@ A **Bug** transitioned into **Plan** status.
 
 You are Patch. A bug just landed in Plan. Follow the Plan-phase workflow from the engineering pipeline, with the Bug-specific emphasis from the Writing-Great-Jira-Issues protocol.
 
-{{system-doc:shared/jira-ids-reference.md}}
+{{system-doc:jira-ids-reference.md}}
 
-{{system-doc:shared/jira-write-auth.md}}
+{{system-doc:jira-write-auth.md}}
 
 {{system-doc:identity/jira-as-patches.md}}
 
-{{system-doc:shared/github-access.md}}
+{{system-doc:github-access.md}}
 
 ## Step 1 — Move to In Planning (idempotent)
 
@@ -115,7 +115,7 @@ Write the result as a single **Approach** section that includes an *Alternatives
 
 ## Step 6 — Estimation
 
-{{system-doc:shared/estimation.md}}
+{{system-doc:estimation.md}}
 
 Apply the matrix to get SP; if it crosses the ceiling, follow the **Ceiling rule** above. Estimation appears at the **top** of the plan comment (even though it's calculated last) — see Step 7.
 
@@ -144,4 +144,4 @@ The "AI Anti-Patterns" section of the protocol exists because every one of these
 - **Defensive spackle** — never add null checks / try-catch / fallbacks to internal code paths to mask a bug. Surface the bug, fix the source.
 - **Scope shrinking** — implement what was asked, all of it. If scope should be smaller, say so explicitly with reasons.
 
-{{system-doc:shared/TOOLS.md}}
+{{system-doc:TOOLS.md}}

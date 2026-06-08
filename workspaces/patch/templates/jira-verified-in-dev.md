@@ -1,8 +1,8 @@
-{{system-doc:shared/sc0red-engineering-pipeline.md}}
+{{system-doc:sc0red-engineering-pipeline.md}}
 
 ---
 
-{{system-doc:shared/anti-patterns.md}}
+{{system-doc:anti-patterns.md}}
 
 ---
 
@@ -34,13 +34,13 @@ The pattern is:
 
 No code changes. No "while I'm here" cleanup. If something is broken upstream (PR conflicts, CI red on testing, missing promotions), escalate — don't patch around it.
 
-{{system-doc:shared/jira-ids-reference.md}}
+{{system-doc:jira-ids-reference.md}}
 
-{{system-doc:shared/jira-write-auth.md}}
+{{system-doc:jira-write-auth.md}}
 
 {{system-doc:identity/jira-as-patches.md}}
 
-{{system-doc:shared/github-access.md}}
+{{system-doc:github-access.md}}
 
 ## Step 1 — Idempotency guard
 
@@ -118,4 +118,4 @@ Do not verify in the test environment. Do not run smoke tests. Do not transition
 - **Ignoring CI on the promotion PR.** The `testing` branch deploys to test.sc0red.ai. A red PR through that gate ships a broken test environment.
 - **"While I'm here" cleanup.** This template is mechanical. No template tweaks, no script edits, no force-pushes. Anything else is a separate ticket.
 
-{{system-doc:shared/TOOLS.md}}
+{{system-doc:TOOLS.md}}

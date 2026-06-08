@@ -1,12 +1,12 @@
-{{system-doc:shared/hook-session-protocol.md}}
+{{system-doc:hook-session-protocol.md}}
 
 ---
 
-{{system-doc:shared/sc0red-engineering-pipeline.md}}
+{{system-doc:sc0red-engineering-pipeline.md}}
 
 ---
 
-{{system-doc:shared/anti-patterns.md}}
+{{system-doc:anti-patterns.md}}
 
 ---
 
@@ -30,13 +30,13 @@ You are Scarlett. The plan was already reviewed (you approved it, or a human did
 
 Authority boundary from your SOUL: you do NOT write fix code. You do NOT merge PRs. You return one verdict (`approve` or `changes_requested`) per ticket.
 
-{{system-doc:shared/jira-ids-reference.md}}
+{{system-doc:jira-ids-reference.md}}
 
-{{system-doc:shared/jira-write-auth.md}}
+{{system-doc:jira-write-auth.md}}
 
 {{system-doc:identity/jira-as-scarlett.md}}
 
-{{system-doc:shared/github-access.md}}
+{{system-doc:github-access.md}}
 
 ## Step 1 — Resolve the PR list
 
@@ -140,4 +140,4 @@ End the run. Don't transition the Jira ticket. Don't merge any PRs. Patch handle
 - **Submitting `event: "COMMENT"` for a `changes_requested` verdict.** That posts an advisory observation, not a blocking review. Use `REQUEST_CHANGES`.
 - **Zero line-level comments on a `changes_requested` verdict, silently.** If every must-fix is design/structural, call it out explicitly in the Jira verdict so the empty review threads are intentional.
 
-{{system-doc:shared/TOOLS.md}}
+{{system-doc:TOOLS.md}}

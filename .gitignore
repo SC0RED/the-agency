@@ -2,3 +2,4 @@ __pycache__/
 *.pyc
 workspaces/patch/jira-workflow.yaml
 .openclaw/
+.idea/

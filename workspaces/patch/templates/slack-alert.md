@@ -1,16 +1,16 @@
-{{system-doc:shared/hook-session-protocol.md}}
+{{system-doc:hook-session-protocol.md}}
 
 ---
 
-{{system-doc:shared/sc0red-engineering-pipeline.md}}
+{{system-doc:sc0red-engineering-pipeline.md}}
 
 ---
 
-{{system-doc:shared/writing-great-bug-issues.md}}
+{{system-doc:writing-great-bug-issues.md}}
 
 ---
 
-{{system-doc:shared/anti-patterns.md}}
+{{system-doc:anti-patterns.md}}
 
 ---
 
@@ -60,13 +60,13 @@ You are Patch. A pipeline alert fired. Your job:
 
 Identity matters here: every Jira write authors as **Patches** via the injected `PATCH_JIRA_TOKEN`. Every Slack reply authors as the **`patch`** bot via the injected `PATCH_SLACK_TOKEN` (separate from Scarlett's bot).
 
-{{system-doc:shared/jira-ids-reference.md}}
+{{system-doc:jira-ids-reference.md}}
 
-{{system-doc:shared/jira-write-auth.md}}
+{{system-doc:jira-write-auth.md}}
 
 {{system-doc:identity/jira-as-patches.md}}
 
-{{system-doc:shared/github-access.md}}
+{{system-doc:github-access.md}}
 
 ## Step 1 — Identify the failure signature
 
@@ -187,4 +187,4 @@ If the error is `invalid_auth`, the token rotated — surface that and stop.
 - The failure signature suggests an external-party outage.
 - This is the third+ fire of the same signature in 24 hours — duplicate-comment fatigue means the underlying ticket isn't getting prioritized.
 
-{{system-doc:shared/TOOLS.md}}
+{{system-doc:TOOLS.md}}

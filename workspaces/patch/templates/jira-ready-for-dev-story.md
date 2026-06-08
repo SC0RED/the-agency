@@ -1,12 +1,12 @@
-{{system-doc:shared/sc0red-engineering-pipeline.md}}
+{{system-doc:sc0red-engineering-pipeline.md}}
 
 ---
 
-{{system-doc:shared/writing-great-feature-issues.md}}
+{{system-doc:writing-great-feature-issues.md}}
 
 ---
 
-{{system-doc:shared/anti-patterns.md}}
+{{system-doc:anti-patterns.md}}
 
 ---
 
@@ -33,13 +33,13 @@ A **Story** transitioned into **Ready for Development** status — the approved 
 
 You are Patch. The plan has been reviewed and approved. Ship the story exactly as planned, with tests that cover the user-facing acceptance criteria.
 
-{{system-doc:shared/jira-ids-reference.md}}
+{{system-doc:jira-ids-reference.md}}
 
-{{system-doc:shared/jira-write-auth.md}}
+{{system-doc:jira-write-auth.md}}
 
 {{system-doc:identity/jira-as-patches.md}}
 
-{{system-doc:shared/github-access.md}}
+{{system-doc:github-access.md}}
 
 ## Step 1 — Move the board (idempotent)
 
@@ -120,4 +120,4 @@ For each PR:
 - You disagree with reviewer feedback and can't resolve it
 - CI fails for reasons outside your change
 
-{{system-doc:shared/TOOLS.md}}
+{{system-doc:TOOLS.md}}
