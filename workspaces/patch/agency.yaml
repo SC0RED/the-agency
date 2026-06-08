@@ -34,6 +34,17 @@
 #              own webhook secret lives under PATCH_GITHUB_WEBHOOK_SECRET.
 #   - slack  — alert-channel triage. Slack Socket Mode (a websocket Patch opens at
 #              startup), matching Winston — no inbound webhook, so no public ingress.
+
+# Cross-agent shared docs (engineering pipeline, anti-patterns, jira/github
+# auth, etc.) live ONCE per box at `agency-workspaces/shared/`. Declaring
+# that path as an extra system-doc root lets every `{{system-doc:shared/X}}`
+# directive resolve through the sibling instead of forcing the deploy to
+# stamp a copy inside this workspace. The runtime keeps the per-root
+# escape check on each entry — see `openspec/changes/add-system-doc-roots/`
+# in SC0RED/Agency.
+systemDocRoots:
+  - ../shared
+
 providers:
   - name: jira
     routePath: /hooks/jira

@@ -1,4 +1,4 @@
-.PHONY: check-all no-symlinks deploy deploy-all
+.PHONY: check-all no-symlinks deploy deploy-shared deploy-all
 
 # the-agency is a config / template / memory repo with no executable
 # test suite of its own; the clawndom + agency-tools repos each carry
@@ -26,23 +26,34 @@ no-symlinks:
 	fi; \
 	echo "no-symlinks: OK — no symlinks under workspaces/"
 
-# Deploy an agent's workspace to its box, then materialize the shared
-# docs as a REAL directory inside it — never a symlink (see
-# workspaces/shared/README.md).
+# Deploy an agent's workspace to its box. Shared docs live ONCE per box
+# as a sibling of every agent that opted in via `systemDocRoots:
+# [../shared]` in its `agency.yaml` — see
+# `openspec/changes/add-system-doc-roots/` in SC0RED/Agency and
+# `workspaces/shared/README.md` for the contract.
 #
 #   make deploy-all              # every agent to its box (use this)
 #   make deploy-all DRY_RUN=1    # preview every agent, no writes
 #   make deploy AGENT=patch      # one agent; host resolved from the map
 #   make deploy AGENT=builder HOST=winston-agent   # explicit host override
+#   make deploy-shared HOST=clawndom               # just the sibling shared dir
 #
 # The fleet's knowledge of WHICH AGENT LIVES WHERE belongs here, not in an
 # operator's head — that memory dependency is what broke the box. To add an
-# agent: drop its workspace under workspaces/, add it to AGENTS, and map it
-# to a host below. `make deploy-all` then carries it automatically.
+# agent: drop its workspace under workspaces/, add it to AGENTS, map it
+# to a host below, and (if it references `{{system-doc:shared/...}}`)
+# include it in AGENTS_USE_SHARED. `make deploy-all` carries it automatically.
 AGENTS := patch scarlett builder
 HOST_patch    := clawndom
 HOST_scarlett := clawndom
 HOST_builder  := winston-agent
+
+# Agents whose templates reference shared docs (`{{system-doc:shared/X}}`).
+# Each such agent's `agency.yaml` MUST declare `systemDocRoots: [../shared]`
+# so the runtime knows to consult the sibling. `make deploy AGENT=<x>` for
+# any agent in this list pulls the sibling shared dir to that agent's box
+# in the same pass.
+AGENTS_USE_SHARED := patch scarlett
 
 # HOST defaults to the agent's mapped host; pass HOST=... to override (or
 # HOST= empty + DEST=/tmp/... for a local dry-run with no ssh).
@@ -54,6 +65,7 @@ RSYNC_EXCLUDES := --exclude='.DS_Store' --exclude='._*' --exclude='.AppleDouble'
 	--exclude='__pycache__/' --exclude='*.pyc' --exclude='.openclaw/'
 RSYNC := rsync -a$(if $(DRY_RUN),n)v
 TARGET = $(if $(HOST),$(HOST):)$(DEST)/$(AGENT)
+SHARED_TARGET = $(if $(HOST),$(HOST):)$(DEST)/shared
 
 # Deploy every agent to its mapped host. One command, no per-agent memory.
 deploy-all:
@@ -70,12 +82,26 @@ deploy:
 		exit 1; \
 	fi
 	@echo "==> deploying $(AGENT) to $(TARGET)$(if $(DRY_RUN), [DRY RUN])"
-	# Agent workspace: --delete keeps the box clean, but exclude shared/ so
-	# this pass never touches the shared docs.
-	$(RSYNC) --delete $(RSYNC_EXCLUDES) --exclude='shared/' \
+	# Agent workspace only — no inner shared/ for agents that consume the
+	# sibling. --delete keeps the box clean of stale templates.
+	$(RSYNC) --delete $(RSYNC_EXCLUDES) \
 		workspaces/$(AGENT)/ $(TARGET)/
-	# Shared docs: copied in as a real directory. NO --delete here, so a
-	# partial deploy can never blow away docs that aren't in this manifest.
-	$(RSYNC) $(RSYNC_EXCLUDES) \
-		workspaces/shared/ $(TARGET)/shared/
-	@echo "==> done: $(AGENT) (shared/ materialized as a real directory)"
+	# Pull the sibling shared dir for agents that opted into the runtime
+	# `systemDocRoots: [../shared]` resolution. Idempotent — deploying
+	# patch and scarlett to the same box stages shared/ once.
+	@if echo " $(AGENTS_USE_SHARED) " | grep -q " $(AGENT) "; then \
+		$(MAKE) --no-print-directory deploy-shared HOST=$(HOST) DEST=$(DEST) DRY_RUN=$(DRY_RUN); \
+	fi
+	@echo "==> done: $(AGENT)"
+
+# Sync the sibling `shared/` directory to the box (one copy per host,
+# consumed by every agent on that host whose yaml lists `../shared` in
+# `systemDocRoots`). NO --delete: a partial deploy can never blow away
+# docs that aren't in this manifest.
+deploy-shared:
+	@if [ -z "$(HOST)" ] && [ "$(DEST)" = "$(DEFAULT_DEST)" ]; then \
+		echo "usage: make deploy-shared HOST=<host>   (or DEST=/tmp/... for local dry-run)"; \
+		exit 1; \
+	fi
+	@echo "==> staging shared/ at $(SHARED_TARGET)$(if $(DRY_RUN), [DRY RUN])"
+	$(RSYNC) $(RSYNC_EXCLUDES) workspaces/shared/ $(SHARED_TARGET)/

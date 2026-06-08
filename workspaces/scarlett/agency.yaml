@@ -15,6 +15,16 @@
 # patterns belong to webhook-driven agents like Patch. Scarlett is purely
 # request/response.
 
+# Cross-agent shared docs (engineering pipeline, anti-patterns, jira/github
+# auth, etc.) live ONCE per box at `agency-workspaces/shared/`. Declaring
+# that path as an extra system-doc root lets every `{{system-doc:shared/X}}`
+# directive resolve through the sibling instead of forcing the deploy to
+# stamp a copy inside this workspace. The runtime keeps the per-root
+# escape check on each entry — see `openspec/changes/add-system-doc-roots/`
+# in SC0RED/Agency.
+systemDocRoots:
+  - ../shared
+
 # Memory namespace declaration — referenced by per-rule `memory.namespace`
 # below. One namespace shared across plan-review + code-review so
 # anti-patterns Scarlett flagged at plan time are recallable at PR time

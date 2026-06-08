@@ -2,19 +2,37 @@
 
 Cross-agent prose every engineering agent references — the engineering
 pipeline, anti-patterns, issue-writing guides, jira/github auth, TOOLS.md,
-etc. Templates pull these in with `{{system-doc:shared/<file>.md}}`, which
-resolves relative to the agent's own workspace root.
+etc. Templates pull these in with `{{system-doc:shared/<file>.md}}`.
 
-## Deploy as a real directory — never a symlink
+## Deployment shape: one copy per box
 
-This is the canonical copy. At deploy time it is **copied into each agent's
-workspace as a real directory** (`agency-workspaces/<agent>/shared/`), so
-every workspace sees the docs at `shared/` without a second copy in source.
+This is the canonical copy. At deploy time it is **rsynced once per box**
+to `agency-workspaces/shared/`, as a sibling of every agent on that box.
+Each consuming agent declares the sibling as an extra system-doc root in
+its `agency.yaml`:
 
-**Do not symlink.** The old pattern (`agency-workspaces/<agent>/shared ->
-../shared`) is gone. The Agency runtime enforces a symlink-escape check on
-workspace reads: any symlink whose target resolves outside the workspace
-root is rejected —
+```yaml
+systemDocRoots:
+  - ../shared
+```
+
+The Agency runtime resolves `{{system-doc:shared/<file>.md}}` against
+the workspace directory first, and falls back to `../shared/` for misses.
+The per-root escape check still runs against each root independently —
+see `openspec/changes/add-system-doc-roots/` in SC0RED/Agency for the
+contract.
+
+The per-agent inner `shared/` copy that the prior deploy pattern stamped
+into every workspace is **gone**: shared docs live exactly once on disk
+per box. On clawndom that saves ~140 KB per consuming agent; the bigger
+win is that an update to a shared doc is visible to every consumer the
+moment one rsync completes, with no per-agent drift risk.
+
+## Do not symlink
+
+The old pattern (`agency-workspaces/<agent>/shared -> ../shared`) is
+gone. The Agency runtime enforces a symlink-escape check on workspace
+reads:
 
 ```
 ServiceError { kind: Configuration,
@@ -22,17 +40,20 @@ ServiceError { kind: Configuration,
            resolves outside the configured root (symlink escape?)" }
 ```
 
-That rejection is a **feature** — it stops a planted symlink in a template
-from reading `/etc/passwd`. A `shared -> ../shared` symlink escapes the
-workspace root and gets rejected, so the agent fails to boot.
+A `shared -> ../shared` symlink escapes the workspace root and gets
+rejected, so the agent fails to boot. Configure `systemDocRoots`
+instead — it's the supported shape, and the per-root escape check keeps
+its security guarantee in place.
 
 ## How it gets there
 
-`make deploy-all` rsyncs every agent's workspace to its mapped host, then
-copies this directory into each as a real `shared/`. The agent→host map
-lives in the repo-root `Makefile` (not in anyone's head), so adding an
-agent is a one-line edit, not a thing to remember. `make deploy AGENT=<x>`
-does a single agent; `DRY_RUN=1` previews without writing.
+`make deploy-all` rsyncs every agent's workspace to its mapped host. For
+every host where at least one deployed agent appears in the Makefile's
+`AGENTS_USE_SHARED` list, the same pass also rsyncs this directory to
+that host as a sibling (idempotent — patch and scarlett share one copy
+on clawndom). `make deploy AGENT=<x>` does a single agent and pulls
+shared if that agent opted in. `make deploy-shared HOST=<host>` syncs
+just the sibling.
 
 Two guards keep symlinks from coming back:
 
