@@ -1,0 +1,20 @@
+name: No workspace symlinks
+
+# Shared docs are deployed as a REAL directory inside each agent's
+# workspace (see workspaces/shared/README.md). The Agency runtime rejects
+# any symlink whose target resolves outside the workspace root, so a
+# committed `shared -> ../shared` symlink breaks the agent on boot. This
+# guard fails the build if anyone reintroduces a symlink under workspaces/.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  no-symlinks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject symlinks under workspaces/
+        run: make no-symlinks
