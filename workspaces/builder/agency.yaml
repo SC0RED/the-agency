@@ -37,6 +37,11 @@ routing:
         messageTemplate: templates/triage.md
         tools:
           - module.python: agency_tools.clawndom.fire_builder_callback
+          # SPE-Builder-visibility — triage uses search_prs at Step 0 to
+          # check "have I already shipped a PR for this exception?"
+          # Querying GitHub directly avoids a parallel memory store and
+          # keeps the source of truth at the source.
+          - module.python: agency_tools.github.search_prs
 
   builder-internal-events:
     rules:

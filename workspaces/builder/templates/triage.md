@@ -22,6 +22,42 @@ replyContext.idempotency_key:  {{ replyContext.idempotency_key }}
 The `request` field is a pointer to the issue. The real spec body
 lives in the GitHub issue at `replyContext.issue_url`.
 
+## Step 0 — Have you already shipped a PR for this?
+
+Before decomposing, check whether you've already addressed this same
+work. The exception-watcher dedups within its window, but window
+boundaries do expire and the same fingerprint can re-fire — opening a
+parallel fix wastes work and pollutes the PR queue.
+
+Call `github_search_prs` with a query that targets the distinctive
+identifier from the spec. For exception-watcher dispatches the
+fingerprint is the strongest signal:
+
+```
+github_search_prs(query='"{{ replyContext.fingerprint }}" org:SC0RED')
+```
+
+For operator-initiated dispatches without a fingerprint, search on the
+distinctive phrase from the spec:
+
+```
+github_search_prs(query='"<verbatim tool name or error message>" org:SC0RED is:closed')
+```
+
+If `total_count > 0` and any item's body references the same
+fingerprint or describes the same symptom, short-circuit:
+
+```
+fire_builder_callback(
+  state="failed",
+  reason="Already shipped — see <html_url>. <one-line of how the prior PR addresses this>."
+)
+```
+
+Then end the run. Don't decompose. Don't dispatch.
+
+If no prior PR matches, continue to Step 1.
+
 ## Step 1 — Read the spec
 
 Call:
