@@ -11,12 +11,12 @@ unit tests.
 ```
 kind:                       tool_task
 work_item.surface:          tool
-work_item.summary:          {{ work_item.summary }}
-work_item.detail:           {{ work_item.detail }}
-work_item.issue_url:        {{ work_item.issue_url }}
-work_item.kind:             {{ work_item.kind }}
-work_item.severity:         {{ work_item.severity }}
-work_item.idempotency_key:  {{ work_item.idempotency_key }}
+work_item.summary:          {{ work_item.summary | default("") }}
+work_item.detail:           {{ work_item.detail | default("") }}
+work_item.issue_url:        {{ work_item.issue_url | default("") }}
+work_item.kind:             {{ work_item.kind | default("") }}
+work_item.severity:         {{ work_item.severity | default("") }}
+work_item.idempotency_key:  {{ work_item.idempotency_key | default("") }}
 ```
 
 ## Step 1 — Authenticate first, then clone into cwd
@@ -38,7 +38,7 @@ cwd is a multi-GB leak).
 ## Step 2 — Read the spec + the closest sibling tool
 
 ```
-gh issue view {{ work_item.issue_url }} --json body --jq .body
+gh issue view {{ work_item.issue_url | default("") }} --json body --jq .body
 ```
 
 Then pick the closest existing tool to your target shape and read it
@@ -148,7 +148,7 @@ registry's `codeOwners` reviewer.
 ```
 gh pr create --draft \
   --title "feat(<category>): <one-line summary>" \
-  --body "Refs {{ work_item.issue_url }}
+  --body "Refs {{ work_item.issue_url | default("") }}
 
 ## Summary
 

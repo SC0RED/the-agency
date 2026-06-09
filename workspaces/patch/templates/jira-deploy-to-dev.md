@@ -8,16 +8,16 @@
 
 # Current Trigger
 
-A **{{ issue.fields.issuetype.name }}** transitioned into **Deploy to development** status — a human reviewed the open PR(s) in Code Review, approved the change, and moved the ticket here meaning *ship it to development*.
+A **{{ issue.fields.issuetype.name | default("") }}** transitioned into **Deploy to development** status — a human reviewed the open PR(s) in Code Review, approved the change, and moved the ticket here meaning *ship it to development*.
 
 | Field | Value |
 | --- | --- |
-| Ticket | {{ issue.key }} — {{ issue.fields.summary }} |
+| Ticket | {{ issue.key | default("") }} — {{ issue.fields.summary | default("") }} |
 | Reporter | {{ issue.fields.reporter.displayName | default("(unknown)") }} |
 | Assignee | {{ issue.fields.assignee.displayName | default("(unassigned)") }} |
 | Priority | {{ issue.fields.priority.name | default("(none)") }} |
-| Status | {{ issue.fields.status.name }} |
-| Issue type | {{ issue.fields.issuetype.name }} |
+| Status | {{ issue.fields.status.name | default("") }} |
+| Issue type | {{ issue.fields.issuetype.name | default("") }} |
 
 ---
 
@@ -42,7 +42,7 @@ This stage is for shipping the approved diff, not for revisiting it. No refactor
 
 ## Step 1 — Idempotency guard
 
-BullMQ retries this whole template on failure (up to 5 attempts). Call `jira_get_issue` for `{{ issue.key }}` with `fields: "status"`.
+BullMQ retries this whole template on failure (up to 5 attempts). Call `jira_get_issue` for `{{ issue.key | default("") }}` with `fields: "status"`.
 
 - If status is **Deploy to development** → normal start, continue.
 - If status is **Deployed to Development** → a prior attempt completed. Call `jira_add_comment` saying "retry observed this ticket already past Deploy to development — assuming previous run completed", **stop**.
@@ -51,9 +51,9 @@ BullMQ retries this whole template on failure (up to 5 attempts). Call `jira_get
 
 ## Step 2 — Find the PRs for this ticket
 
-Search each of the three repos for open PRs whose title contains `{{ issue.key }}`. Call `github_pr_list` once per repo (`SC0RED/assessment_engine`, `SC0RED/Platform-Backend`, `SC0RED/Platform-Frontend`) with `state: "open"`, `base: "development"`. Filter the response to PRs whose title contains `{{ issue.key }}`.
+Search each of the three repos for open PRs whose title contains `{{ issue.key | default("") }}`. Call `github_pr_list` once per repo (`SC0RED/assessment_engine`, `SC0RED/Platform-Backend`, `SC0RED/Platform-Frontend`) with `state: "open"`, `base: "development"`. Filter the response to PRs whose title contains `{{ issue.key | default("") }}`.
 
-Expected: one PR per repo that was changed by this fix, all targeting `development`. If zero PRs match across all three repos, **stop** — `jira_transition_issue` (Blocked, `transition_id: "4"`) + `jira_add_comment` saying "no open PRs found matching {{ issue.key }}; can't deploy what doesn't exist."
+Expected: one PR per repo that was changed by this fix, all targeting `development`. If zero PRs match across all three repos, **stop** — `jira_transition_issue` (Blocked, `transition_id: "4"`) + `jira_add_comment` saying "no open PRs found matching {{ issue.key | default("") }}; can't deploy what doesn't exist."
 
 ## Step 3 — Confirm CI is green on every PR
 
@@ -111,9 +111,9 @@ If a merge fails for a non-idempotent reason (branch out of date, conflict appea
 
 Compose one ADF body summarising what shipped. Include each merged PR's URL and the merge commit SHA (from the `github_pr_merge` response).
 
-Heading: `🩹 Deployed to development — {{ issue.key }}`. Body: the list of merged PRs + a note that the development environment auto-deploys on push.
+Heading: `🩹 Deployed to development — {{ issue.key | default("") }}`. Body: the list of merged PRs + a note that the development environment auto-deploys on push.
 
-Call `jira_add_comment` with `key: "{{ issue.key }}"` and the ADF body.
+Call `jira_add_comment` with `key: "{{ issue.key | default("") }}"` and the ADF body.
 
 ## Step 7 — Transition to Deployed to Development
 

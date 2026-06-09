@@ -12,12 +12,12 @@ it ships without review.
 ```
 kind:                       workspace_task
 work_item.surface:          workspace
-work_item.summary:          {{ work_item.summary }}
-work_item.detail:           {{ work_item.detail }}
-work_item.issue_url:        {{ work_item.issue_url }}
-work_item.kind:             {{ work_item.kind }}
-work_item.severity:         {{ work_item.severity }}
-work_item.idempotency_key:  {{ work_item.idempotency_key }}
+work_item.summary:          {{ work_item.summary | default("") }}
+work_item.detail:           {{ work_item.detail | default("") }}
+work_item.issue_url:        {{ work_item.issue_url | default("") }}
+work_item.kind:             {{ work_item.kind | default("") }}
+work_item.severity:         {{ work_item.severity | default("") }}
+work_item.idempotency_key:  {{ work_item.idempotency_key | default("") }}
 ```
 
 Resolve the dispatching agent against the registry. For Winston-
@@ -49,7 +49,7 @@ detects this).
 ## Step 2 — Read the issue + existing code
 
 ```
-gh issue view {{ work_item.issue_url }} --json body --jq .body
+gh issue view {{ work_item.issue_url | default("") }} --json body --jq .body
 ```
 
 The full spec is there. Don't rely on `work_item.detail` alone —
@@ -164,7 +164,7 @@ not in this template.
 ```
 gh pr create --draft \
   --title "<kebab-case-summary>" \
-  --body "Refs {{ work_item.issue_url }}
+  --body "Refs {{ work_item.issue_url | default("") }}
 
 <plan body, decisions log, open questions>" \
   --base <baseRef> --head <branch>

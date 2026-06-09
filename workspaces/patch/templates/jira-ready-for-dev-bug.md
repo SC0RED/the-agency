@@ -16,12 +16,12 @@ A **Bug** transitioned into **Ready for Development** status — the approved pl
 
 | Field | Value |
 | --- | --- |
-| Ticket | {{ issue.key }} — {{ issue.fields.summary }} |
+| Ticket | {{ issue.key | default("") }} — {{ issue.fields.summary | default("") }} |
 | Reporter | {{ issue.fields.reporter.displayName | default("(unknown)") }} |
 | Assignee | {{ issue.fields.assignee.displayName | default("(unassigned)") }} |
 | Priority | {{ issue.fields.priority.name | default("(none)") }} |
-| Status | {{ issue.fields.status.name }} |
-| Issue type | {{ issue.fields.issuetype.name }} |
+| Status | {{ issue.fields.status.name | default("") }} |
+| Issue type | {{ issue.fields.issuetype.name | default("") }} |
 
 **Description**
 
@@ -43,7 +43,7 @@ You are Patch. The plan has been reviewed and approved (otherwise this ticket wo
 
 ## Step 1 — Move the board (idempotent)
 
-BullMQ retries this whole template on failure (up to 5 attempts), so Step 1 can run more than once on the same ticket. Call `jira_get_issue` for `{{ issue.key }}` with `fields: "status"` first.
+BullMQ retries this whole template on failure (up to 5 attempts), so Step 1 can run more than once on the same ticket. Call `jira_get_issue` for `{{ issue.key | default("") }}` with `fields: "status"` first.
 
 - If status is **Ready for Development** → call `jira_transition_issue` with `transition_id: "37"` (Start Development), continue to Step 2.
 - If status is **In Development** → a prior attempt already made this move. Continue to Step 2.
@@ -69,8 +69,8 @@ If the bug is genuinely untestable in isolation, restructure the code so it isn'
 Git operations remain shell-driven (no git tools in agency-tools yet). The GitHub App install token is the operator-provided `GH_TOKEN` env var; refresh it per `github-access.md` if your run might exceed its 1h TTL.
 
 1. Generate / refresh the GitHub App token and clone the target repo into `/tmp` per *GitHub access* above.
-2. **Check for prior work first.** A previous run of yours (interrupted by quota wall, max-turns, or a service restart) may have already pushed a branch and made commits for this ticket. Resuming from there beats redoing it. Use `git ls-remote --heads origin "fix/{{ issue.key }}-*"` to find a prior branch; if present, check it out and inspect `git log --oneline development..HEAD`. If green + diff matches the plan: skip ahead to Step 6 (open PR if not already up). DO NOT redo work that's already committed.
-3. Otherwise: `git checkout development && git pull --ff-only && git checkout -b fix/{{ issue.key }}-<short-slug>`.
+2. **Check for prior work first.** A previous run of yours (interrupted by quota wall, max-turns, or a service restart) may have already pushed a branch and made commits for this ticket. Resuming from there beats redoing it. Use `git ls-remote --heads origin "fix/{{ issue.key | default("") }}-*"` to find a prior branch; if present, check it out and inspect `git log --oneline development..HEAD`. If green + diff matches the plan: skip ahead to Step 6 (open PR if not already up). DO NOT redo work that's already committed.
+3. Otherwise: `git checkout development && git pull --ff-only && git checkout -b fix/{{ issue.key | default("") }}-<short-slug>`.
 4. Implement the approved plan directly. Write the regression test. Follow existing patterns. No scope creep, no extra refactors.
 5. Review the diff yourself before pushing. Diff matches plan? Tests run? No surprises?
 
@@ -84,8 +84,8 @@ Run `make check-all` in the repo root. All three repos expose this uniform targe
 
 ## Step 6 — Open PR + Jira link
 
-1. `git push -u origin fix/{{ issue.key }}-...`
-2. Open the PR if not already up. Call `github_pr_list` with `repo: "SC0RED/<repo-name>"`, `head: "<repo-owner>:fix/{{ issue.key }}-..."`, `state: "open"`. If empty, call `github_pr_create` with the title `<ticket-key>: <one-line summary>`, base `development`, head `<branch>`, and a body that links the Jira ticket and references the approved plan comment.
+1. `git push -u origin fix/{{ issue.key | default("") }}-...`
+2. Open the PR if not already up. Call `github_pr_list` with `repo: "SC0RED/<repo-name>"`, `head: "<repo-owner>:fix/{{ issue.key | default("") }}-..."`, `state: "open"`. If empty, call `github_pr_create` with the title `<ticket-key>: <one-line summary>`, base `development`, head `<branch>`, and a body that links the Jira ticket and references the approved plan comment.
 3. Capture `<PR_URL>` from the create-or-list response (`html_url` field).
 4. Post the PR link as a Jira comment via `jira_add_comment`. Before posting, call `jira_get_issue` and scan recent comments for an existing Patches-authored comment containing the PR URL — skip if a prior run already posted it.
 
@@ -108,7 +108,7 @@ Run this only once the PR is green and CodeRabbit is satisfied.
 1. **Dispatch a `code-review` task to Scarlett.** Call `dispatch_task` with:
    - `agent`: `"scarlett"`
    - `task_type`: `"code-review"`
-   - `context`: `{ticketKey: "{{ issue.key }}", ticketTitle: "{{ issue.fields.summary }}", ticketType: "{{ issue.fields.issuetype.name }}", prUrls: [<PR URL(s) you opened>]}`
+   - `context`: `{ticketKey: "{{ issue.key | default("") }}", ticketTitle: "{{ issue.fields.summary | default("") }}", ticketType: "{{ issue.fields.issuetype.name | default("") }}", prUrls: [<PR URL(s) you opened>]}`
 
    Fire-and-forget. On `ClawndomAPIError`, post a single fallback `jira_add_comment` noting Scarlett dispatch failed.
 

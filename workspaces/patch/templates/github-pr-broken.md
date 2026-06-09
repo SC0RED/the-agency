@@ -12,10 +12,10 @@ A GitHub `check_suite.completed` webhook fired with `conclusion: failure` on a P
 
 | Field | Value |
 | --- | --- |
-| Repo | {{ repository.full_name }} |
-| Check suite head SHA | {{ check_suite.head_sha }} |
-| Conclusion | {{ check_suite.conclusion }} |
-| App | {{ check_suite.app.slug }} |
+| Repo | {{ repository.full_name | default("") }} |
+| Check suite head SHA | {{ check_suite.head_sha | default("") }} |
+| Conclusion | {{ check_suite.conclusion | default("") }} |
+| App | {{ check_suite.app.slug | default("") }} |
 | PR | {{ check_suite.pull_requests[0].number | default('(no PR association)') }} |
 
 If `check_suite.pull_requests` is empty, **stop** — this is a check on a non-PR ref (push to a branch, scheduled run, etc.). Not your job. End the run.
@@ -39,9 +39,9 @@ You are Patch. A PR you (or your past self) opened has failed CI after the run t
 The webhook payload names the repo and a list of PRs. There's almost always one PR; if there are multiple, handle each independently in subsequent runs (the trigger fires per check_suite, which is per-head-SHA).
 
 Set:
-- `repo` = `{{ repository.full_name }}`
-- `pull_number` = `{{ check_suite.pull_requests[0].number }}`
-- `head_sha` = `{{ check_suite.head_sha }}`
+- `repo` = `{{ repository.full_name | default("") }}`
+- `pull_number` = `{{ check_suite.pull_requests[0].number | default("") }}`
+- `head_sha` = `{{ check_suite.head_sha | default("") }}`
 
 Call `github_pr_view` for this PR. Read `title`, `head.ref`, `state`, `mergeable_state`.
 
