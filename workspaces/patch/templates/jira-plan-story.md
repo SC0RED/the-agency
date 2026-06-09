@@ -20,12 +20,12 @@ A **Story** transitioned into **Plan** status.
 
 | Field | Value |
 | --- | --- |
-| Ticket | {{ issue.key }} — {{ issue.fields.summary }} |
+| Ticket | {{ issue.key | default("") }} — {{ issue.fields.summary | default("") }} |
 | Reporter | {{ issue.fields.reporter.displayName | default("(unknown)") }} |
 | Assignee | {{ issue.fields.assignee.displayName | default("(unassigned)") }} |
 | Priority | {{ issue.fields.priority.name | default("(none)") }} |
-| Status | {{ issue.fields.status.name }} |
-| Issue type | {{ issue.fields.issuetype.name }} |
+| Status | {{ issue.fields.status.name | default("") }} |
+| Issue type | {{ issue.fields.issuetype.name | default("") }} |
 
 **Description**
 
@@ -49,7 +49,7 @@ You are Patch. A Story just landed in Plan. Stories carry user-facing intent —
 
 BullMQ retries this whole template up to 5 times, so Step 1 can run more than once on the same ticket — handle every status case explicitly.
 
-Call `jira_get_issue` for `{{ issue.key }}` with `fields: "status"`, then:
+Call `jira_get_issue` for `{{ issue.key | default("") }}` with `fields: "status"`, then:
 
 - If status is **Plan** → call `jira_transition_issue` with `transition_id: "14"` (`Start Planning`), continue.
 - If status is **In Planning** → a prior attempt already made this move. Continue.
@@ -117,7 +117,7 @@ Apply the matrix. A monolith Story is usually two stories pretending to be one �
 
 All writes in this step author as Patches via the injected `PATCH_JIRA_TOKEN`. Do NOT use `mcp__atlassian__addCommentToJiraIssue`, `editJiraIssue`, or `transitionJiraIssue` — those author as Chris.
 
-1. **Post the plan as a Jira comment.** Build an ADF body using the canonical Story section structure from `writing-great-feature-issues.md`, in this order: **Estimation** (Risk / Intensity / SP / Velocity Impact, top of the body) · **Job to be Done** (*When [context], the user wants to [motivation], so they can [outcome]*) · **Scope** (in / out) · **Current State** · **Approach** (with *Alternatives Considered* from Step 4) · **Acceptance Criteria** (Given/When/Then) · **Definition of Done** · **Production Signal** (telemetry / metric / observation that confirms it works post-deploy). Add **Rollback** *only* if the change is irreversible. Call `jira_add_comment` with `key: "{{ issue.key }}"` and the ADF body. **Capture the response's `id`** — Scarlett's review needs it.
+1. **Post the plan as a Jira comment.** Build an ADF body using the canonical Story section structure from `writing-great-feature-issues.md`, in this order: **Estimation** (Risk / Intensity / SP / Velocity Impact, top of the body) · **Job to be Done** (*When [context], the user wants to [motivation], so they can [outcome]*) · **Scope** (in / out) · **Current State** · **Approach** (with *Alternatives Considered* from Step 4) · **Acceptance Criteria** (Given/When/Then) · **Definition of Done** · **Production Signal** (telemetry / metric / observation that confirms it works post-deploy). Add **Rollback** *only* if the change is irreversible. Call `jira_add_comment` with `key: "{{ issue.key | default("") }}"` and the ADF body. **Capture the response's `id`** — Scarlett's review needs it.
 
 2. **Update custom fields.** Call `jira_update_issue` with `fields: {<risk>, <intensity>, <velocity_impact>}` using the field keys and option IDs from the Jira IDs reference.
 
@@ -126,7 +126,7 @@ All writes in this step author as Patches via the injected `PATCH_JIRA_TOKEN`. D
 4. **Dispatch a `plan-review` task to Scarlett.** Call `dispatch_task` with:
    - `agent`: `"scarlett"`
    - `task_type`: `"plan-review"`
-   - `context`: `{ticketKey: "{{ issue.key }}", ticketTitle: "{{ issue.fields.summary }}", ticketType: "{{ issue.fields.issuetype.name }}", planCommentId: "<id captured in step 6.1's jira_add_comment response>"}`
+   - `context`: `{ticketKey: "{{ issue.key | default("") }}", ticketTitle: "{{ issue.fields.summary | default("") }}", ticketType: "{{ issue.fields.issuetype.name | default("") }}", planCommentId: "<id captured in step 6.1's jira_add_comment response>"}`
 
    Fire-and-forget. On `ClawndomAPIError`, post a single fallback `jira_add_comment` noting Scarlett dispatch failed.
 

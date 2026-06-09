@@ -13,10 +13,10 @@ You do not write code in this template. The specialized templates
 ```
 agentName:           {{ agentName }}
 request:             {{ request }}
-replyContext.issue_url:        {{ replyContext.issue_url }}
-replyContext.kind:             {{ replyContext.kind }}
-replyContext.severity:         {{ replyContext.severity }}
-replyContext.idempotency_key:  {{ replyContext.idempotency_key }}
+replyContext.issue_url:        {{ replyContext.issue_url | default("") }}
+replyContext.kind:             {{ replyContext.kind | default("") }}
+replyContext.severity:         {{ replyContext.severity | default("") }}
+replyContext.idempotency_key:  {{ replyContext.idempotency_key | default("") }}
 ```
 
 The `request` field is a pointer to the issue. The real spec body
@@ -34,7 +34,7 @@ identifier from the spec. For exception-watcher dispatches the
 fingerprint is the strongest signal:
 
 ```
-github_search_prs(query='"{{ replyContext.fingerprint }}" org:SC0RED')
+github_search_prs(query='"{{ replyContext.fingerprint | default("") }}" org:SC0RED')
 ```
 
 For operator-initiated dispatches without a fingerprint, search on the
@@ -63,7 +63,7 @@ If no prior PR matches, continue to Step 1.
 Call:
 
 ```
-gh issue view {{ replyContext.issue_url }} --json title,body,labels --jq '{title, body, labels: [.labels[].name]}'
+gh issue view {{ replyContext.issue_url | default("") }} --json title,body,labels --jq '{title, body, labels: [.labels[].name]}'
 ```
 
 Parse the body. The spec follows `writing-great-jira-issues` shape:
@@ -108,10 +108,10 @@ For each surface that the spec touches, produce one work item:
   "surface": "workspace" | "tool" | "runtime",
   "summary": "<one-line title for the work item, max 80 chars>",
   "detail": "<2-5 sentence description of what THIS surface owns in this spec>",
-  "issue_url": "{{ replyContext.issue_url }}",
-  "kind": "{{ replyContext.kind }}",
-  "severity": "{{ replyContext.severity }}",
-  "idempotency_key": "{{ replyContext.idempotency_key }}:<surface>"
+  "issue_url": "{{ replyContext.issue_url | default("") }}",
+  "kind": "{{ replyContext.kind | default("") }}",
+  "severity": "{{ replyContext.severity | default("") }}",
+  "idempotency_key": "{{ replyContext.idempotency_key | default("") }}:<surface>"
 }
 ```
 
@@ -161,7 +161,7 @@ After all dispatches succeed, call:
 ```
 fire_builder_callback(
   state="testable",
-  pr_url="{{ replyContext.issue_url }}",
+  pr_url="{{ replyContext.issue_url | default("") }}",
   summary="<2-4 sentences — what you decomposed the request into and what the operator should expect next>",
   auto_merge_eligible=false
 )

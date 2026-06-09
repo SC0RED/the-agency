@@ -20,12 +20,12 @@ A **Bug** transitioned into **Plan** status.
 
 | Field | Value |
 | --- | --- |
-| Ticket | {{ issue.key }} — {{ issue.fields.summary }} |
+| Ticket | {{ issue.key | default("") }} — {{ issue.fields.summary | default("") }} |
 | Reporter | {{ issue.fields.reporter.displayName | default("(unknown)") }} |
 | Assignee | {{ issue.fields.assignee.displayName | default("(unassigned)") }} |
 | Priority | {{ issue.fields.priority.name | default("(none)") }} |
-| Status | {{ issue.fields.status.name }} |
-| Issue type | {{ issue.fields.issuetype.name }} |
+| Status | {{ issue.fields.status.name | default("") }} |
+| Issue type | {{ issue.fields.issuetype.name | default("") }} |
 
 **Description**
 
@@ -49,7 +49,7 @@ You are Patch. A bug just landed in Plan. Follow the Plan-phase workflow from th
 
 The `In Planning` status is how humans see on the dashboard that Patch has picked up the ticket and is actively planning. Same pattern as `In Development` during Ready-for-Dev. BullMQ retries this whole template up to 5 times, so Step 1 can run more than once on the same ticket — handle every status case explicitly.
 
-Call `jira_get_issue` for `{{ issue.key }}` with `fields: "status"` to read current state, then:
+Call `jira_get_issue` for `{{ issue.key | default("") }}` with `fields: "status"` to read current state, then:
 
 - If status is **Plan** → call `jira_transition_issue` with `transition_id: "14"` (`Start Planning`), then continue.
 - If status is **In Planning** → a prior attempt already made this move. Continue.
@@ -123,7 +123,7 @@ Apply the matrix to get SP; if it crosses the ceiling, follow the **Ceiling rule
 
 All writes in this step author as Patches via the injected `PATCH_JIRA_TOKEN`. Do NOT use `mcp__atlassian__addCommentToJiraIssue`, `editJiraIssue`, or `transitionJiraIssue` — those author as Chris.
 
-1. **Post the plan as a Jira comment.** Build an ADF body using the canonical Bug section structure from `writing-great-bug-issues.md`, in this order: **Estimation** (Risk / Intensity / SP / Velocity Impact, top of the body) · **Symptom** · **Reproduction** · **Diagnosis** (with file:line refs and root-cause depth from Step 4) · **Approach** (with *Alternatives Considered* from Step 5) · **Acceptance Criteria** (Given/When/Then) · **Definition of Done** (including the regression test). Add **Rollback** *only* if the change is irreversible (DB migration, schema change, deleted data, infra mutation). Call `jira_add_comment` with `key: "{{ issue.key }}"` and the ADF body. **Capture the response's `id`** — Scarlett's review needs it.
+1. **Post the plan as a Jira comment.** Build an ADF body using the canonical Bug section structure from `writing-great-bug-issues.md`, in this order: **Estimation** (Risk / Intensity / SP / Velocity Impact, top of the body) · **Symptom** · **Reproduction** · **Diagnosis** (with file:line refs and root-cause depth from Step 4) · **Approach** (with *Alternatives Considered* from Step 5) · **Acceptance Criteria** (Given/When/Then) · **Definition of Done** (including the regression test). Add **Rollback** *only* if the change is irreversible (DB migration, schema change, deleted data, infra mutation). Call `jira_add_comment` with `key: "{{ issue.key | default("") }}"` and the ADF body. **Capture the response's `id`** — Scarlett's review needs it.
 
 2. **Update custom fields.** Call `jira_update_issue` with `fields: {<risk>, <intensity>, <velocity_impact>}` using the field keys and option IDs from the Jira IDs reference. Business Value is set by humans; Story Points is calculated by Jira.
 
@@ -132,7 +132,7 @@ All writes in this step author as Patches via the injected `PATCH_JIRA_TOKEN`. D
 4. **Dispatch a `plan-review` task to Scarlett.** Call `dispatch_task` with:
    - `agent`: `"scarlett"`
    - `task_type`: `"plan-review"`
-   - `context`: `{ticketKey: "{{ issue.key }}", ticketTitle: "{{ issue.fields.summary }}", ticketType: "{{ issue.fields.issuetype.name }}", planCommentId: "<id captured in step 7.1's jira_add_comment response>"}`
+   - `context`: `{ticketKey: "{{ issue.key | default("") }}", ticketTitle: "{{ issue.fields.summary | default("") }}", ticketType: "{{ issue.fields.issuetype.name | default("") }}", planCommentId: "<id captured in step 7.1's jira_add_comment response>"}`
 
    Fire-and-forget. If `dispatch_task` raises `ClawndomAPIError`, post a single fallback `jira_add_comment` noting Scarlett dispatch failed — don't retry, don't block on it.
 

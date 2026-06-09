@@ -27,15 +27,15 @@
 
 **Alert content**
 
-{% for block in event.blocks %}{% if block.type == "header" and block.text %}### {{ block.text.text }}
-{% elif block.type == "section" and block.text %}{{ block.text.text }}
+{% for block in event.blocks %}{% if block.type == "header" and block.text %}### {{ block.text.text | default("") }}
+{% elif block.type == "section" and block.text %}{{ block.text.text | default("") }}
 
-{% elif block.type == "section" and block.fields %}{% for f in block.fields %}- {{ f.text }}
+{% elif block.type == "section" and block.fields %}{% for f in block.fields %}- {{ f.text | default("") }}
 {% endfor %}
 {% elif block.type == "rich_text" %}{% for element in block.elements %}{% if element.type == "rich_text_preformatted" %}```
-{% for item in element.elements %}{{ item.text }}{% endfor %}
+{% for item in element.elements %}{{ item.text | default("") }}{% endfor %}
 ```
-{% elif element.type == "rich_text_section" %}{% for item in element.elements %}{{ item.text }}{% endfor %}
+{% elif element.type == "rich_text_section" %}{% for item in element.elements %}{{ item.text | default("") }}{% endfor %}
 
 {% endif %}{% endfor %}{% elif block.type == "divider" %}---
 {% endif %}{% endfor %}
@@ -87,7 +87,7 @@ Call `aws_cloudwatch_filter_logs`:
 
 - `log_group_name`: the failing Lambda's log group (e.g. `/aws/lambda/<function-name>`).
 - `filter_pattern`: the request ID, correlation ID, or distinctive error phrase.
-- `start_time`: epoch-ms of 15 minutes before the alert (computed from `{{ event.ts }}` × 1000).
+- `start_time`: epoch-ms of 15 minutes before the alert (computed from `{{ event.ts | default("") }}` × 1000).
 - `region`: `us-east-2` for backend/engine Lambdas; defaults otherwise.
 
 Backend and engine Lambdas live in `us-east-2`. If the alert is frontend, there may be no CloudWatch target — note that and keep going.
@@ -163,7 +163,7 @@ Ticket:  SPE-XXXX — https://sc0red.atlassian.net/browse/SPE-XXXX
 
 Call `slack_post`:
 
-- `channel`: `{{ event.channel }}`
+- `channel`: `{{ event.channel | default("") }}`
 - `text`: a short notification fallback (e.g. `"Diagnosis posted for <service> failure"`)
 - `blocks`: the Block Kit array
 - `thread_ts`: `{{ event.thread_ts | default(event.ts) }}` so the reply threads under the original alert

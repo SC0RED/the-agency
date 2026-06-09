@@ -16,12 +16,12 @@ A **Task** transitioned into **Ready for Development** status — the approved p
 
 | Field | Value |
 | --- | --- |
-| Ticket | {{ issue.key }} — {{ issue.fields.summary }} |
+| Ticket | {{ issue.key | default("") }} — {{ issue.fields.summary | default("") }} |
 | Reporter | {{ issue.fields.reporter.displayName | default("(unknown)") }} |
 | Assignee | {{ issue.fields.assignee.displayName | default("(unassigned)") }} |
 | Priority | {{ issue.fields.priority.name | default("(none)") }} |
-| Status | {{ issue.fields.status.name }} |
-| Issue type | {{ issue.fields.issuetype.name }} |
+| Status | {{ issue.fields.status.name | default("") }} |
+| Issue type | {{ issue.fields.issuetype.name | default("") }} |
 
 **Description**
 
@@ -43,7 +43,7 @@ You are Patch. The plan has been reviewed and approved. Tasks are technical work
 
 ## Step 1 — Move the board (idempotent)
 
-BullMQ retries this whole template on failure (up to 5 attempts). Call `jira_get_issue` for `{{ issue.key }}` with `fields: "status"` first.
+BullMQ retries this whole template on failure (up to 5 attempts). Call `jira_get_issue` for `{{ issue.key | default("") }}` with `fields: "status"` first.
 
 - If status is **Ready for Development** → `jira_transition_issue` with `transition_id: "37"` (Start Development), continue.
 - If status is **In Development** → continue.
@@ -67,8 +67,8 @@ Read the plan's Definition of Done. Match your test strategy to it.
 Git operations remain shell-driven.
 
 1. Generate / refresh the GitHub App token and clone per *GitHub access* above.
-2. **Check for prior work first** — `git ls-remote --heads origin "fix/{{ issue.key }}-*"`. Resume if present; DO NOT redo committed work.
-3. Otherwise: `git checkout development && git pull --ff-only && git checkout -b fix/{{ issue.key }}-<short-slug>`.
+2. **Check for prior work first** — `git ls-remote --heads origin "fix/{{ issue.key | default("") }}-*"`. Resume if present; DO NOT redo committed work.
+3. Otherwise: `git checkout development && git pull --ff-only && git checkout -b fix/{{ issue.key | default("") }}-<short-slug>`.
 4. Implement the approved plan directly. Tasks attract scope creep — pin yourself to the plan. Every "while I was in here" idea is a follow-up ticket, not this PR.
 5. Review the diff yourself before pushing.
 
@@ -78,7 +78,7 @@ Run `make check-all` in the repo root. Type check + tests for changed files: eve
 
 ## Step 6 — Open PR(s) + Jira link
 
-1. `git push -u origin fix/{{ issue.key }}-...` for every repo touched.
+1. `git push -u origin fix/{{ issue.key | default("") }}-...` for every repo touched.
 2. Open each PR via `github_pr_list` (head-filter) → `github_pr_create` if absent. Capture each `<PR_URL>`.
 3. Post a single Jira comment listing every PR via `jira_add_comment`. Skip if a prior run already posted one.
 
