@@ -87,7 +87,7 @@ authoring-standard contract (codified in
   the identity file or `shared/` JSON; don't paste the content
   inline.
 - **One Jinja variable per use.** If you find yourself writing
-  `{{ x or y or z }}` you've smuggled three conditionals into a
+  `{% raw %}{{ x or y or z }}{% endraw %}` you've smuggled three conditionals into a
   Jinja expression — extract the branching into an explicit step
   in the prose.
 
