@@ -142,6 +142,7 @@ routing:
           - module.python: agency_tools.jira.transition_issue
           - module.python: agency_tools.jira.update_issue
           - module.python: agency_tools.aws.cloudwatch.filter_logs
+          - module.python: agency_tools.mongo.find
           - module.python: agency_tools.clawndom.dispatch_task
 
       - name: plan-story
@@ -170,6 +171,7 @@ routing:
           - module.python: agency_tools.jira.transition_issue
           - module.python: agency_tools.jira.update_issue
           - module.python: agency_tools.aws.cloudwatch.filter_logs
+          - module.python: agency_tools.mongo.find
           - module.python: agency_tools.clawndom.dispatch_task
 
       - name: plan-task
@@ -198,6 +200,7 @@ routing:
           - module.python: agency_tools.jira.transition_issue
           - module.python: agency_tools.jira.update_issue
           - module.python: agency_tools.aws.cloudwatch.filter_logs
+          - module.python: agency_tools.mongo.find
           - module.python: agency_tools.clawndom.dispatch_task
 
       # ── Ready for Development: per-type ──────────────────────────────
@@ -527,6 +530,7 @@ routing:
             minSimilarity: 0.4
         tools:
           - module.python: agency_tools.aws.cloudwatch.filter_logs
+          - module.python: agency_tools.mongo.find
           - module.python: agency_tools.jira.search
           - module.python: agency_tools.jira.create_issue
           - module.python: agency_tools.jira.add_comment
@@ -551,6 +555,7 @@ routing:
             minSimilarity: 0.4
         tools:
           - module.python: agency_tools.aws.cloudwatch.filter_logs
+          - module.python: agency_tools.mongo.find
           - module.python: agency_tools.jira.search
           - module.python: agency_tools.jira.create_issue
           - module.python: agency_tools.jira.add_comment
@@ -575,6 +580,7 @@ routing:
             minSimilarity: 0.4
         tools:
           - module.python: agency_tools.aws.cloudwatch.filter_logs
+          - module.python: agency_tools.mongo.find
           - module.python: agency_tools.jira.search
           - module.python: agency_tools.jira.create_issue
           - module.python: agency_tools.jira.add_comment
