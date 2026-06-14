@@ -47,7 +47,7 @@ BullMQ retries this whole template on failure (up to 5 attempts). Call `jira_get
 
 - If status is **Ready for Development** → call `jira_transition_issue` with `transition_id: "37"` (Start Development), continue.
 - If status is **In Development** → a prior attempt already made this move. Continue.
-- If status is **Code Review**, **Blocked**, or past **In Development** → call `jira_add_comment` saying "retry observed this ticket already past In Development — assuming previous run completed", **stop**.
+- If status is **Code Review**, **Blocked**, or past **In Development** → a prior attempt already opened the PR(s) and advanced the board (Code Review now happens in Step 6, not Step 8). The PRs are up and the board is correct. Call `jira_add_comment` saying "retry observed this ticket already past In Development — assuming previous run advanced it", **stop**.
 - Anything else (Plan, Plan Review, etc.) → unexpected. Call `jira_add_comment` naming the current status; call `jira_transition_issue` with `transition_id: "4"` (Blocked); stop.
 
 ## Step 2 — Read the approved plan
@@ -81,12 +81,13 @@ Run `make check-all` in the repo root. Type check + tests for changed files: eve
 1. `git push -u origin fix/{{ issue.key | default("") }}-...` for every repo touched.
 2. Open each PR via `github_pr_list` (head-filter) → `github_pr_create` if absent. Capture each `<PR_URL>`. Stories often span multiple repos; repeat per repo.
 3. Post a single Jira comment listing every PR opened for this ticket via `jira_add_comment`. Skip if a prior run already posted one (read recent comments via `jira_get_issue`).
+4. **Move the board to Code Review now.** Re-read status via `jira_get_issue` (`fields: "status"`); if still **In Development**, call `jira_transition_issue` with `transition_id: "36"`. The PR(s) are open and reviewable. Do **not** gate this on CI — a run that dies during the Step 7 CI wait must never strand a ticket-with-open-PRs in In Development. (Idempotent: skip if already Code Review.)
 
-The ticket stays **In Development** at the end of this step.
+The ticket is in **Code Review** at the end of this step. CI verification and CodeRabbit (Step 7) run against an already-reviewable ticket; a red PR still cannot be merged (the merge / Deploy-to-development move is human-gated), and a persistently failing PR is routed to **Blocked** in Step 7.
 
 ## Step 7 — Verify CI green; trigger and handle CodeRabbit
 
-For each PR:
+The board is already in **Code Review** (Step 6); this step confirms the PR(s) are green and routes a persistently failing PR to **Blocked**. For each PR:
 
 1. **Trigger CodeRabbit manually**: `github_pr_comment` with `body: "@coderabbitai review"`.
 2. **Poll CI status** via `github_pr_check_runs` every ~60s. Stop when every check has a non-null `conclusion`. Cap polling at 25 minutes.
@@ -94,7 +95,9 @@ For each PR:
 4. **Handle CodeRabbit findings.** Wait ~3 min, call `github_pr_reviews` to read inline comments. Triage per `shared/coderabbit-feedback.md`. Push back on anti-pattern suggestions via `github_pr_comment` on each contested item. Two CodeRabbit passes max.
 5. **Re-verify after every push.** Any commit pushed in Step 7.4 re-triggers CI — restart from Step 7.1.
 
-## Step 8 — Dispatch Scarlett, transition to Code Review, close out
+## Step 8 — Dispatch Scarlett, close out
+
+The board is already in **Code Review** (moved in Step 6).
 
 1. **Dispatch a `code-review` task to Scarlett** via `dispatch_task`:
    - `agent`: `"scarlett"`
@@ -103,9 +106,7 @@ For each PR:
 
    Fire-and-forget. On `ClawndomAPIError`, post a single fallback `jira_add_comment`.
 
-2. **Transition to Code Review.** `jira_transition_issue` with `transition_id: "36"`.
-
-3. **Post a consolidated Jira comment** listing every PR via `jira_add_comment`.
+2. **Post a consolidated Jira comment** listing every PR via `jira_add_comment`.
 
 ## Anti-patterns to actively avoid
 
