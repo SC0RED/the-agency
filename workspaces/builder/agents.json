@@ -13,7 +13,7 @@
     "verifyCommand": "python3 scripts/generate_catalog.py --check && python3 -m pytest -q"
   },
   "_runtimeRepo": {
-    "_comment": "The Agency runtime itself — the Rust daemon every agent runs on. Not a dispatching agent. Builder PRs here when a bug's root cause (or a requested change) is in the platform, not an agent's workspace or a tool: transport (Slack/webhook intake), routing engine, queue/worker, inbound de-duplication, secrets resolution. Highest blast radius (every agent runs this code), so runtime PRs are ALWAYS review-required and must pass the full make-check gate (clippy + tests + 90% coverage + security + naming) locally before being marked testable.",
+    "_comment": "The Agency runtime itself \u2014 the Rust daemon every agent runs on. Not a dispatching agent. Builder PRs here when a bug's root cause (or a requested change) is in the platform, not an agent's workspace or a tool: transport (Slack/webhook intake), routing engine, queue/worker, inbound de-duplication, secrets resolution. Highest blast radius (every agent runs this code), so runtime PRs are ALWAYS review-required and must pass the full make-check gate (clippy + tests + 90% coverage + security + naming) locally before being marked testable.",
     "repo": "SC0RED/Agency",
     "baseRef": "development",
     "branchNamingPattern": "builder/runtime-{summary}",
@@ -21,7 +21,7 @@
     "verifyCommand": "make check"
   },
   "_builderRepo": {
-    "_comment": "Builder's OWN workspace — its prompt, templates, agency.yaml, and this registry. Not a dispatching agent. Builder PRs here when a bug's root cause is in its own behavior/config (e.g. it didn't acknowledge reviewer feedback before reworking, or it cloned outside its ephemeral cwd). Lives in the engineering-agents monorepo alongside Patch/Scarlett. ALWAYS review-required; never self-edit on the box. Resolving this entry is what lets Builder improve itself through the same reviewed-PR path as everything else.",
+    "_comment": "Builder's OWN workspace \u2014 its prompt, templates, agency.yaml, and this registry. Not a dispatching agent. Builder PRs here when a bug's root cause is in its own behavior/config (e.g. it didn't acknowledge reviewer feedback before reworking, or it cloned outside its ephemeral cwd). Lives in the engineering-agents monorepo alongside Patch/Scarlett. ALWAYS review-required; never self-edit on the box. Resolving this entry is what lets Builder improve itself through the same reviewed-PR path as everything else.",
     "repo": "SC0RED/the-agency",
     "path": "workspaces/builder",
     "baseRef": "main",
@@ -30,7 +30,7 @@
     "verifyCommand": "python3 -c \"import yaml,json; yaml.safe_load(open('workspaces/builder/agency.yaml')); json.load(open('workspaces/builder/agents.json'))\""
   },
   "winston": {
-    "repo": "ctcreel/winston-agency",
+    "repo": "SC0RED/winston-agency",
     "path": "workspaces/winston",
     "baseRef": "main",
     "branchNamingPattern": "builder/{summary}",
