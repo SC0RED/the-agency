@@ -81,10 +81,11 @@ Run `make check-all` in the repo root. Type check + tests for changed files: eve
 1. `git push -u origin fix/{{ issue.key | default("") }}-...` for every repo touched.
 2. Open each PR via `github_pr_list` (head-filter) → `github_pr_create` if absent. Capture each `<PR_URL>`.
 3. Post a single Jira comment listing every PR via `jira_add_comment`. Skip if a prior run already posted one.
+4. **Move the board to Code Review now.** Re-read status via `jira_get_issue` (`fields: "status"`); if still **In Development**, call `jira_transition_issue` with `transition_id: "36"`. The PR(s) are open and reviewable. Do **not** gate this on CI — a run that dies during the Step 7 CI wait must never strand a ticket-with-open-PRs in In Development. (Idempotent: skip if already Code Review.)
 
 ## Step 7 — Verify CI green; trigger and handle CodeRabbit
 
-For each PR:
+The board is already in **Code Review** (Step 6); this step confirms the PR(s) are green and routes a persistently failing PR to **Blocked**. For each PR:
 
 1. **Trigger CodeRabbit**: `github_pr_comment` with `body: "@coderabbitai review"`.
 2. **Poll CI** via `github_pr_check_runs` every ~60s. Cap at 25 minutes.
@@ -92,7 +93,9 @@ For each PR:
 4. **Handle CodeRabbit findings** via `github_pr_reviews` → `github_pr_comment` for replies. Two CodeRabbit passes max.
 5. **Re-verify after every push.**
 
-## Step 8 — Dispatch Scarlett, transition to Code Review, close out
+## Step 8 — Dispatch Scarlett, close out
+
+The board is already in **Code Review** (moved in Step 6).
 
 1. **Dispatch a `code-review` task to Scarlett** via `dispatch_task`:
    - `agent`: `"scarlett"`
@@ -101,9 +104,7 @@ For each PR:
 
    Fire-and-forget. On `ClawndomAPIError`, post a single fallback `jira_add_comment`.
 
-2. **Transition to Code Review.** `jira_transition_issue` with `transition_id: "36"`.
-
-3. **Post a consolidated Jira comment** listing every PR.
+2. **Post a consolidated Jira comment** listing every PR.
 
 ## Anti-patterns to actively avoid
 

@@ -47,7 +47,7 @@ BullMQ retries this whole template on failure (up to 5 attempts), so Step 1 can 
 
 - If status is **Ready for Development** → call `jira_transition_issue` with `transition_id: "37"` (Start Development), continue to Step 2.
 - If status is **In Development** → a prior attempt already made this move. Continue to Step 2.
-- If status is **Code Review**, **Blocked**, or anything past **In Development** → a prior attempt completed Step 8. Call `jira_add_comment` saying "retry observed this ticket already past In Development — assuming previous run completed", **stop**.
+- If status is **Code Review**, **Blocked**, or anything past **In Development** → a prior attempt already opened the PR and advanced the board (Code Review now happens in Step 6, not Step 8). The PR is up and the board is correct. Call `jira_add_comment` saying "retry observed this ticket already past In Development — assuming previous run advanced it", **stop**.
 - If status is anything else (Plan, Plan Review, etc.) → unexpected. Call `jira_add_comment` naming the current status and what you expected; call `jira_transition_issue` with `transition_id: "4"` (Blocked); stop.
 
 ## Step 2 — Read the approved plan
@@ -88,12 +88,13 @@ Run `make check-all` in the repo root. All three repos expose this uniform targe
 2. Open the PR if not already up. Call `github_pr_list` with `repo: "SC0RED/<repo-name>"`, `head: "<repo-owner>:fix/{{ issue.key | default("") }}-..."`, `state: "open"`. If empty, call `github_pr_create` with the title `<ticket-key>: <one-line summary>`, base `development`, head `<branch>`, and a body that links the Jira ticket and references the approved plan comment.
 3. Capture `<PR_URL>` from the create-or-list response (`html_url` field).
 4. Post the PR link as a Jira comment via `jira_add_comment`. Before posting, call `jira_get_issue` and scan recent comments for an existing Patches-authored comment containing the PR URL — skip if a prior run already posted it.
+5. **Move the board to Code Review now.** Re-read status via `jira_get_issue` (`fields: "status"`); if it is still **In Development**, call `jira_transition_issue` with `transition_id: "36"`. The PR is open and reviewable, so the board must say so immediately. Do **not** gate this transition on CI — a run that dies during the Step 7 CI wait must never leave a ticket-with-an-open-PR stranded in In Development. (Idempotent: if a prior attempt already moved it to Code Review, skip.)
 
-The ticket stays **In Development** at the end of this step. It does NOT move to Code Review until the PR is verifiably green and CodeRabbit is handled (Step 7).
+The ticket is in **Code Review** at the end of this step. CI verification and CodeRabbit (Step 7) now run against an already-reviewable ticket; a red PR still cannot be merged (the merge / Deploy-to-development move is human-gated), and a persistently failing PR is routed to **Blocked** in Step 7.
 
 ## Step 7 — Verify CI green; trigger and handle CodeRabbit
 
-The PR must clear CI before transitioning to Code Review.
+The board is already in **Code Review** (Step 6). This step confirms the PR is genuinely green and routes a persistently failing PR back to **Blocked** so no one reviews a broken change.
 
 1. **Trigger CodeRabbit manually** — bot-authored PRs are auto-skipped. After every push (including the initial one): call `github_pr_comment` with `body: "@coderabbitai review"`.
 2. **Poll CI status.** Call `github_pr_check_runs` every ~60s. Stop when every check run has a non-null `conclusion`. Reasonable cap: 25 minutes total. SonarCloud's `Code Analysis` check evaluates the same quality gate `make check-all` blocked on locally — both must pass.
@@ -101,9 +102,9 @@ The PR must clear CI before transitioning to Code Review.
 4. **Handle CodeRabbit findings.** Wait ~3 min after the trigger comment, then call `github_pr_reviews` to read inline comments. Triage each finding per `shared/coderabbit-feedback.md`. Apply real defects. **Push back** on suggestions that violate our anti-patterns (defensive null checks, fallback values that mask bugs, redundant validation, premature helper extraction, callability-only tests). Reply via `github_pr_comment` on each contested item; resolve the conversation. Two CodeRabbit passes max.
 5. **Re-verify after every push.** Any commit pushed in Step 7.4 re-triggers CI — restart from Step 7.1. Step 8 only runs against a verifiably green PR.
 
-## Step 8 — Dispatch Scarlett, transition to Code Review, close out
+## Step 8 — Dispatch Scarlett, close out
 
-Run this only once the PR is green and CodeRabbit is satisfied.
+Run this only once the PR is green and CodeRabbit is satisfied. The board is already in **Code Review** (moved in Step 6).
 
 1. **Dispatch a `code-review` task to Scarlett.** Call `dispatch_task` with:
    - `agent`: `"scarlett"`
@@ -112,9 +113,7 @@ Run this only once the PR is green and CodeRabbit is satisfied.
 
    Fire-and-forget. On `ClawndomAPIError`, post a single fallback `jira_add_comment` noting Scarlett dispatch failed.
 
-2. **Transition the ticket to Code Review.** Call `jira_transition_issue` with `transition_id: "36"`. The PR is green and reviewable.
-
-3. **Post a consolidated Jira comment as Patches** listing every PR open for this ticket via `jira_add_comment`. The ticket stays in **Code Review** until a human merges; a human handles the final transition.
+2. **Post a consolidated Jira comment as Patches** listing every PR open for this ticket via `jira_add_comment`. The ticket stays in **Code Review** until a human merges; a human handles the final transition.
 
 (MVP scope: Patch dispatches once and ends. Scarlett's verdict is additive feedback for the human reviewer, not a gate.)
 
