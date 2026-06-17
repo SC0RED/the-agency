@@ -1,4 +1,4 @@
-# Workspace task — declarative agent configuration changes
+# Workspace task: declarative agent configuration changes
 
 You received a workspace-surface work item from triage. Your job is
 to make a small, focused change to **the dispatching agent's
@@ -6,6 +6,13 @@ workspace files**: templates (`templates/*.md`), routing config
 (`agency.yaml`), identity files (`identity/*.md`), or relation data
 (`relations.json`). Open a PR; let the auto-merge gate decide whether
 it ships without review.
+
+## Intent
+
+**Purpose:** Make a small, focused change to a dispatching agent's workspace files (templates, agency.yaml routing, identity, relations) while preserving the agent's existing tool allowlist and runtime interface, and open a PR for it.
+**Success:** The change stays inside the agent's registry `path` scope; the template lint (or YAML parse) runs clean; the PR is opened with an auto-merge verdict and an operator-readable `summary` fired via `fire_builder_callback`.
+
+---
 
 ## What you received
 
@@ -25,7 +32,7 @@ originated work, the registry entry names the repo
 (`ctcreel/winston-agency`), the `path` scope (`workspaces/winston/`),
 the base branch, branch-naming pattern, reviewer, and verify command.
 
-## Step 1 — Authenticate first, then clone into cwd
+## Step 1: Authenticate first, then clone into cwd
 
 Mint a per-repo App token before any git/gh against that repo:
 
@@ -46,13 +53,13 @@ cwd. The per-run teardown only reclaims what's inside cwd; an
 out-of-cwd checkout leaks host disk (INC-20260529, daily-healthcheck
 detects this).
 
-## Step 2 — Read the issue + existing code
+## Step 2: Read the issue + existing code
 
 ```
 gh issue view {{ work_item.issue_url | default("") }} --json body --jq .body
 ```
 
-The full spec is there. Don't rely on `work_item.detail` alone —
+The full spec is there. Don't rely on `work_item.detail` alone,
 the detail is triage's summary; the issue body is the source of
 truth.
 
@@ -60,7 +67,7 @@ Then read the files you're about to change. Templates: read the
 whole file before editing; subtle Jinja patterns matter. Routing:
 read the surrounding routing rules to match the existing shape.
 
-## Step 3 — Make the change
+## Step 3: Make the change
 
 Per-surface guidance:
 
@@ -71,6 +78,7 @@ tokens, attention, and risk of priming. Follow the template-
 authoring-standard contract (codified in
 `winston-agency/openspec/changes/template-authoring-standard/`):
 
+- **Every route template must open with an `## Intent` block:** `**Purpose:**` (the objective, stated first so the context-free model is oriented before the steps), `**Deliverable:**` (`text` | `decision` | `action`), `**Success:**` (concrete success criteria), `**Out of scope:**`. This is required: it's the model's goal-framing and it feeds the modelbench's per-route scoring.
 - **Positive instruction only.** Tell the LLM what to do, not what
   to avoid. The lint forbids `do not`, `don't`, `never`, `must
   not`, `without this`, `otherwise X happens`, `if you are reading
@@ -79,7 +87,7 @@ authoring-standard contract (codified in
   template; that section is a reference catalog, not a behavioral
   instruction.)
 - **No incident history.** Dates, operator names, PR numbers,
-  ticket IDs, "X caught this on YYYY-MM-DD" — none of that in the
+  ticket IDs, "X caught this on YYYY-MM-DD", none of that in the
   template body. The lint forbids it explicitly. Reasons for the
   change belong in the commit message and PR description.
 - **Reference identity, don't duplicate it.** When a template
@@ -88,7 +96,7 @@ authoring-standard contract (codified in
   inline.
 - **One Jinja variable per use.** If you find yourself writing
   `{% raw %}{{ x or y or z }}{% endraw %}` you've smuggled three conditionals into a
-  Jinja expression — extract the branching into an explicit step
+  Jinja expression, extract the branching into an explicit step
   in the prose.
 
 Lint locally before pushing:
@@ -137,7 +145,7 @@ A graph of entity → entity links. Edit by appending entries
 matching the existing JSON shape. Never reformat the whole file in
 a small-PR change.
 
-## Step 4 — Auto-merge classification
+## Step 4: Auto-merge classification
 
 Run `git diff --name-status main...HEAD` and check each line.
 
@@ -159,7 +167,7 @@ If review-required: `gh pr edit --add-reviewer <codeowners>` per
 the registry and mark testable. Reviewer is named in the registry,
 not in this template.
 
-## Step 5 — Open the PR + emit the testable callback
+## Step 5: Open the PR + emit the testable callback
 
 ```
 gh pr create --draft \
@@ -176,7 +184,7 @@ Run the verify command, mark the PR ready, then:
 fire_builder_callback(
   state="testable",
   pr_url="<the PR URL>",
-  summary="<2-4 sentences, plain language — see contract below>",
+  summary="<2-4 sentences, plain language, see contract below>",
   auto_merge_eligible=<verdict>
 )
 ```
@@ -198,17 +206,17 @@ Rules:
   Describe behaviour, not artifacts. The reviewer gets `pr_url`
   separately and can read the diff for technical detail.
 - **Tie to the ask.** Lead with the change in terms the operator
-  already used — paraphrase from `replyContext.originalRequestText`
+  already used: paraphrase from `replyContext.originalRequestText`
   so it's self-contextual.
 - **Past or present, not future-conditional.** "The morning digest
-  now skips…" — not "this would make it possible to…".
+  now skips…", not "this would make it possible to…".
 
 Good summary (workspace change):
 
 > "The morning digest now skips clients whose sessions were cancelled
 > overnight, so they don't appear in the day's list when they aren't
 > actually on the calendar. Cancellation status is read directly from
-> Google Calendar — no manual tagging needed."
+> Google Calendar, no manual tagging needed."
 
 Bad summary (vocabulary leak, no behavioural anchor):
 

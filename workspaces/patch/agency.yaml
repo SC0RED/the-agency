@@ -90,6 +90,7 @@ routing:
         condition:
           equals: { field: taskType, value: address-pr-feedback }
         messageTemplate: templates/address-pr-feedback.md
+        deliverable: action
         inputs:
           - ticketKey
           - ticketTitle
@@ -224,6 +225,7 @@ routing:
                     - equals: { field: field, value: status }
                     - equals: { field: toString, value: Ready for Development }
         messageTemplate: templates/jira-ready-for-dev-bug.md
+        deliverable: action
         maxTurns: 500
         dispatches:
           - code-review
@@ -256,6 +258,7 @@ routing:
                     - equals: { field: field, value: status }
                     - equals: { field: toString, value: Ready for Development }
         messageTemplate: templates/jira-ready-for-dev-story.md
+        deliverable: action
         maxTurns: 500
         dispatches:
           - code-review
@@ -288,6 +291,7 @@ routing:
                     - equals: { field: field, value: status }
                     - equals: { field: toString, value: Ready for Development }
         messageTemplate: templates/jira-ready-for-dev-task.md
+        deliverable: action
         maxTurns: 500
         dispatches:
           - code-review
@@ -329,6 +333,7 @@ routing:
                     - equals: { field: field, value: status }
                     - equals: { field: toString, value: Deploy to development }
         messageTemplate: templates/jira-deploy-to-dev.md
+        deliverable: action
         tools:
           - module.python: agency_tools.jira.get_issue
           - module.python: agency_tools.jira.add_comment
@@ -349,6 +354,7 @@ routing:
                     - equals: { field: field, value: status }
                     - equals: { field: toString, value: Deploy to development }
         messageTemplate: templates/jira-deploy-to-dev.md
+        deliverable: action
         tools:
           - module.python: agency_tools.jira.get_issue
           - module.python: agency_tools.jira.add_comment
@@ -369,6 +375,7 @@ routing:
                     - equals: { field: field, value: status }
                     - equals: { field: toString, value: Deploy to development }
         messageTemplate: templates/jira-deploy-to-dev.md
+        deliverable: action
         tools:
           - module.python: agency_tools.jira.get_issue
           - module.python: agency_tools.jira.add_comment
@@ -399,6 +406,7 @@ routing:
                     - equals: { field: field, value: status }
                     - equals: { field: toString, value: Verified in Development }
         messageTemplate: templates/jira-verified-in-dev.md
+        deliverable: action
         tools:
           - module.python: agency_tools.jira.get_issue
           - module.python: agency_tools.jira.search
@@ -421,6 +429,7 @@ routing:
                     - equals: { field: field, value: status }
                     - equals: { field: toString, value: Verified in Development }
         messageTemplate: templates/jira-verified-in-dev.md
+        deliverable: action
         tools:
           - module.python: agency_tools.jira.get_issue
           - module.python: agency_tools.jira.search
@@ -443,6 +452,7 @@ routing:
                     - equals: { field: field, value: status }
                     - equals: { field: toString, value: Verified in Development }
         messageTemplate: templates/jira-verified-in-dev.md
+        deliverable: action
         tools:
           - module.python: agency_tools.jira.get_issue
           - module.python: agency_tools.jira.search
@@ -477,6 +487,7 @@ routing:
                 where:
                   exists: { field: number }
         messageTemplate: templates/github-pr-broken.md
+        deliverable: action
         maxTurns: 200
         memory:
           namespace: patch-personal
@@ -522,6 +533,7 @@ routing:
             - not:
                 equals: { field: event.bot_id, value: B0ALY9FMKE2 }
         messageTemplate: templates/slack-alert.md
+        deliverable: action
         memory:
           namespace: patch-personal
           retrieve:
@@ -547,6 +559,7 @@ routing:
             - not:
                 equals: { field: event.bot_id, value: B0ALY9FMKE2 }
         messageTemplate: templates/slack-alert.md
+        deliverable: action
         memory:
           namespace: patch-personal
           retrieve:
@@ -572,6 +585,7 @@ routing:
             - not:
                 equals: { field: event.bot_id, value: B0ALY9FMKE2 }
         messageTemplate: templates/slack-alert.md
+        deliverable: action
         memory:
           namespace: patch-personal
           retrieve:

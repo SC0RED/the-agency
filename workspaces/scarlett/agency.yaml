@@ -43,6 +43,7 @@ routing:
         condition:
           equals: { field: taskType, value: plan-review }
         messageTemplate: templates/review-plan.md
+        deliverable: decision
         # `ticketTitle` (not `ticketKey`) is the semantic-meaningful field
         # in the /api/tasks payload — recall is similarity-ranked over
         # past plans whose tickets share vocabulary, not exact keys.
@@ -68,6 +69,7 @@ routing:
         condition:
           equals: { field: taskType, value: code-review }
         messageTemplate: templates/review-pr.md
+        deliverable: decision
         # PR description isn't on the routing payload (Patch dispatches
         # with `context: { ticketKey, ticketTitle, ticketType, prUrls }`),
         # so `ticketTitle` is again the best available semantic key.
