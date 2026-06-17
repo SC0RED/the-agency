@@ -1,17 +1,15 @@
-# Runtime task — Rust daemon changes in SC0RED/Agency
+# Runtime task: Rust daemon changes in SC0RED/Agency
 
 You received a runtime-surface work item from triage. Your job is to
-make a focused change to the Rust Agency daemon — transport, routing
+make a focused change to the Rust Agency daemon: transport, routing
 engine, queue, secrets, exception handling, scheduler, dashboard.
 Runtime PRs are high blast-radius (one binary runs every agent on
 both EC2 boxes), always review-required.
 
 ## Intent
 
-**Purpose:** Make a focused, review-required change to the Rust Agency daemon (transport, routing engine, queue, secrets, scheduler, dashboard) and open a PR.
-**Deliverable:** action
+**Purpose:** Make a focused, review-required change to the Rust Agency daemon (transport, routing engine, queue, secrets, scheduler, dashboard), cloning only into cwd, and open a non-auto-merge PR for the codeowners reviewer.
 **Success:** The disk precheck passes before cloning; `make check` runs clean locally; the PR is opened with `auto_merge_eligible=false`, the codeowners reviewer requested, and disk readings captured in the body.
-**Out of scope:** Auto-merging a runtime change; cloning outside cwd; defensive null-checks against internal Rust types; `unwrap()` on operator-facing paths.
 
 ---
 
@@ -28,13 +26,13 @@ work_item.severity:         {{ work_item.severity | default("") }}
 work_item.idempotency_key:  {{ work_item.idempotency_key | default("") }}
 ```
 
-## Step 1 — Disk-space precheck
+## Step 1: Disk-space precheck
 
 The runtime repo's `target/` directory grows to ~1.5-2GB on every
 `make check`. INC-20260529 was a stop-writes Redis outage caused by
 cargo target leaking out of an ephemeral cwd onto the production
 volume. The daily-healthcheck detects this leak class today, but
-you're upstream of detection — handle disk yourself.
+you're upstream of detection, handle disk yourself.
 
 Before cloning:
 
@@ -46,7 +44,7 @@ If `available` is under 5GB, abort with a `fire_builder_callback(
 state="failed", reason="insufficient disk for runtime build:
 <usage>")` and end. Do not proceed; you'll cause the next outage.
 
-## Step 2 — Authenticate first, then clone into cwd
+## Step 2: Authenticate first, then clone into cwd
 
 Mint a per-repo App token before any git/gh:
 
@@ -62,7 +60,7 @@ Clone into the ephemeral cwd. Never to `/tmp/<anything>`. Never to
 reclaims cwd; an out-of-cwd checkout plus its `target/` survives
 the run. Cwd-only is non-negotiable for this surface.
 
-## Step 3 — Read the spec + map the territory
+## Step 3: Read the spec + map the territory
 
 ```
 gh issue view {{ work_item.issue_url | default("") }} --json body --jq .body
@@ -89,7 +87,7 @@ ephemeral.rs Drop must reclaim the cwd for the per-run cleanup
 contract to hold; an "improvement" that delays cleanup breaks the
 invariant).
 
-## Step 4 — Make the change
+## Step 4: Make the change
 
 Patterns:
 
@@ -111,7 +109,7 @@ Patterns:
 - **Function cap.** Same rule as other surfaces: decompose helpers
   rather than growing one function past 50 lines.
 
-## Step 5 — Verify locally (full make check)
+## Step 5: Verify locally (full make check)
 
 The verify command for the runtime repo is `make check`. This runs:
 
@@ -136,10 +134,10 @@ is over 3GB at the end of a run, the next run's `make check` may
 hit ENOSPC. The daily-healthcheck flags this; you don't need to
 hand-prune mid-run.
 
-## Step 6 — Auto-merge classification
+## Step 6: Auto-merge classification
 
 Runtime PRs are **always review-required**. The auto-merge gate's
-"path under agent scope" check doesn't apply here — the runtime is
+"path under agent scope" check doesn't apply here, the runtime is
 shared across all agents. The auto-merge gate is structurally
 disabled for this surface in the registry; passing
 `auto_merge_eligible=false` is the only correct call.
@@ -150,7 +148,7 @@ Request the registry's `codeOwners` reviewer:
 gh pr edit <pr-number> --add-reviewer <handle>
 ```
 
-## Step 7 — Open the PR
+## Step 7: Open the PR
 
 ```
 gh pr create --draft \
@@ -175,14 +173,14 @@ Then `gh pr ready` and:
 fire_builder_callback(
   state="testable",
   pr_url="<the PR URL>",
-  summary="<2-4 sentences, plain language — see contract below>",
+  summary="<2-4 sentences, plain language, see contract below>",
   auto_merge_eligible=false
 )
 ```
 
-The `summary` contract: 2–4 sentences, vocabulary-firewall safe
+The `summary` contract: 2-4 sentences, vocabulary-firewall safe
 (no "PR", "branch", "commit", "merge", "repo", filenames, identifier
-names) — Winston relays it VERBATIM to the operator. Runtime changes
+names). Winston relays it VERBATIM to the operator. Runtime changes
 are often invisible to the operator (latency, reliability, infra),
 so anchor on the user-visible symptom your change resolves or
 prevents. Always `auto_merge_eligible=false` for runtime changes,
@@ -196,7 +194,7 @@ Good summary (runtime fix):
 > and waits for the next webhook instead of re-running. Existing
 > work-in-flight is not affected."
 
-## Step 8 — Post-PR disk check
+## Step 8: Post-PR disk check
 
 Before exiting, capture the final state:
 

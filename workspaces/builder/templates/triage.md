@@ -1,4 +1,4 @@
-# Triage — decompose an engineering request into work items
+# Triage: decompose an engineering request into work items
 
 You received a dispatch from Winston (or directly from a healthcheck
 detector) carrying an engineering spec. Your job here is **triage
@@ -10,10 +10,8 @@ You do not write code in this template. The specialized templates
 
 ## Intent
 
-**Purpose:** Classify an inbound engineering spec into the surface(s) it touches (workspace / tool / runtime) and dispatch one work item per surface to the matching specialized route.
-**Deliverable:** decision
+**Purpose:** Classify an inbound engineering spec into the surface(s) it touches (workspace / tool / runtime) and dispatch one work item per surface to the matching specialized route, leaving the code to those routes.
 **Success:** The prior-PR dedup check runs first; each surface the spec touches gets exactly one work item with a `:<surface>`-suffixed idempotency key dispatched to the right `kind` route; a plain-language routing summary fires via `fire_builder_callback`.
-**Out of scope:** Writing code or touching git; over- or under-decomposing surfaces; classifying without reading the issue body.
 
 ---
 
@@ -31,11 +29,11 @@ replyContext.idempotency_key:  {{ replyContext.idempotency_key | default("") }}
 The `request` field is a pointer to the issue. The real spec body
 lives in the GitHub issue at `replyContext.issue_url`.
 
-## Step 0 — Have you already shipped a PR for this?
+## Step 0: Have you already shipped a PR for this?
 
 Before decomposing, check whether you've already addressed this same
 work. The exception-watcher dedups within its window, but window
-boundaries do expire and the same fingerprint can re-fire — opening a
+boundaries do expire and the same fingerprint can re-fire, opening a
 parallel fix wastes work and pollutes the PR queue.
 
 Call `github_search_prs` with a query that targets the distinctive
@@ -59,7 +57,7 @@ fingerprint or describes the same symptom, short-circuit:
 ```
 fire_builder_callback(
   state="failed",
-  reason="Already shipped — see <html_url>. <one-line of how the prior PR addresses this>."
+  reason="Already shipped. See <html_url>. <one-line of how the prior PR addresses this>."
 )
 ```
 
@@ -67,7 +65,7 @@ Then end the run. Don't decompose. Don't dispatch.
 
 If no prior PR matches, continue to Step 1.
 
-## Step 1 — Read the spec
+## Step 1: Read the spec
 
 Call:
 
@@ -82,7 +80,7 @@ or detector should have validated, but defense in depth), call
 `fire_builder_callback(state="failed", reason="spec missing required
 section(s): <names>")` and end.
 
-## Step 2 — Classify the surface(s)
+## Step 2: Classify the surface(s)
 
 A single spec can touch one, two, or all three surfaces. Read the
 `Technical landscape` section and the `Approach` section together;
@@ -92,7 +90,7 @@ each named file / module / repo maps to a surface:
 |---------|----------------|---------------------|
 | `workspace` | An agent's declarative configuration: templates, agency.yaml routing, identity, relations.json | `workspaces/<agent>/templates/`, `workspaces/<agent>/agency.yaml`, `workspaces/<agent>/identity/` |
 | `tool` | A new or modified Python tool used by agents | `agency_tools/<category>/<tool>/`, `tool.yaml`, `impl.py` |
-| `runtime` | The Rust daemon — transport, routing engine, queue, secrets, exception handling, scheduler | `src/`, `Cargo.toml`, anything in `SC0RED/Agency` |
+| `runtime` | The Rust daemon: transport, routing engine, queue, secrets, exception handling, scheduler | `src/`, `Cargo.toml`, anything in `SC0RED/Agency` |
 
 Default heuristics:
 
@@ -127,7 +125,7 @@ For each surface that the spec touches, produce one work item:
 The `idempotency_key` gets a `:<surface>` suffix so a respawn of
 triage produces the same dispatches for the same surfaces.
 
-## Step 3 — Dispatch each work item
+## Step 3: Dispatch each work item
 
 For each work item, POST to the matching internal-events route on
 your own daemon. Include the `replyContext` you received so the
@@ -158,12 +156,12 @@ errors with `BUILDER_CONTEXT_DIR is not set`. Pass through whatever
 you received; the runtime mints a fresh `jobId` for the dispatched
 run automatically.
 
-Each dispatched specialized run is independent — they each clone
+Each dispatched specialized run is independent: they each clone
 their own repo, branch, PR, and call `fire_builder_callback`
 independently. The original issue accumulates references from each
 PR.
 
-## Step 4 — Report back
+## Step 4: Report back
 
 After all dispatches succeed, call:
 
@@ -171,26 +169,26 @@ After all dispatches succeed, call:
 fire_builder_callback(
   state="testable",
   pr_url="{{ replyContext.issue_url | default("") }}",
-  summary="<2-4 sentences — what you decomposed the request into and what the operator should expect next>",
+  summary="<2-4 sentences: what you decomposed the request into and what the operator should expect next>",
   auto_merge_eligible=false
 )
 ```
 
 The `pr_url` field is reused to carry the issue URL here so the relay
 back to Winston (or the healthcheck dashboard) gets the operator-visible
-link. Auto-merge is always `false` for triage — the actual auto-merge
+link. Auto-merge is always `false` for triage; the actual auto-merge
 gate runs in each specialized route's PR.
 
 The `summary` describes the routing decision in plain operator terms:
 which surfaces you dispatched the request into and what the operator
 should expect to hear back about. 2–4 sentences, vocabulary-firewall
 safe (no "PR", "branch", "commit", "merge", "repo", "template",
-"route" — say "workspace change", "tool addition", "runtime fix"
+"route", say "workspace change", "tool addition", "runtime fix"
 instead). Winston relays this VERBATIM, so it has to stand on its own.
 
 Good summary (multi-surface dispatch):
 
-> "I split this into two pieces — a workspace change so Heather's
+> "I split this into two pieces: a workspace change so Heather's
 > morning digest filters cancelled clients, and a runtime fix so the
 > calendar lookup that feeds it doesn't retry indefinitely on Google
 > 429s. Each one is being worked on independently and you'll get a
