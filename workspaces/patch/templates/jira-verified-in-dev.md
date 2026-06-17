@@ -6,6 +6,15 @@
 
 ---
 
+## Intent
+
+**Purpose:** Pulse-promote every Verified-in-Development ticket by merging `development` → `testing` across the three repos and advancing those tickets to Deployed to Testing.
+**Deliverable:** action
+**Success:** The quiet-pipeline guard confirms nothing is pending dev verification; each repo where dev leads testing gets a green, merge-committed promotion PR; every gathered ticket transitions to Deployed to Testing with a confirmation comment.
+**Out of scope:** Cherry-picking a single ticket's commits; bypassing the quiet-pipeline guard; any code change or "while I'm here" cleanup.
+
+---
+
 # Current Trigger
 
 A **{{ issue.fields.issuetype.name | default("") }}** transitioned into **Verified in Development** — a human ran the change in the development environment, confirmed it works, and approved promoting it to testing.

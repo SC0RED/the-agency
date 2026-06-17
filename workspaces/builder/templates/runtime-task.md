@@ -6,6 +6,15 @@ engine, queue, secrets, exception handling, scheduler, dashboard.
 Runtime PRs are high blast-radius (one binary runs every agent on
 both EC2 boxes), always review-required.
 
+## Intent
+
+**Purpose:** Make a focused, review-required change to the Rust Agency daemon (transport, routing engine, queue, secrets, scheduler, dashboard) and open a PR.
+**Deliverable:** action
+**Success:** The disk precheck passes before cloning; `make check` runs clean locally; the PR is opened with `auto_merge_eligible=false`, the codeowners reviewer requested, and disk readings captured in the body.
+**Out of scope:** Auto-merging a runtime change; cloning outside cwd; defensive null-checks against internal Rust types; `unwrap()` on operator-facing paths.
+
+---
+
 ## What you received
 
 ```

@@ -14,6 +14,15 @@
 
 ---
 
+## Intent
+
+**Purpose:** Plan an engineering Task that landed in Plan — make the technical case, bound the blast radius, and write an approved-shape plan for Scarlett to review.
+**Deliverable:** text
+**Success:** The plan names the code, patterns, and dependency blast radius involved; it carries Estimation, Motivating Cost, in/out Scope, an Approach with *Alternatives Considered*, an observable Acceptance Criteria, and a Production Signal where perf/infra applies; the ticket transitions to Plan Review and dispatches a plan-review to Scarlett.
+**Out of scope:** Writing implementation code; premature or cargo-cult abstraction; shrinking scope into a partial migration.
+
+---
+
 # Current Trigger
 
 A **Task** transitioned into **Plan** status.

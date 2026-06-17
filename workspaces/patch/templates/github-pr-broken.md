@@ -6,6 +6,15 @@
 
 ---
 
+## Intent
+
+**Purpose:** Catch a PR whose CI went red after its opening run ended, diagnose the failure from logs, and push a fix that turns it green.
+**Deliverable:** action
+**Success:** The failure is traced to the diff that introduced it (not guessed); the fix clears `make check-all` locally then goes green in CI; a PR comment records the prior head SHA, the fix, and the new green SHA.
+**Out of scope:** `noqa`-ing past a real check; pushing without local validation; looping past two fix attempts instead of escalating to Blocked.
+
+---
+
 # Current Trigger
 
 A GitHub `check_suite.completed` webhook fired with `conclusion: failure` on a PR. CI broke. Either your earlier ready-for-dev or address-pr-feedback run ended before the failure landed, or a later push (yours or another agent's) regressed checks that were green. Either way, the PR is sitting red and nobody else is going to fix it — close the loop.

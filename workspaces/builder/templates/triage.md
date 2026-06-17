@@ -8,6 +8,15 @@ dispatch per surface, and end.
 You do not write code in this template. The specialized templates
 (`workspace-task.md`, `tool-task.md`, `runtime-task.md`) do that.
 
+## Intent
+
+**Purpose:** Classify an inbound engineering spec into the surface(s) it touches (workspace / tool / runtime) and dispatch one work item per surface to the matching specialized route.
+**Deliverable:** decision
+**Success:** The prior-PR dedup check runs first; each surface the spec touches gets exactly one work item with a `:<surface>`-suffixed idempotency key dispatched to the right `kind` route; a plain-language routing summary fires via `fire_builder_callback`.
+**Out of scope:** Writing code or touching git; over- or under-decomposing surfaces; classifying without reading the issue body.
+
+---
+
 ## What you received
 
 ```

@@ -10,6 +10,15 @@
 
 ---
 
+## Intent
+
+**Purpose:** Implement the approved story plan exactly as written, with tests covering the user-facing acceptance criteria, and open green PR(s).
+**Deliverable:** action
+**Success:** Tests cover the plan's user-facing acceptance criteria and named edge cases; the implementation matches the approved plan and clears `make check-all`; every PR goes green in CI, CodeRabbit is handled, and the ticket moves to Code Review with Scarlett dispatched.
+**Out of scope:** Adding bonus features or scope beyond the plan; defensive spackle; skipping tests.
+
+---
+
 # Current Trigger
 
 A **Story** transitioned into **Ready for Development** status — the approved plan is in the Jira comments, and a human moved it to this column meaning *go*.

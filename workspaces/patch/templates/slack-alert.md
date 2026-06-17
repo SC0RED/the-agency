@@ -14,6 +14,15 @@
 
 ---
 
+## Intent
+
+**Purpose:** Diagnose a pipeline-failure alert from logs, decide whether it's a duplicate or novel, ticket it accordingly, and reply in the alert thread.
+**Deliverable:** action
+**Success:** The diagnosis is grounded in CloudWatch evidence (logs before code); a genuine duplicate gets a comment while a novel bug gets a new ticket transitioned to Plan (inconclusive evidence opens no ticket); a threaded `patch` reply posts the diagnosis and ticket link.
+**Out of scope:** Guessing the cause without log evidence; opening duplicate tickets; fixing the bug here — the Plan / Ready-for-Dev flow ships fixes.
+
+---
+
 # Current Trigger
 
 {% set channel = event.channel %}{% set env = "unknown" %}{% if channel == "C08UVJDJZTL" %}{% set env = "production" %}{% elif channel == "C08UWMQJFBN" %}{% set env = "testing" %}{% elif channel == "C08V6MV0VNV" %}{% set env = "development" %}{% endif %}A pipeline-failure alert landed in `#alerts-platform-failure-{{ env }}`.

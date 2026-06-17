@@ -10,6 +10,15 @@
 
 ---
 
+## Intent
+
+**Purpose:** Execute the approved engineering-task plan exactly as written, with tests appropriate to the change, and open green PR(s).
+**Deliverable:** action
+**Success:** The test strategy matches the plan's Definition of Done (behaviour preserved for refactors, measured for perf); the implementation matches the approved plan and clears `make check-all`; every PR goes green in CI, CodeRabbit is handled, and the ticket moves to Code Review with Scarlett dispatched.
+**Out of scope:** Scope creep or "while I was in here" bonus refactors (file follow-ups instead); skipping the perf/infra measurement.
+
+---
+
 # Current Trigger
 
 A **Task** transitioned into **Ready for Development** status — the approved plan is in the Jira comments, and a human moved it to this column meaning *go*.

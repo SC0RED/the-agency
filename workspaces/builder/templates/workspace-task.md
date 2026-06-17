@@ -7,6 +7,15 @@ workspace files**: templates (`templates/*.md`), routing config
 (`relations.json`). Open a PR; let the auto-merge gate decide whether
 it ships without review.
 
+## Intent
+
+**Purpose:** Make a small, focused change to a dispatching agent's workspace files (templates, agency.yaml routing, identity, relations) and open a PR for it.
+**Deliverable:** action
+**Success:** The change stays inside the agent's registry `path` scope; the template lint (or YAML parse) runs clean; the PR is opened with an auto-merge verdict and an operator-readable `summary` fired via `fire_builder_callback`.
+**Out of scope:** Touching tool allowlists or runtime contracts to dodge review; cloning outside cwd; rewriting whole identity or relations files in a small change.
+
+---
+
 ## What you received
 
 ```
@@ -71,6 +80,7 @@ tokens, attention, and risk of priming. Follow the template-
 authoring-standard contract (codified in
 `winston-agency/openspec/changes/template-authoring-standard/`):
 
+- **Every route template must open with an `## Intent` block** — `**Purpose:**` (the objective, stated first so the context-free model is oriented before the steps), `**Deliverable:**` (`text` | `decision` | `action`), `**Success:**` (concrete success criteria), `**Out of scope:**`. This is required: it's the model's goal-framing and it feeds the modelbench's per-route scoring.
 - **Positive instruction only.** Tell the LLM what to do, not what
   to avoid. The lint forbids `do not`, `don't`, `never`, `must
   not`, `without this`, `otherwise X happens`, `if you are reading

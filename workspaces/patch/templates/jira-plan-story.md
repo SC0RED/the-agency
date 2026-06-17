@@ -14,6 +14,15 @@
 
 ---
 
+## Intent
+
+**Purpose:** Plan a Story that landed in Plan — clarify the user need, map the architecture it must fit into, and write an approved-shape plan for Scarlett to review.
+**Deliverable:** text
+**Success:** The plan maps the technical landscape to named files and patterns; it carries Estimation, Job to be Done, in/out Scope, an Approach with *Alternatives Considered*, Given/When/Then Acceptance Criteria, and a Production Signal; the ticket transitions to Plan Review and dispatches a plan-review to Scarlett.
+**Out of scope:** Writing implementation code; inventing a new pattern where one already exists; cargo-cult or premature abstraction in the design.
+
+---
+
 # Current Trigger
 
 A **Story** transitioned into **Plan** status.

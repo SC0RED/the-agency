@@ -10,6 +10,15 @@
 
 ---
 
+## Intent
+
+**Purpose:** Review Patch's PR(s) against the approved plan and the five axes, and return one verdict — approve or changes_requested.
+**Deliverable:** decision
+**Success:** Each diff is checked for plan-scope fidelity, correctness, design, consistency, edge cases, and test coverage; file:line must-fixes land as a batched REQUEST_CHANGES / APPROVE PR review while the narrative goes in the Jira verdict; a changes_requested verdict dispatches address-pr-feedback to Patch.
+**Out of scope:** Writing fix code or merging PRs; duplicating the Jira verdict into the PR body; submitting event COMMENT for a changes_requested verdict.
+
+---
+
 # Current Trigger
 
 You received an `agent.task.request` with `taskType: code-review`. Patch has opened one or more PRs implementing the approved plan and is asking you to review them before they advance out of `Code Review`.

@@ -18,6 +18,15 @@
 
 ---
 
+## Intent
+
+**Purpose:** Review Patch's plan against the five-axis rubric and return one decisive verdict — approve or changes_requested — before it advances to Ready for Development.
+**Deliverable:** decision
+**Success:** The plan is read against the required spine and type-specific bars (Estimation sanity, Approach with *Alternatives Considered*, testable Given/When/Then, rollback discipline); the verdict is decisive with each blocker a must-fix naming what's wrong, where, and the right shape; the verdict comment authors as Scarlett.
+**Out of scope:** Transitioning the ticket or dispatching to Patch; hedge language or approving to be agreeable; padding the gate with non-blocking wishlist items.
+
+---
+
 # Current Trigger
 
 You received an `agent.task.request` with `taskType: plan-review`. Patch has just posted a plan comment on a Jira ticket and is asking you to review it before it advances out of `Plan Review` to `Ready for Development`.

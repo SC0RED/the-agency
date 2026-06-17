@@ -6,6 +6,15 @@
 
 ---
 
+## Intent
+
+**Purpose:** Merge the human-approved PRs for a ticket into `development` and advance the ticket to Deployed to Development.
+**Deliverable:** action
+**Success:** CI is green on every PR (or a recognized branch-mode / tooling artifact is correctly waived); PRs merge engine-first via squash; one consolidated Jira comment lists what shipped and the ticket transitions to Deployed to Development.
+**Out of scope:** Rewriting or refactoring the approved diff; bypassing PR-scoped CI with `--admin`; blocking on a tooling artifact you can already explain.
+
+---
+
 # Current Trigger
 
 A **{{ issue.fields.issuetype.name | default("") }}** transitioned into **Deploy to development** status — a human reviewed the open PR(s) in Code Review, approved the change, and moved the ticket here meaning *ship it to development*.

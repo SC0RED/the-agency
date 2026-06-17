@@ -6,6 +6,15 @@ A tool is a Python module at `agency_tools/<category>/<name>/` with
 `tool.yaml` (the contract) and `impl.py` (the implementation), plus
 unit tests.
 
+## Intent
+
+**Purpose:** Forge a new Python tool — or modify an existing one — in agency-tools, with its contract, implementation, and tests, then open a PR.
+**Deliverable:** action
+**Success:** `tool.yaml` carries a clear When-to-call / When-NOT-to-call contract; `impl.py` returns a structured dict using the package's `_identity` and `urllib` patterns; every happy-path and error branch is tested and `make test` (or `pytest`) runs clean.
+**Out of scope:** Adding third-party deps for stdlib-solvable problems; wrapping an existing tool with no value-add; cloning outside cwd.
+
+---
+
 ## What you received
 
 ```

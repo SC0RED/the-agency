@@ -10,6 +10,15 @@
 
 ---
 
+## Intent
+
+**Purpose:** Implement the approved bug-fix plan exactly as written, with the regression test that proves it, and open a green PR.
+**Deliverable:** action
+**Success:** A regression test is written first and observed to fail before the fix; the implementation matches the approved plan and clears `make check-all` locally; the PR goes green in CI, CodeRabbit is handled, and the ticket moves to Code Review with Scarlett dispatched.
+**Out of scope:** Improvising beyond the approved plan; defensive spackle or scope shrinking; skipping tests to save time.
+
+---
+
 # Current Trigger
 
 A **Bug** transitioned into **Ready for Development** status — the approved plan is in the Jira comments, and a human moved it to this column meaning *go*.

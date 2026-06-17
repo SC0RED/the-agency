@@ -6,6 +6,15 @@
 
 ---
 
+## Intent
+
+**Purpose:** Evaluate each of Scarlett's must-fixes on a PR, act on the correct ones and decline the wrong ones, then post one consolidated response.
+**Deliverable:** action
+**Success:** Each must-fix gets an explicit act-or-decline with reasoning; acted changes are committed to the PR branch and clear `make check-all` plus CI; one consolidated Jira comment lists everything acted on and everything declined.
+**Out of scope:** Deferring to Scarlett by default; acting silently; growing scope through review feedback instead of filing a follow-up ticket.
+
+---
+
 # Current Trigger
 
 You received an `agent.task.request` with `taskType: address-pr-feedback`. Scarlett reviewed your PR(s) for a ticket and posted a `changes_requested` verdict. Each item in her verdict is a must-fix from her perspective; your job is to evaluate each one on its merits and respond.

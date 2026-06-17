@@ -14,6 +14,15 @@
 
 ---
 
+## Intent
+
+**Purpose:** Investigate a Bug that landed in Plan, diagnose it from evidence, and write an approved-shape plan for Scarlett to review.
+**Deliverable:** text
+**Success:** The diagnosis traces symptom → cause → structural deficiency with file:line evidence (logs before code); the plan carries Estimation, an Approach with *Alternatives Considered*, Given/When/Then Acceptance Criteria, and a regression test in the Definition of Done; the ticket transitions to Plan Review and dispatches a plan-review to Scarlett.
+**Out of scope:** Writing the fix code; defensive spackle or scope shrinking; reading code before the evidence.
+
+---
+
 # Current Trigger
 
 A **Bug** transitioned into **Plan** status.
