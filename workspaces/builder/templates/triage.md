@@ -54,7 +54,7 @@ github_search_prs(query='"<verbatim tool name or error message>" org:SC0RED is:c
 If `total_count > 0` and any item's body references the same
 fingerprint or describes the same symptom, short-circuit:
 
-```
+```python
 fire_builder_callback(
   state="failed",
   reason="Already shipped. See <html_url>. <one-line of how the prior PR addresses this>."
@@ -165,7 +165,7 @@ PR.
 
 After all dispatches succeed, call:
 
-```
+```python
 fire_builder_callback(
   state="testable",
   pr_url="{{ replyContext.issue_url | default("") }}",
