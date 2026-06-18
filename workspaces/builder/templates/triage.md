@@ -163,21 +163,41 @@ PR.
 
 ## Step 4: Report back
 
-After all dispatches succeed, call:
+How you close out depends on whether this dispatch carried a backing
+issue URL. Operator-initiated requests (relayed by Winston) always
+carry `replyContext.issue_url`; exception-watcher dispatches fire with
+no backing GitHub issue, leaving it empty.
+
+{% if replyContext.issue_url | default("") %}
+After all dispatches succeed, report the routing decision as testable.
+`pr_url` is reused to carry the issue URL so the relay back to Winston
+(or the healthcheck dashboard) gets the operator-visible link:
 
 ```
 fire_builder_callback(
   state="testable",
-  pr_url="{{ replyContext.issue_url | default("") }}",
+  pr_url="{{ replyContext.issue_url }}",
   summary="<2-4 sentences: what you decomposed the request into and what the operator should expect next>",
   auto_merge_eligible=false
 )
 ```
+{% else %}
+The decomposition still succeeded: each specialized run reports its own
+PR independently. A dispatch with no backing issue URL has no
+operator-visible link to surface as a testable result, so report
+completion through the failed channel with a reason that says exactly
+that:
 
-The `pr_url` field is reused to carry the issue URL here so the relay
-back to Winston (or the healthcheck dashboard) gets the operator-visible
-link. Auto-merge is always `false` for triage; the actual auto-merge
-gate runs in each specialized route's PR.
+```
+fire_builder_callback(
+  state="failed",
+  reason="Triage completed and dispatched the work items, but this dispatch carried no backing issue URL to surface as a testable link. Each specialized run reports its own PR independently."
+)
+```
+{% endif %}
+
+Auto-merge is always `false` for triage; the actual auto-merge gate
+runs in each specialized route's PR.
 
 The `summary` describes the routing decision in plain operator terms:
 which surfaces you dispatched the request into and what the operator
