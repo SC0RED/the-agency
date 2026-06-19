@@ -153,7 +153,7 @@ gh pr edit <pr-number> --add-reviewer <handle>
 ```
 gh pr create --draft \
   --title "feat(<module>): <one-line summary>" \
-  --body "Refs {{ work_item.issue_url | default("") }}
+  --body "Closes {{ work_item.issue_url | default("") }}
 
 ## Summary
 <2-4 bullets>

@@ -172,7 +172,7 @@ not in this template.
 ```
 gh pr create --draft \
   --title "<kebab-case-summary>" \
-  --body "Refs {{ work_item.issue_url | default("") }}
+  --body "Closes {{ work_item.issue_url | default("") }}
 
 <plan body, decisions log, open questions>" \
   --base <baseRef> --head <branch>

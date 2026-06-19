@@ -155,7 +155,7 @@ registry's `codeOwners` reviewer.
 ```
 gh pr create --draft \
   --title "feat(<category>): <one-line summary>" \
-  --body "Refs {{ work_item.issue_url | default("") }}
+  --body "Closes {{ work_item.issue_url | default("") }}
 
 ## Summary
 
