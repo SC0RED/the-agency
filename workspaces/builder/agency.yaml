@@ -79,4 +79,3 @@ routing:
 runner:
   type: claude-cli
   model: claude-opus-4-8
-  auth: api-key
